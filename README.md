@@ -75,7 +75,7 @@ A comprehensive Flutter-based personal finance management application with moder
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/finance_app.git
+   git clone https://github.com/syaha-creator/finance_app.git
    cd finance_app
    ```
 
@@ -214,7 +214,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you have any questions or need help:
 
 - Create an issue on GitHub
-- Contact: <your.email@example.com>
+- Contact: <msyahrul090@gmail.com>
 
 ---
 
