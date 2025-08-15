@@ -101,7 +101,7 @@ A comprehensive Flutter-based personal finance management application with moder
 
 ## 📁 Project Structure
 
-```
+```bash
 lib/
 ├── core/                    # Core utilities and constants
 │   ├── constants/          # App constants
@@ -222,4 +222,4 @@ If you have any questions or need help:
 
 ---
 
-**Made with ❤️ using Flutter**
+## 🎨 Made with ❤️ using Flutter
