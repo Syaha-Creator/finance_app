@@ -1,0 +1,114 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
+import '../models/transaction_model.dart';
+
+class TransactionRepository {
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _firebaseAuth;
+
+  TransactionRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth firebaseAuth,
+  }) : _firestore = firestore,
+       _firebaseAuth = firebaseAuth;
+
+  String? get _currentUserId => _firebaseAuth.currentUser?.uid;
+
+  Stream<List<TransactionModel>> getTransactionsStream() {
+    final userId = _currentUserId;
+    if (userId == null) {
+      return Stream.value([]);
+    }
+    return _firestore
+        .collection(FirestoreConstants.transactionsCollection)
+        .where('userId', isEqualTo: userId)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map((doc) => TransactionModel.fromFirestore(doc))
+                  .toList(),
+        );
+  }
+
+  Future<void> addTransaction(TransactionModel transaction) async {
+    final userId = _currentUserId;
+    if (userId == null) throw Exception('User not logged in');
+    await _firestore
+        .collection(FirestoreConstants.transactionsCollection)
+        .add(transaction.toFirestore());
+  }
+
+  Future<void> updateTransaction(TransactionModel transaction) async {
+    final userId = _currentUserId;
+    if (userId == null) throw Exception('User not logged in');
+    await _firestore
+        .collection(FirestoreConstants.transactionsCollection)
+        .doc(transaction.id)
+        .update(transaction.toFirestore());
+  }
+
+  Future<void> deleteTransaction(String transactionId) async {
+    await _firestore
+        .collection(FirestoreConstants.transactionsCollection)
+        .doc(transactionId)
+        .delete();
+  }
+
+  Future<void> addTransfer({
+    required double amount,
+    required String fromAccount,
+    required String toAccount,
+    required DateTime date,
+    required String description,
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) throw Exception('User not logged in');
+
+    final batch = _firestore.batch();
+    final collection = _firestore.collection(
+      FirestoreConstants.transactionsCollection,
+    );
+
+    final expenseTransaction = TransactionModel(
+      userId: userId,
+      description: 'Transfer ke $toAccount: $description',
+      amount: amount,
+      category: 'Transfer Keluar',
+      account: fromAccount,
+      date: date,
+      type: TransactionType.expense,
+    );
+    batch.set(collection.doc(), expenseTransaction.toFirestore());
+
+    final incomeTransaction = TransactionModel(
+      userId: userId,
+      description: 'Transfer dari $fromAccount: $description',
+      amount: amount,
+      category: 'Transfer Masuk',
+      account: toAccount,
+      date: date,
+      type: TransactionType.income,
+    );
+    batch.set(collection.doc(), incomeTransaction.toFirestore());
+
+    await batch.commit();
+  }
+
+  Future<List<String>> getExpenseCategories() async {
+    final snapshot = await _firestore.collection('expense_categories').get();
+    return snapshot.docs.map((doc) => doc['name'] as String).toList();
+  }
+
+  Future<List<String>> getIncomeCategories() async {
+    final snapshot = await _firestore.collection('income_categories').get();
+    return snapshot.docs.map((doc) => doc['name'] as String).toList();
+  }
+
+  Future<List<String>> getAccounts() async {
+    final snapshot = await _firestore.collection('accounts').get();
+    return snapshot.docs.map((doc) => doc['name'] as String).toList();
+  }
+}
