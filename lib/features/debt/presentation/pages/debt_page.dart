@@ -112,17 +112,34 @@ class _DebtPageState extends ConsumerState<DebtPage>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddEditDebtPage()),
+      floatingActionButton: Consumer(
+        builder: (context, ref, child) {
+          final debtsAsyncValue = ref.watch(debtsStreamProvider);
+          return debtsAsyncValue.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (debts) {
+              // Hanya tampilkan FAB jika ada data
+              if (debts.isNotEmpty) {
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddEditDebtPage(),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Catatan'),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           );
         },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Catatan'),
       ),
     );
   }

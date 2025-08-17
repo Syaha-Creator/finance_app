@@ -136,17 +136,34 @@ class GoalsPage extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddEditGoalPage()),
+      floatingActionButton: Consumer(
+        builder: (context, ref, child) {
+          final goalsAsync = ref.watch(goalsWithProgressProvider);
+          return goalsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (goals) {
+              // Hanya tampilkan FAB jika ada data
+              if (goals.isNotEmpty) {
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddEditGoalPage(),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Tujuan'),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           );
         },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Tujuan'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );

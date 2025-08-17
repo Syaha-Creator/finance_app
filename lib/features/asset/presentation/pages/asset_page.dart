@@ -113,17 +113,34 @@ class AssetPage extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddEditAssetPage()),
+      floatingActionButton: Consumer(
+        builder: (context, ref, child) {
+          final assetsAsyncValue = ref.watch(assetsStreamProvider);
+          return assetsAsyncValue.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (assets) {
+              // Hanya tampilkan FAB jika ada data
+              if (assets.isNotEmpty) {
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddEditAssetPage(),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Aset'),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           );
         },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Aset'),
       ),
     );
   }
