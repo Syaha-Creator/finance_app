@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/goal_model.dart';
@@ -23,6 +24,7 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
   DateTime? _targetDate;
 
   bool get _isEditMode => widget.goal != null;
+  bool get _isLoading => ref.watch(goalControllerProvider);
 
   @override
   void initState() {
@@ -107,90 +109,427 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(goalControllerProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditMode ? 'Edit Tujuan' : 'Tambah Tujuan Baru'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nama Tujuan'),
-                validator:
-                    (v) =>
-                        (v == null || v.isEmpty)
-                            ? 'Nama tidak boleh kosong'
-                            : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _targetAmountController,
-                decoration: const InputDecoration(
-                  labelText: 'Jumlah Target',
-                  prefixText: 'Rp ',
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  ThousandInputFormatter(),
-                ],
-                validator:
-                    (v) =>
-                        (v == null || v.isEmpty)
-                            ? 'Jumlah tidak boleh kosong'
-                            : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Target Tanggal Tercapai',
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                controller: TextEditingController(
-                  text:
-                      _targetDate == null
-                          ? ''
-                          : DateFormat(
-                            'dd MMMM yyyy',
-                            'id_ID',
-                          ).format(_targetDate!),
-                ),
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate:
-                        _targetDate ??
-                        DateTime.now().add(const Duration(days: 30)),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2101),
-                  );
-                  if (pickedDate != null) {
-                    setState(() => _targetDate = pickedDate);
-                  }
-                },
-                validator:
-                    (v) =>
-                        _targetDate == null
-                            ? 'Tanggal tidak boleh kosong'
-                            : null,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: isLoading ? null : _submitForm,
-                child: const Text('SIMPAN TUJUAN'),
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             ],
           ),
         ),
+        child: Column(
+          children: [
+            // Custom App Bar dengan tombol back
+            _buildCustomAppBar(context, theme),
+            
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    _buildHeader(context, theme),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Form
+                    _buildForm(context, theme),
+                    
+                    // Bottom padding
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 16,
+        right: 16,
+        bottom: 16,
+      ),
+      child: Row(
+        children: [
+          // Tombol back
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: theme.colorScheme.onSurface,
+                size: 20,
+              ),
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(40, 40),
+              ),
+            ),
+          ),
+          
+          const SizedBox(width: 16),
+          
+          // Judul halaman
+          Expanded(
+            child: Text(
+              _isEditMode ? 'Edit Tujuan' : 'Tambah Tujuan Baru',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.accent,
+            AppColors.accentLight,
+            AppColors.accentContainer,
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              _isEditMode ? Icons.edit : Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isEditMode ? 'Edit Tujuan Keuangan' : 'Buat Tujuan Keuangan Baru',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _isEditMode 
+                      ? 'Perbarui detail tujuan Anda'
+                      : 'Tentukan target keuangan yang ingin Anda capai',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, ThemeData theme) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Nama Tujuan
+          _buildTextField(
+            context,
+            theme,
+            controller: _nameController,
+            label: 'Nama Tujuan',
+            hint: 'Contoh: Beli Rumah, Liburan ke Bali',
+            icon: Icons.flag,
+            validator: (v) => (v == null || v.isEmpty)
+                ? 'Nama tidak boleh kosong'
+                : null,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Jumlah Target
+          _buildTextField(
+            context,
+            theme,
+            controller: _targetAmountController,
+            label: 'Jumlah Target',
+            hint: 'Masukkan jumlah target',
+            icon: Icons.attach_money,
+            prefixText: 'Rp ',
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              ThousandInputFormatter(),
+            ],
+            validator: (v) => (v == null || v.isEmpty)
+                ? 'Jumlah tidak boleh kosong'
+                : null,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Target Tanggal
+          _buildDateField(context, theme),
+          
+          const SizedBox(height: 32),
+          
+          // Submit Button
+          ElevatedButton(
+            onPressed: _isLoading ? null : _submitForm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    _isEditMode ? 'UPDATE TUJUAN' : 'SIMPAN TUJUAN',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    BuildContext context,
+    ThemeData theme, {
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? prefixText,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixText: prefixText,
+              prefixIcon: Icon(
+                icon,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateField(BuildContext context, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Target Tanggal Tercapai',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2101),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                        primary: AppColors.primary,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (pickedDate != null) {
+                setState(() => _targetDate = pickedDate);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _targetDate == null
+                          ? 'Pilih tanggal target'
+                          : DateFormat('dd MMMM yyyy', 'id_ID').format(_targetDate!),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: _targetDate == null
+                            ? theme.colorScheme.onSurfaceVariant
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  if (_targetDate != null)
+                    IconButton(
+                      onPressed: () => setState(() => _targetDate = null),
+                      icon: Icon(
+                        Icons.clear,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 18,
+                      ),
+                      style: IconButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(24, 24),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (_targetDate == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 16),
+            child: Text(
+              'Tanggal tidak boleh kosong',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

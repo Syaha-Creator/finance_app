@@ -97,6 +97,28 @@ class TransactionRepository {
     await batch.commit();
   }
 
+  Future<List<TransactionModel>> getTransactionsByGoalId(String goalId) async {
+    final userId = _currentUserId;
+    if (userId == null) return [];
+
+    try {
+      final snapshot =
+          await _firestore
+              .collection(FirestoreConstants.transactionsCollection)
+              .where('userId', isEqualTo: userId)
+              .where('goalId', isEqualTo: goalId)
+              .orderBy('date', descending: true)
+              .get();
+
+      return snapshot.docs
+          .map((doc) => TransactionModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print('Error getting transactions by goal ID: $e');
+      return [];
+    }
+  }
+
   Future<List<String>> getExpenseCategories() async {
     final snapshot = await _firestore.collection('expense_categories').get();
     return snapshot.docs.map((doc) => doc['name'] as String).toList();

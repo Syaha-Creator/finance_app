@@ -7,7 +7,10 @@ import '../../../debt/presentation/provider/debt_provider.dart';
 class DashboardSummary {
   final double totalAssets;
   final double totalDebts;
+  
   DashboardSummary({required this.totalAssets, required this.totalDebts});
+  
+  double get netWorth => totalAssets - totalDebts;
 }
 
 final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {

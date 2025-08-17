@@ -12,6 +12,7 @@ class TransactionModel extends Equatable {
   final String account;
   final DateTime date;
   final TransactionType type;
+  final String? goalId;
 
   const TransactionModel({
     this.id,
@@ -22,6 +23,7 @@ class TransactionModel extends Equatable {
     required this.account,
     required this.date,
     required this.type,
+    this.goalId,
   });
 
   factory TransactionModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +37,7 @@ class TransactionModel extends Equatable {
       account: data['account'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       type: _parseTransactionType(data['type']),
+      goalId: data['goalId'],
     );
   }
 
@@ -60,7 +63,32 @@ class TransactionModel extends Equatable {
       'account': account,
       'date': Timestamp.fromDate(date),
       'type': type.name,
+      'goalId': goalId,
     };
+  }
+
+  TransactionModel copyWith({
+    String? id,
+    String? userId,
+    String? description,
+    double? amount,
+    String? category,
+    String? account,
+    DateTime? date,
+    TransactionType? type,
+    String? goalId,
+  }) {
+    return TransactionModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      description: description ?? this.description,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      account: account ?? this.account,
+      date: date ?? this.date,
+      type: type ?? this.type,
+      goalId: goalId ?? this.goalId,
+    );
   }
 
   @override
@@ -73,5 +101,6 @@ class TransactionModel extends Equatable {
     account,
     date,
     type,
+    goalId,
   ];
 }

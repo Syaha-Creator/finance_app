@@ -11,12 +11,14 @@ class DashboardViewModel {
   final List<NetWorthDataPoint> netWorthHistory;
   final MonthlyCashFlow monthlyCashFlow;
   final List<TransactionModel> upcomingBills;
+  final List<TransactionModel> recentTransactions;
 
   DashboardViewModel({
     required this.netWorth,
     required this.netWorthHistory,
     required this.monthlyCashFlow,
     required this.upcomingBills,
+    required this.recentTransactions,
   });
 }
 
@@ -102,10 +104,23 @@ final dashboardViewModelProvider =
                 t.date.isBefore(DateTime.now().add(const Duration(days: 7)));
           }).toList();
 
+      final recentTransactions =
+          allTransactions
+              .where(
+                (t) => t.date.isAfter(
+                  DateTime.now().subtract(const Duration(days: 30)),
+                ),
+              )
+              .toList()
+              .reversed
+              .take(5)
+              .toList();
+
       return DashboardViewModel(
         netWorth: currentNetWorth,
         netWorthHistory: netWorthHistory,
         monthlyCashFlow: cashFlow,
         upcomingBills: upcomingBills,
+        recentTransactions: recentTransactions,
       );
     });

@@ -1,148 +1,97 @@
-// lib/features/dashboard/presentation/pages/dashboard_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Import provider dan widget-widget yang sudah kita buat
+import '../../../../core/theme/app_colors.dart';
 import '../providers/dashboard_viewmodel_provider.dart';
-import '../widgets/net_worth_trend_card.dart';
-import '../widgets/cash_flow_card.dart';
-import '../widgets/upcoming_bills_card.dart';
-// import '../widgets/dashboard_header.dart'; // Masih nonaktif
+import '../widgets/index.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Panggil provider ViewModel kita
-    final asyncData = ref.watch(dashboardViewModelProvider);
-    final textTheme = Theme.of(context).textTheme;
+    final viewModelAsync = ref.watch(dashboardViewModelProvider);
+    final theme = Theme.of(context);
 
-    // Kita langsung return Widget yang bisa di-scroll, tanpa Scaffold/AppBar
-    return asyncData.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error:
-          (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Terjadi kesalahan saat memuat data:\n$err',
-                textAlign: TextAlign.center,
-              ),
-            ),
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            ],
           ),
-      // Jika data berhasil dimuat, kita bangun UI-nya
-      data: (viewModel) {
-        return RefreshIndicator(
-          onRefresh: () async {
-            // Invalidate provider untuk memuat ulang data
-            ref.invalidate(dashboardViewModelProvider);
-          },
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              // Header sementara
-              Text(
-                'Selamat Datang!',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+        ),
+        child: viewModelAsync.when(
+          loading:
+              () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
               ),
-              Text(
-                'Berikut ringkasan keuanganmu.',
-                style: textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 24),
-
-              // Kartu Grafik Kekayaan Bersih
-              NetWorthTrendCard(
-                netWorth: viewModel.netWorth,
-                history: viewModel.netWorthHistory,
-              ),
-              const SizedBox(height: 16),
-
-              // Kartu Cash Flow Bulanan
-              CashFlowCard(cashFlow: viewModel.monthlyCashFlow),
-              const SizedBox(height: 16),
-
-              // Kartu Tagihan Akan Datang
-              UpcomingBillsCard(bills: viewModel.upcomingBills),
-              const SizedBox(height: 24),
-
-              // Menu Akses Cepat yang sudah kita buat sebelumnya
-              Text(
-                "Akses Cepat",
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _QuickAccessButton(
-                    icon: Icons.add_card_outlined,
-                    label: 'Transaksi',
-                    onTap: () {},
+          error: (err, stack) => Center(child: Text('Error: $err')),
+          data:
+              (viewModel) => CustomScrollView(
+                slivers: [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: _buildHeader(context, theme, viewModel),
                   ),
-                  _QuickAccessButton(
-                    icon: Icons.receipt_long_outlined,
-                    label: 'Anggaran',
-                    onTap: () {},
-                  ),
-                  _QuickAccessButton(
-                    icon: Icons.pie_chart_outline_rounded,
-                    label: 'Laporan',
-                    onTap: () {},
-                  ),
-                  _QuickAccessButton(
-                    icon: Icons.savings_outlined,
-                    label: 'Tujuan',
-                    onTap: () {},
+
+                  // Dashboard Content
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          // Phase 1: Core Features
+                          const GoalsProgressOverview(),
+                          const SizedBox(height: 8),
+                          const QuickActionsPanel(),
+                          const SizedBox(height: 8),
+
+                          // Phase 2: Analysis Features
+                          const SpendingPatternAnalysis(),
+                          const SizedBox(height: 8),
+                          const MonthlyComparison(),
+                          const SizedBox(height: 8),
+
+                          // Phase 3: Health & Insights
+                          const FinancialHealthScore(),
+                          const SizedBox(height: 8),
+                          const PersonalizedInsights(),
+                          const SizedBox(height: 8),
+
+                          // Phase 4: Advanced Analytics
+                          const FinancialRatioCard(),
+                          const SizedBox(height: 8),
+                          const NetWorthLineChart(),
+                          const SizedBox(height: 8),
+
+                          // Phase 5: Summary & Overview
+                          const OverallScoreGauge(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
-}
 
-// Helper widget untuk tombol akses cepat
-class _QuickAccessButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickAccessButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: Icon(
-              icon,
-              size: 28,
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
+  Widget _buildHeader(
+    BuildContext context,
+    ThemeData theme,
+    dynamic viewModel,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: const SummaryCard(),
     );
   }
 }

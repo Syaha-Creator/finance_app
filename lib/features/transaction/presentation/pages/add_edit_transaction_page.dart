@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../authentication/presentation/providers/auth_providers.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/income_expense_form.dart';
@@ -49,7 +50,8 @@ class _AddEditTransactionPageState
 
     _selectedCategory = t?.category;
     _selectedAccount = t?.account;
-    _selectedDate = t?.date ?? DateTime.now();
+
+    _selectedDate = _isEditMode ? t!.date : DateTime.now();
     _selectedType = _isEditMode ? t!.type : TransactionType.expense;
   }
 
@@ -71,11 +73,21 @@ class _AddEditTransactionPageState
       if (userId == null) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Error: Pengguna tidak ditemukan. Silakan login ulang.',
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Error: Pengguna tidak ditemukan. Silakan login ulang.',
+                  ),
+                ],
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           );
         }
@@ -117,10 +129,20 @@ class _AddEditTransactionPageState
         if (mounted) {
           scaffoldMessenger.showSnackBar(
             SnackBar(
-              content: Text(
-                'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
+                  ),
+                ],
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           );
           if (_isEditMode) navigator.pop();
@@ -129,7 +151,20 @@ class _AddEditTransactionPageState
       } catch (e) {
         if (mounted) {
           scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text('Gagal: $e'),
+                ],
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           );
         }
       } finally {
@@ -140,9 +175,16 @@ class _AddEditTransactionPageState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(_isEditMode ? 'Edit Transaksi' : 'Tambah Transaksi'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        centerTitle: true,
       ),
       body: Stack(
         children: [
@@ -153,28 +195,141 @@ class _AddEditTransactionPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (!_isEditMode)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24.0),
-                      child: TransactionTypeSelector(
-                        selectedType: _selectedType,
-                        onTypeSelected: (newType) {
-                          setState(() {
-                            _selectedType = newType;
-                            _selectedCategory = null;
-                            _fromAccount = null;
-                            _toAccount = null;
-                          });
-                        },
+                  // Transaction Type Selector (only for new transactions)
+                  if (!_isEditMode) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16.0),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.1,
+                          ),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.category_outlined,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Jenis Transaksi',
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Pilih jenis transaksi yang ingin Anda catat',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color:
+                                                theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TransactionTypeSelector(
+                            selectedType: _selectedType,
+                            onTypeSelected: (type) {
+                              setState(() {
+                                _selectedType = type;
+                                _selectedCategory = null;
+                                _fromAccount = null;
+                                _toAccount = null;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Form Section
                   Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16.0),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    child:
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.description_outlined,
+                                color: AppColors.secondary,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Detail Transaksi',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
                         _selectedType == TransactionType.transfer
                             ? TransferForm(
                               amountController: _amountController,
@@ -206,21 +361,105 @@ class _AddEditTransactionPageState
                               onDateChanged:
                                   (val) => setState(() => _selectedDate = val),
                             ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _submitForm,
-                    child: Text(_isEditMode ? 'PERBARUI' : 'SIMPAN'),
+                  const SizedBox(height: 20),
+
+                  // Submit Button
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [AppColors.primary, AppColors.primaryLight],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child:
+                          _isLoading
+                              ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    _isEditMode
+                                        ? 'Memperbarui...'
+                                        : 'Menyimpan...',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _isEditMode
+                                        ? Icons.save_outlined
+                                        : Icons.add,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _isEditMode ? 'PERBARUI' : 'SIMPAN',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
+
+          // Loading Overlay
           if (_isLoading)
             Container(
-              color: Colors.black.withAlpha(128),
-              child: const Center(child: CircularProgressIndicator()),
+              color: Colors.black.withValues(alpha: 0.5),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
             ),
         ],
       ),

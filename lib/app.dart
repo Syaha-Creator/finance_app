@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/routes/app_routes.dart';
 import 'features/authentication/presentation/pages/auth_wrapper.dart';
 
 class MyApp extends StatelessWidget {
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('id', 'ID')],
       home: const AuthWrapper(),
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }

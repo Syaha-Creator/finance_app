@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/recurring_transaction_model.dart';
@@ -124,67 +125,261 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(recurringTransactionControllerProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditMode ? 'Edit Jadwal' : 'Jadwal Baru')),
-      body: Stack(
-        children: [
-          Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Custom App Bar
+            _buildCustomAppBar(context, theme),
+
+            // Form Content
+            Expanded(
+              child: Stack(
                 children: [
-                  _buildTypeSelector(),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(labelText: 'Keterangan'),
-                    validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Jumlah',
-                      prefixText: 'Rp ',
+                  Form(
+                    key: _formKey,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Header dengan gradient
+                        SliverToBoxAdapter(child: _buildHeader(context, theme)),
+
+                        // Form content
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildTypeSelector(),
+                                const SizedBox(height: 20),
+                                _buildDescriptionField(),
+                                const SizedBox(height: 20),
+                                _buildAmountField(),
+                                const SizedBox(height: 20),
+                                _buildCategoryDropdown(),
+                                const SizedBox(height: 20),
+                                _buildAccountDropdown(),
+                                const SizedBox(height: 24),
+                                const Divider(),
+                                const SizedBox(height: 16),
+                                _buildFrequencySelector(),
+                                const SizedBox(height: 32),
+                                _buildSubmitButton(),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      ThousandInputFormatter(),
-                    ],
-                    validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
                   ),
-                  const SizedBox(height: 16),
-                  _buildCategoryDropdown(),
-                  const SizedBox(height: 16),
-                  _buildAccountDropdown(),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  _buildFrequencySelector(),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: Text(isEditMode ? 'UPDATE JADWAL' : 'SIMPAN JADWAL'),
-                  ),
+
+                  // Loading overlay
+                  if (isLoading)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-          ),
-          if (isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // --- KUMPULAN WIDGET BUILDER UNTUK FORM ---
+
+  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 8,
+        left: 16,
+        right: 16,
+        bottom: 16,
+      ),
+      child: Row(
+        children: [
+          // Tombol back
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: theme.colorScheme.onSurface,
+                size: 20,
+              ),
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(40, 40),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // Judul halaman
+          Expanded(
+            child: Text(
+              isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.primaryLight,
+            AppColors.primaryDark,
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              isEditMode ? Icons.edit : Icons.add,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  isEditMode
+                      ? 'Perbarui jadwal transaksi berulang'
+                      : 'Buat jadwal transaksi yang berulang otomatis',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextFormField(
+      controller: _descriptionController,
+      decoration: const InputDecoration(
+        labelText: 'Keterangan',
+        hintText: 'Contoh: Bayar internet, Gaji bulanan, dll',
+        prefixIcon: Icon(Icons.description),
+      ),
+      validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+    );
+  }
+
+  Widget _buildAmountField() {
+    return TextFormField(
+      controller: _amountController,
+      decoration: const InputDecoration(
+        labelText: 'Jumlah',
+        hintText: 'Masukkan jumlah transaksi',
+        prefixIcon: Icon(Icons.attach_money),
+        prefixText: 'Rp ',
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        ThousandInputFormatter(),
+      ],
+      validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    final isLoading = ref.watch(recurringTransactionControllerProvider);
+
+    return ElevatedButton(
+      onPressed: isLoading ? null : _submit,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+      ),
+      child: Text(
+        isEditMode ? 'UPDATE JADWWAL' : 'SIMPAN JADWAL',
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 
   Widget _buildTypeSelector() {
     return SegmentedButton<TransactionType>(

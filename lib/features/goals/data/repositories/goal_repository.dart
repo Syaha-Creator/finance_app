@@ -53,6 +53,19 @@ class GoalRepository {
     await _goalsCollection.doc(goalId).delete();
   }
 
+  Future<GoalModel?> getGoalById(String goalId) async {
+    try {
+      final doc = await _goalsCollection.doc(goalId).get();
+      if (doc.exists) {
+        return GoalModel.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting goal by ID: $e');
+      return null;
+    }
+  }
+
   Future<void> addFundsToGoal({
     required String goalId,
     required double amount,

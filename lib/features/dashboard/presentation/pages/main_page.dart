@@ -13,15 +13,22 @@ import 'dashboard_page.dart';
 
 final mainPageProvider = StateProvider<int>((ref) => 0);
 
-class MainPage extends ConsumerWidget {
+class MainPage extends ConsumerStatefulWidget {
   const MainPage({super.key});
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    TransactionPage(),
-    ReportsPage(),
-    SettingsPage(),
-  ];
+  @override
+  ConsumerState<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends ConsumerState<MainPage> {
+  List<Widget> _buildPages(WidgetRef ref) {
+    return [
+      const DashboardPage(),
+      const TransactionPage(),
+      const ReportsPage(),
+      const SettingsPage(),
+    ];
+  }
 
   final List<String> _pageTitles = const [
     'Dashboard',
@@ -33,82 +40,292 @@ class MainPage extends ConsumerWidget {
   void _showAddMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(
-                  Icons.receipt_long_outlined,
-                  color: AppColors.primary,
-                ),
-                title: const Text('Tambah Transaksi'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    ctx,
-                    MaterialPageRoute(
-                      builder: (_) => const AddEditTransactionPage(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: AppColors.primary,
-                ),
-                title: const Text('Tambah Aset'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    ctx,
-                    MaterialPageRoute(builder: (_) => const AddEditAssetPage()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.credit_card_outlined,
-                  color: AppColors.primary,
-                ),
-                title: const Text('Tambah Utang/Piutang'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    ctx,
-                    MaterialPageRoute(builder: (_) => const AddEditDebtPage()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.flag_outlined,
-                  color: AppColors.primary,
-                ),
-                title: const Text('Tambah Tujuan (Goal)'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    ctx,
-                    MaterialPageRoute(builder: (_) => const AddEditGoalPage()),
-                  );
-                },
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
               ),
             ],
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.primary, AppColors.primaryLight],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.add_circle_outline,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tambah Data Baru',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              'Pilih jenis data yang ingin ditambahkan',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Menu items
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.receipt_long_outlined,
+                        title: 'Tambah Transaksi',
+                        subtitle: 'Catat pemasukan atau pengeluaran',
+                        color: AppColors.primary,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditTransactionPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: 'Tambah Aset',
+                        subtitle: 'Catat aset dan investasi',
+                        color: AppColors.income,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditAssetPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.credit_card_outlined,
+                        title: 'Tambah Utang/Piutang',
+                        subtitle: 'Catat utang atau piutang',
+                        color: AppColors.warning,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditDebtPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.flag_outlined,
+                        title: 'Tambah Tujuan (Goal)',
+                        subtitle: 'Set target keuangan',
+                        color: AppColors.accent,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditGoalPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom padding
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
+  Widget _buildEnhancedMenuItem({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Icon container
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withValues(alpha: 0.15),
+                      color.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+
+              const SizedBox(width: 16),
+
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Arrow icon
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.arrow_forward_ios, color: color, size: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final selectedIndex = ref.watch(mainPageProvider);
     final theme = Theme.of(context);
 
@@ -118,8 +335,63 @@ class MainPage extends ConsumerWidget {
           _pageTitles[selectedIndex],
           style: theme.appBarTheme.titleTextStyle,
         ),
+        actions: [
+          // Notification Icon
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: IconButton(
+              onPressed: () => _showNotifications(context),
+              icon: Stack(
+                children: [
+                  Icon(
+                    Icons.notifications_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                  // Notification Badge
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '3',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              style: IconButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(40, 40),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: IndexedStack(index: selectedIndex, children: _pages),
+      body: IndexedStack(index: selectedIndex, children: _buildPages(ref)),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
@@ -184,6 +456,229 @@ class MainPage extends ConsumerWidget {
       icon: Icon(icon, color: color),
       onPressed: () => ref.read(mainPageProvider.notifier).state = index,
       tooltip: label,
+    );
+  }
+
+  void _showNotifications(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.primary, AppColors.primaryLight],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Notifikasi Cerdas',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              'Pengingat dan saran keuangan',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Notifications List
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      _buildNotificationItem(
+                        context,
+                        'Pengingatan Budget',
+                        'Budget kategori "Makanan & Minuman" sudah 80% terpakai',
+                        Icons.account_balance_wallet,
+                        AppColors.warning,
+                        '2 jam lalu',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildNotificationItem(
+                        context,
+                        'Saran Investasi',
+                        'Berdasarkan cash flow Anda, pertimbangkan investasi bulanan',
+                        Icons.trending_up,
+                        AppColors.success,
+                        '1 hari lalu',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildNotificationItem(
+                        context,
+                        'Goal Progress',
+                        'Goal "Liburan" sudah 65% tercapai. Lanjutkan!',
+                        Icons.flag,
+                        AppColors.primary,
+                        '2 hari lalu',
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom padding
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNotificationItem(
+    BuildContext context,
+    String title,
+    String message,
+    IconData icon,
+    Color color,
+    String time,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  time,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

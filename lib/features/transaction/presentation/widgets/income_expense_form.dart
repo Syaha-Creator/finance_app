@@ -139,7 +139,16 @@ class IncomeExpenseForm extends ConsumerWidget {
           lastDate: DateTime.now().add(const Duration(days: 365)),
         );
         if (picked != null && picked != selectedDate) {
-          onDateChanged(picked);
+          final now = DateTime.now();
+          final combinedDateTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            now.hour,
+            now.minute,
+            now.second,
+          );
+          onDateChanged(combinedDateTime);
         }
       },
       child: InputDecorator(
