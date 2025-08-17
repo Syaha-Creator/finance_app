@@ -417,14 +417,21 @@ class NetWorthLineChart extends ConsumerWidget {
   }
 
   double _calculateHorizontalInterval(double netWorth) {
+    // Prevent zero or negative values
+    if (netWorth <= 0) return 1000000.0;
+    
     if (netWorth >= 1000000000) {
-      return netWorth / 5; // 5 divisions for billions
+      final interval = netWorth / 5; // 5 divisions for billions
+      return interval > 0 ? interval : 1000000.0;
     } else if (netWorth >= 100000000) {
-      return netWorth / 4; // 4 divisions for hundreds of millions
+      final interval = netWorth / 4; // 4 divisions for hundreds of millions
+      return interval > 0 ? interval : 1000000.0;
     } else if (netWorth >= 10000000) {
-      return netWorth / 3; // 3 divisions for tens of millions
+      final interval = netWorth / 3; // 3 divisions for tens of millions
+      return interval > 0 ? interval : 1000000.0;
     } else {
-      return netWorth / 2; // 2 divisions for smaller amounts
+      final interval = netWorth / 2; // 2 divisions for smaller amounts
+      return interval > 0 ? interval : 1000000.0;
     }
   }
 }

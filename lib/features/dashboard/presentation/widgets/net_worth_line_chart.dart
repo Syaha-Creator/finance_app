@@ -514,8 +514,15 @@ class NetWorthLineChart extends ConsumerWidget {
   }
 
   double _calculateHorizontalInterval(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) return 1000000.0;
+
     final values = data.map((e) => e['value'] as double).toList();
     final maxValue = values.reduce((a, b) => a > b ? a : b);
-    return (maxValue / 1000000).ceil() * 1000000.0;
+
+    // Prevent zero interval
+    if (maxValue <= 0) return 1000000.0;
+
+    final interval = (maxValue / 1000000).ceil() * 1000000.0;
+    return interval > 0 ? interval : 1000000.0; // Ensure positive value
   }
 }
