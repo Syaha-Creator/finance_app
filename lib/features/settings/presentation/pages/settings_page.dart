@@ -35,7 +35,7 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
           children: [
             const UserProfileCard(),
             SettingsGroup(
@@ -162,13 +162,13 @@ class SettingsPage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 1, vertical: 0.5),
+      margin: const EdgeInsets.symmetric(horizontal: 1),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
