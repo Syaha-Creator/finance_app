@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/local_notification_service.dart';
 import '../../../budget/presentation/providers/budget_providers.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
@@ -50,7 +51,6 @@ class SmartNotificationService {
     required List<dynamic> debts,
   }) {
     final notifications = <SmartNotification>[];
-    final now = DateTime.now();
 
     // 1. Budget Notifications
     notifications.addAll(_generateBudgetNotifications(budgets, transactions));
@@ -96,8 +96,7 @@ class SmartNotificationService {
     List<dynamic> transactions,
   ) {
     final notifications = <SmartNotification>[];
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
+    final currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
     for (final budget in budgets) {
       try {
@@ -134,7 +133,7 @@ class SmartNotificationService {
                   'Budget kategori "$category" sudah ${(percentageUsed * 100).toInt()}% terpakai',
               icon: Icons.account_balance_wallet,
               color: AppColors.warning,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.budget,
               priority: NotificationPriority.high,
             ),
@@ -148,7 +147,7 @@ class SmartNotificationService {
                   'Budget kategori "$category" sudah terlampaui ${(percentageUsed * 100).toInt()}%',
               icon: Icons.warning,
               color: AppColors.error,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.budget,
               priority: NotificationPriority.urgent,
             ),
@@ -192,7 +191,7 @@ class SmartNotificationService {
                   'Goal "$goalName" sudah ${(progress * 100).toInt()}% tercapai. Lanjutkan!',
               icon: Icons.flag,
               color: AppColors.primary,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.goal,
               priority: NotificationPriority.medium,
             ),
@@ -206,7 +205,7 @@ class SmartNotificationService {
                   'Goal "$goalName" sudah ${(progress * 100).toInt()}% tercapai. Tinggal sedikit lagi!',
               icon: Icons.flag,
               color: AppColors.success,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.goal,
               priority: NotificationPriority.high,
             ),
@@ -223,7 +222,7 @@ class SmartNotificationService {
                   'Goal "$goalName" deadline dalam $daysLeft hari. Percepat progress!',
               icon: Icons.schedule,
               color: AppColors.warning,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.goal,
               priority: NotificationPriority.high,
             ),
@@ -237,7 +236,7 @@ class SmartNotificationService {
                   'Goal "$goalName" sudah melewati deadline. Evaluasi dan sesuaikan target!',
               icon: Icons.schedule,
               color: AppColors.error,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.goal,
               priority: NotificationPriority.urgent,
             ),
@@ -264,7 +263,6 @@ class SmartNotificationService {
         final amount = debt['amount'] as double? ?? 0.0;
         final dueDate = debt['dueDate'] as DateTime?;
         final status = debt['status'] as String? ?? '';
-        final type = debt['type'] as String? ?? '';
 
         if (status == 'paid' || dueDate == null) continue;
 
@@ -279,7 +277,7 @@ class SmartNotificationService {
                   'Utang kepada $personName jatuh tempo dalam $daysUntilDue hari (${amount.toStringAsFixed(0)})',
               icon: Icons.credit_card,
               color: AppColors.warning,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.debt,
               priority: NotificationPriority.high,
             ),
@@ -293,7 +291,7 @@ class SmartNotificationService {
                   'Utang kepada $personName sudah terlambat ${daysUntilDue.abs()} hari (${amount.toStringAsFixed(0)})',
               icon: Icons.credit_card,
               color: AppColors.error,
-              timestamp: now,
+              timestamp: DateTime.now(),
               type: NotificationType.debt,
               priority: NotificationPriority.urgent,
             ),
@@ -358,7 +356,7 @@ class SmartNotificationService {
                 'Pengeluaran bulan ini meningkat ${changePercentage.toInt()}% dari bulan lalu',
             icon: Icons.trending_up,
             color: AppColors.warning,
-            timestamp: now,
+            timestamp: DateTime.now(),
             type: NotificationType.spending,
             priority: NotificationPriority.medium,
           ),
@@ -372,7 +370,7 @@ class SmartNotificationService {
                 'Pengeluaran bulan ini berkurang ${changePercentage.abs().toInt()}% dari bulan lalu. Bagus!',
             icon: Icons.trending_down,
             color: AppColors.success,
-            timestamp: now,
+            timestamp: DateTime.now(),
             type: NotificationType.spending,
             priority: NotificationPriority.low,
           ),
@@ -420,7 +418,7 @@ class SmartNotificationService {
                 'Berdasarkan cash flow Anda, pertimbangkan mulai investasi bulanan',
             icon: Icons.trending_up,
             color: AppColors.success,
-            timestamp: now,
+            timestamp: DateTime.now(),
             type: NotificationType.investment,
             priority: NotificationPriority.medium,
           ),
@@ -459,7 +457,7 @@ class SmartNotificationService {
               'Belum ada pencatatan pemasukan bulan ini. Jangan lupa catat gaji/bonus!',
           icon: Icons.attach_money,
           color: AppColors.income,
-          timestamp: now,
+          timestamp: DateTime.now(),
           type: NotificationType.income,
           priority: NotificationPriority.medium,
         ),
@@ -520,14 +518,187 @@ final smartNotificationsProvider = FutureProvider<List<SmartNotification>>((
   final assets = results[3];
   final debts = results[4];
 
-  return SmartNotificationService.generateNotifications(
+  final notifications = SmartNotificationService.generateNotifications(
     transactions: transactions,
     budgets: budgets,
     goals: goals,
     assets: assets,
     debts: debts,
   );
+
+  // Send local notifications for urgent and high priority notifications
+  _sendLocalNotifications(notifications);
+
+  return notifications;
 });
+
+// Function to send local notifications
+void _sendLocalNotifications(List<SmartNotification> notifications) {
+  final notificationService = LocalNotificationService();
+
+  for (final notification in notifications) {
+    // Only send local notifications for urgent and high priority
+    if (notification.priority == NotificationPriority.urgent ||
+        notification.priority == NotificationPriority.high) {
+      // Convert priority to local notification priority
+      final localPriority = _convertToLocalPriority(notification.priority);
+
+      // Generate navigation payload based on notification type
+      final payload = _generateNavigationPayload(notification);
+
+      // Use category-specific notification methods based on type
+      switch (notification.type) {
+        case NotificationType.budget:
+          notificationService.showBudgetNotification(
+            id: _generateNotificationId(notification),
+            title: notification.title,
+            body: notification.message,
+            priority: localPriority,
+            payload: payload,
+            color: notification.color,
+          );
+          break;
+        case NotificationType.goal:
+          notificationService.showGoalNotification(
+            id: _generateNotificationId(notification),
+            title: notification.title,
+            body: notification.message,
+            priority: localPriority,
+            payload: payload,
+            color: notification.color,
+          );
+          break;
+        case NotificationType.debt:
+          notificationService.showDebtNotification(
+            id: _generateNotificationId(notification),
+            title: notification.title,
+            body: notification.message,
+            priority: localPriority,
+            payload: payload,
+            color: notification.color,
+          );
+          break;
+        default:
+          // Use generic smart notification for other types
+          notificationService.showSmartNotification(
+            id: _generateNotificationId(notification),
+            title: notification.title,
+            body: notification.message,
+            priority: localPriority,
+            payload: payload,
+            color: notification.color,
+          );
+          break;
+      }
+    }
+  }
+}
+
+// Generate navigation payload for smart notifications
+String _generateNavigationPayload(SmartNotification notification) {
+  final notificationService = LocalNotificationService();
+
+  switch (notification.type) {
+    case NotificationType.budget:
+      // Extract category from notification ID
+      final category = notification.id
+          .replaceFirst('budget_warning_', '')
+          .replaceFirst('budget_exceeded_', '');
+      final action =
+          notification.id.contains('exceeded') ? 'exceeded' : 'warning';
+      return notificationService.generateNavigationPayload(
+        type: 'budget',
+        action: action,
+        data: category,
+      );
+
+    case NotificationType.goal:
+      // Extract goal name from notification ID
+      final goalName = notification.id
+          .replaceFirst('goal_halfway_', '')
+          .replaceFirst('goal_near_complete_', '')
+          .replaceFirst('goal_deadline_', '')
+          .replaceFirst('goal_overdue_', '');
+
+      String action;
+      if (notification.id.contains('overdue')) {
+        action = 'deadline';
+      } else if (notification.id.contains('deadline')) {
+        action = 'deadline';
+      } else if (notification.id.contains('near_complete')) {
+        action = 'progress';
+      } else {
+        action = 'progress';
+      }
+
+      return notificationService.generateNavigationPayload(
+        type: 'goal',
+        action: action,
+        data: goalName,
+      );
+
+    case NotificationType.debt:
+      // Extract person name from notification ID
+      final personName = notification.id
+          .replaceFirst('debt_due_soon_', '')
+          .replaceFirst('debt_overdue_', '');
+
+      final action =
+          notification.id.contains('overdue') ? 'overdue' : 'due_soon';
+
+      return notificationService.generateNavigationPayload(
+        type: 'debt',
+        action: action,
+        data: personName,
+      );
+
+    case NotificationType.investment:
+      return notificationService.generateNavigationPayload(
+        type: 'investment',
+        action: 'suggestion',
+      );
+
+    case NotificationType.spending:
+      return notificationService.generateNavigationPayload(
+        type: 'transaction',
+        action: 'spending_pattern',
+      );
+
+    case NotificationType.income:
+      return notificationService.generateNavigationPayload(
+        type: 'transaction',
+        action: 'income_reminder',
+      );
+
+    default:
+      return notificationService.generateNavigationPayload(
+        type: 'reminder',
+        action: 'view',
+      );
+  }
+}
+
+// Convert smart notification priority to local notification priority
+LocalNotificationPriority _convertToLocalPriority(
+  NotificationPriority priority,
+) {
+  switch (priority) {
+    case NotificationPriority.urgent:
+      return LocalNotificationPriority.urgent;
+    case NotificationPriority.high:
+      return LocalNotificationPriority.high;
+    case NotificationPriority.medium:
+      return LocalNotificationPriority.medium;
+    case NotificationPriority.low:
+      return LocalNotificationPriority.low;
+  }
+}
+
+// Generate unique notification ID
+int _generateNotificationId(SmartNotification notification) {
+  // Use hash of notification ID to generate unique integer ID
+  return notification.id.hashCode;
+}
 
 final unreadNotificationsCountProvider = Provider<int>((ref) {
   final notificationsAsync = ref.watch(smartNotificationsProvider);

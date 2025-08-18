@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/notification_highlight.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/budget_model.dart';
@@ -83,6 +84,16 @@ class BudgetPage extends ConsumerWidget {
                               theme,
                               totalBudget,
                               totalSpent,
+                            ),
+                          ),
+
+                          // Notification Highlights (Budget Warnings)
+                          SliverToBoxAdapter(
+                            child: _buildBudgetWarnings(
+                              context,
+                              ref,
+                              budgets,
+                              selectedDate,
                             ),
                           ),
 
@@ -586,6 +597,31 @@ class BudgetPage extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBudgetWarnings(
+    BuildContext context,
+    WidgetRef ref,
+    List<BudgetModel> budgets,
+    DateTime selectedDate,
+  ) {
+    final warnings = ref.watch(budgetWarningsProvider);
+
+    if (warnings.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Show first warning as highlight
+    final firstWarning = warnings.first;
+
+    return BudgetWarningHighlight(
+      category: firstWarning.categoryName,
+      percentageUsed: firstWarning.percentageUsed,
+      onViewBudget: () {
+        // Already on budget page, just scroll to category
+        // This could be enhanced with scroll controller
+      },
     );
   }
 
