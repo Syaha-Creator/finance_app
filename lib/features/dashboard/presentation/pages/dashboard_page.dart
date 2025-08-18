@@ -46,9 +46,9 @@ class DashboardPage extends ConsumerWidget {
                       child: Column(
                         children: [
                           // Phase 1: Core Features
+                          const QuickActionsWidget(),
+                          const SizedBox(height: 16),
                           const GoalsProgressOverview(),
-                          const SizedBox(height: 8),
-                          const QuickActionsPanel(),
                           const SizedBox(height: 8),
 
                           // Phase 2: Analysis Features

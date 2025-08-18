@@ -9,6 +9,10 @@ import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../transaction/presentation/pages/add_edit_transaction_page.dart';
 import '../../../transaction/presentation/pages/transaction_page.dart';
+import '../../../bill_management/presentation/pages/add_edit_bill_page.dart';
+import '../../../receipt_management/presentation/pages/add_receipt_page.dart';
+import '../../../investment/presentation/pages/add_edit_investment_page.dart';
+
 import 'dashboard_page.dart';
 import '../providers/smart_notification_provider.dart';
 
@@ -214,6 +218,57 @@ class _MainPageState extends ConsumerState<MainPage> {
                             ctx,
                             MaterialPageRoute(
                               builder: (_) => const AddEditGoalPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.receipt_long_outlined,
+                        title: 'Tambah Tagihan',
+                        subtitle: 'Buat tagihan baru',
+                        color: AppColors.error,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditBillPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.document_scanner_outlined,
+                        title: 'Scan Struk',
+                        subtitle: 'Scan dengan OCR',
+                        color: AppColors.accent,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddReceiptPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEnhancedMenuItem(
+                        context: ctx,
+                        icon: Icons.trending_up_outlined,
+                        title: 'Tambah Investasi',
+                        subtitle: 'Portfolio baru',
+                        color: AppColors.income,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const AddEditInvestmentPage(),
                             ),
                           );
                         },

@@ -44,7 +44,7 @@ class RecurringTransactionController extends StateNotifier<bool> {
   Future<bool> add(RecurringTransactionModel recurring) async {
     state = true;
     try {
-      await _repository.add(recurring);
+      await _repository.addRecurringTransaction(recurring);
       _ref.invalidate(recurringTransactionsStreamProvider);
       if (!mounted) return false;
       state = false;
@@ -59,7 +59,7 @@ class RecurringTransactionController extends StateNotifier<bool> {
   Future<bool> update(RecurringTransactionModel recurring) async {
     state = true;
     try {
-      await _repository.update(recurring);
+      await _repository.updateRecurringTransaction(recurring);
       _ref.invalidate(recurringTransactionsStreamProvider);
       if (!mounted) return false;
       state = false;
@@ -74,7 +74,7 @@ class RecurringTransactionController extends StateNotifier<bool> {
   Future<bool> delete(String id) async {
     state = true;
     try {
-      await _repository.delete(id);
+      await _repository.deleteRecurringTransaction(id);
       _ref.invalidate(recurringTransactionsStreamProvider);
       if (!mounted) return false;
       state = false;

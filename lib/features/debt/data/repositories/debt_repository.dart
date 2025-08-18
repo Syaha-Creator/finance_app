@@ -20,60 +20,60 @@ class DebtRepository {
       _firestore.collection('transactions');
 
   Stream<List<DebtReceivableModel>> getDebtsStream() {
-    final userId = _currentUserId;
-    if (userId == null) return Stream.value([]);
+    try {
+      final userId = _firebaseAuth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        return Stream.value([]);
+      }
 
-    return _debtCollection.where('userId', isEqualTo: userId).snapshots().map((
-      snapshot,
-    ) {
-      final docs = snapshot.docs;
+      final query = _firestore
+          .collection('debts')
+          .where('userId', isEqualTo: userId)
+          .orderBy('dueDate', descending: false);
 
-      docs.sort((a, b) {
-        final dataA = a.data() as Map<String, dynamic>?;
-        final dataB = b.data() as Map<String, dynamic>?;
-
-        if (dataA == null || dataB == null) return 0;
-
-        final dateA = dataA['createdAt'] as Timestamp;
-        final dateB = dataB['createdAt'] as Timestamp;
-        return dateB.compareTo(dateA);
-      });
-
-      return docs.map((doc) => DebtReceivableModel.fromFirestore(doc)).toList();
-    });
+      return query
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs
+                .map((doc) => DebtReceivableModel.fromFirestore(doc))
+                .toList();
+          })
+          .handleError((error) {
+            return <DebtReceivableModel>[];
+          });
+    } catch (e) {
+      return Stream.value([]);
+    }
   }
 
   Future<void> addDebt(DebtReceivableModel debt) async {
-    final userId = _currentUserId;
-    if (userId == null) throw Exception('User not logged in');
+    try {
+      final userId = _firebaseAuth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        return;
+      }
 
-    final debtWithUser = DebtReceivableModel(
-      userId: userId,
-      type: debt.type,
-      personName: debt.personName,
-      description: debt.description,
-      amount: debt.amount,
-      createdAt: debt.createdAt,
-      dueDate: debt.dueDate,
-      status: debt.status,
-    );
-    await _debtCollection.add(debtWithUser.toFirestore());
+      final data = debt.toFirestore();
+      await _firestore.collection('debts').add(data);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> updateDebt(DebtReceivableModel debt) async {
-    if (debt.id == null) throw Exception('Debt ID is null, cannot update');
     try {
-      await _debtCollection.doc(debt.id).update(debt.toFirestore());
+      final data = debt.toFirestore();
+      await _firestore.collection('debts').doc(debt.id).update(data);
     } catch (e) {
-      throw Exception('Gagal mengupdate catatan: $e');
+      rethrow;
     }
   }
 
   Future<void> deleteDebt(String debtId) async {
     try {
-      await _debtCollection.doc(debtId).delete();
+      await _firestore.collection('debts').doc(debtId).delete();
     } catch (e) {
-      throw Exception('Gagal menghapus catatan: $e');
+      rethrow;
     }
   }
 

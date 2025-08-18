@@ -1,5 +1,5 @@
 export 'goals_progress_overview.dart';
-export 'quick_actions_panel.dart';
+export 'quick_actions_widget.dart';
 export 'smart_notifications.dart';
 export 'spending_pattern_analysis.dart';
 export 'monthly_comparison.dart';

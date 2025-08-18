@@ -16,45 +16,64 @@ class TransactionRepository {
   String? get _currentUserId => _firebaseAuth.currentUser?.uid;
 
   Stream<List<TransactionModel>> getTransactionsStream() {
-    final userId = _currentUserId;
-    if (userId == null) {
+    try {
+      final userId = _firebaseAuth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        return Stream.value([]);
+      }
+
+      final query = _firestore
+          .collection('transactions')
+          .where('userId', isEqualTo: userId)
+          .orderBy('date', descending: true);
+
+      return query
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs
+                .map((doc) => TransactionModel.fromFirestore(doc))
+                .toList();
+          })
+          .handleError((error) {
+            return <TransactionModel>[];
+          });
+    } catch (e) {
       return Stream.value([]);
     }
-    return _firestore
-        .collection(FirestoreConstants.transactionsCollection)
-        .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => TransactionModel.fromFirestore(doc))
-                  .toList(),
-        );
   }
 
   Future<void> addTransaction(TransactionModel transaction) async {
-    final userId = _currentUserId;
-    if (userId == null) throw Exception('User not logged in');
-    await _firestore
-        .collection(FirestoreConstants.transactionsCollection)
-        .add(transaction.toFirestore());
+    try {
+      final userId = _firebaseAuth.currentUser?.uid;
+      if (userId == null || userId.isEmpty) {
+        return;
+      }
+
+      final data = transaction.toFirestore();
+      await _firestore.collection('transactions').add(data);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> updateTransaction(TransactionModel transaction) async {
-    final userId = _currentUserId;
-    if (userId == null) throw Exception('User not logged in');
-    await _firestore
-        .collection(FirestoreConstants.transactionsCollection)
-        .doc(transaction.id)
-        .update(transaction.toFirestore());
+    try {
+      final data = transaction.toFirestore();
+      await _firestore
+          .collection('transactions')
+          .doc(transaction.id)
+          .update(data);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> deleteTransaction(String transactionId) async {
-    await _firestore
-        .collection(FirestoreConstants.transactionsCollection)
-        .doc(transactionId)
-        .delete();
+    try {
+      await _firestore.collection('transactions').doc(transactionId).delete();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> addTransfer({

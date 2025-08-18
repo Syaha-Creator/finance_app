@@ -26,14 +26,23 @@ class GoalRepository {
       _firestore.collection('transactions');
 
   Stream<List<GoalModel>> getGoalsStream() {
-    return _goalsCollection
-        .where('userId', isEqualTo: _currentUserId)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => GoalModel.fromFirestore(doc))
-              .toList();
-        });
+    try {
+      return _goalsCollection
+          .where('userId', isEqualTo: _currentUserId)
+          .orderBy('targetDate', descending: false)
+          .orderBy(FieldPath.documentId, descending: true)
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs
+                .map((doc) => GoalModel.fromFirestore(doc))
+                .toList();
+          })
+          .handleError((error) {
+            return <GoalModel>[];
+          });
+    } catch (e) {
+      return Stream.value(<GoalModel>[]);
+    }
   }
 
   Future<void> addGoal(GoalModel goal) async {

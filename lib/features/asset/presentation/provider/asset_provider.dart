@@ -12,11 +12,11 @@ final assetRepositoryProvider = Provider<AssetRepository>((ref) {
 });
 
 // 2. Provider untuk mendapatkan stream data aset
-final assetsStreamProvider = StreamProvider.autoDispose<List<AssetModel>>((
-  ref,
-) {
-  final assetRepository = ref.watch(assetRepositoryProvider);
-  return assetRepository.getAssetsStream();
+final assetsStreamProvider = StreamProvider<List<AssetModel>>((ref) {
+  final repository = ref.read(assetRepositoryProvider);
+  return repository.getAssetsStream().handleError((error) {
+    return <AssetModel>[];
+  });
 });
 
 // 3. Provider untuk Controller (menangani state loading saat ada aksi)

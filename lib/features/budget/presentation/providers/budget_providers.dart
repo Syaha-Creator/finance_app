@@ -15,7 +15,11 @@ final budgetRepositoryProvider = Provider<BudgetRepository>((ref) {
 final budgetsForMonthProvider = StreamProvider.autoDispose
     .family<List<BudgetModel>, ({int year, int month})>((ref, date) {
       final budgetRepository = ref.watch(budgetRepositoryProvider);
-      return budgetRepository.getBudgetsForMonth(date.month, date.year);
+      return budgetRepository
+          .getBudgetsForMonth(date.month, date.year)
+          .handleError((error, stackTrace) {
+            return <BudgetModel>[];
+          });
     });
 
 final budgetControllerProvider =
