@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 
+enum BillSummarySelection { all, pending, overdue, paid }
+
 class BillSummaryCard extends StatelessWidget {
   final Map<String, dynamic> summary;
+  final ValueChanged<BillSummarySelection>? onSelect;
 
-  const BillSummaryCard({super.key, required this.summary});
+  const BillSummaryCard({super.key, required this.summary, this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -60,39 +63,67 @@ class BillSummaryCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatItem(
-                    context,
-                    'Total Tagihan',
-                    summary['totalBills'].toString(),
-                    Icons.receipt_long_outlined,
-                    AppColors.primary,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap:
+                        onSelect == null
+                            ? null
+                            : () => onSelect!(BillSummarySelection.all),
+                    child: _buildStatItem(
+                      context,
+                      'Total Tagihan',
+                      summary['totalBills'].toString(),
+                      Icons.receipt_long_outlined,
+                      AppColors.primary,
+                    ),
                   ),
                 ),
                 Expanded(
-                  child: _buildStatItem(
-                    context,
-                    'Pending',
-                    summary['pendingBills'].toString(),
-                    Icons.pending_outlined,
-                    AppColors.warning,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap:
+                        onSelect == null
+                            ? null
+                            : () => onSelect!(BillSummarySelection.pending),
+                    child: _buildStatItem(
+                      context,
+                      'Pending',
+                      summary['pendingBills'].toString(),
+                      Icons.pending_outlined,
+                      AppColors.warning,
+                    ),
                   ),
                 ),
                 Expanded(
-                  child: _buildStatItem(
-                    context,
-                    'Jatuh Tempo',
-                    summary['overdueBills'].toString(),
-                    Icons.warning_amber_outlined,
-                    AppColors.error,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap:
+                        onSelect == null
+                            ? null
+                            : () => onSelect!(BillSummarySelection.overdue),
+                    child: _buildStatItem(
+                      context,
+                      'Jatuh Tempo',
+                      summary['overdueBills'].toString(),
+                      Icons.warning_amber_outlined,
+                      AppColors.error,
+                    ),
                   ),
                 ),
                 Expanded(
-                  child: _buildStatItem(
-                    context,
-                    'Lunas',
-                    summary['paidBills'].toString(),
-                    Icons.check_circle_outline,
-                    AppColors.success,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap:
+                        onSelect == null
+                            ? null
+                            : () => onSelect!(BillSummarySelection.paid),
+                    child: _buildStatItem(
+                      context,
+                      'Lunas',
+                      summary['paidBills'].toString(),
+                      Icons.check_circle_outline,
+                      AppColors.success,
+                    ),
                   ),
                 ),
               ],

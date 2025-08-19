@@ -13,11 +13,8 @@ class BillRepository {
     try {
       // Check if user is logged in
       if (_userId.isEmpty) {
-        print('Debug: userId is empty, returning empty stream');
         return Stream.value(<BillModel>[]);
       }
-
-      print('Debug: getBills() called with userId: $_userId');
 
       return _firestore
           .collection('bills')
@@ -26,9 +23,6 @@ class BillRepository {
           .orderBy(FieldPath.documentId, descending: false)
           .snapshots()
           .map((snapshot) {
-            print(
-              'Debug: Firestore snapshot received with ${snapshot.docs.length} docs',
-            );
             final bills =
                 snapshot.docs
                     .map((doc) => BillModel.fromFirestore(doc))
@@ -37,11 +31,9 @@ class BillRepository {
             return bills;
           })
           .handleError((error) {
-            print('Error in getBills stream: $error');
             return <BillModel>[];
           });
     } catch (e) {
-      print('Error setting up getBills stream: $e');
       return Stream.value(<BillModel>[]);
     }
   }
@@ -65,16 +57,12 @@ class BillRepository {
                 snapshot.docs
                     .map((doc) => BillModel.fromFirestore(doc))
                     .toList();
-
-            // No need to sort manually anymore - Firestore handles it
             return bills;
           })
           .handleError((error) {
-            print('Error in getBillsByStatus stream: $error');
             return <BillModel>[];
           });
     } catch (e) {
-      print('Error setting up getBillsByStatus stream: $e');
       return Stream.value(<BillModel>[]);
     }
   }
@@ -104,11 +92,9 @@ class BillRepository {
             return bills;
           })
           .handleError((error) {
-            print('Error in getOverdueBills stream: $error');
             return <BillModel>[];
           });
     } catch (e) {
-      print('Error setting up getOverdueBills stream: $e');
       return Stream.value(<BillModel>[]);
     }
   }
@@ -136,16 +122,12 @@ class BillRepository {
                 snapshot.docs
                     .map((doc) => BillModel.fromFirestore(doc))
                     .toList();
-
-            // No need to sort manually anymore - Firestore handles it
             return bills;
           })
           .handleError((error) {
-            print('Error in getUpcomingBills stream: $error');
             return <BillModel>[];
           });
     } catch (e) {
-      print('Error setting up getUpcomingBills stream: $e');
       return Stream.value(<BillModel>[]);
     }
   }
@@ -167,12 +149,9 @@ class BillRepository {
       );
 
       final billMap = billData.toFirestore();
-      print('Debug: Adding bill with data: $billMap'); // Debug log
 
       await _firestore.collection('bills').add(billMap);
-      print('Debug: Bill added successfully'); // Debug log
     } catch (e) {
-      print('Error adding bill: $e'); // Debug log
       throw Exception('Gagal menambahkan tagihan: $e');
     }
   }
@@ -284,6 +263,76 @@ class BillRepository {
         'paidBills': 0,
         'totalAmount': 0.0,
       };
+    }
+  }
+
+  // Get bills summary stream for real-time updates
+  Stream<Map<String, dynamic>> getBillsSummaryStream() {
+    try {
+      // Check if user is logged in
+      if (_userId.isEmpty) {
+        return Stream.value({
+          'totalBills': 0,
+          'pendingBills': 0,
+          'overdueBills': 0,
+          'paidBills': 0,
+          'totalAmount': 0.0,
+        });
+      }
+
+      return _firestore
+          .collection('bills')
+          .where('userId', isEqualTo: _userId)
+          .snapshots()
+          .map((snapshot) {
+            final bills =
+                snapshot.docs
+                    .map((doc) => BillModel.fromFirestore(doc))
+                    .toList();
+
+            final now = DateTime.now();
+            final totalBills = bills.length;
+            final pendingBills =
+                bills.where((b) => b.status == BillStatus.pending).length;
+            final overdueBills =
+                bills
+                    .where(
+                      (b) =>
+                          b.status == BillStatus.pending &&
+                          b.dueDate.isBefore(now),
+                    )
+                    .length;
+            final paidBills =
+                bills.where((b) => b.status == BillStatus.paid).length;
+            final totalAmount = bills
+                .where((b) => b.status == BillStatus.pending)
+                .fold(0.0, (total, bill) => total + bill.amount);
+
+            return {
+              'totalBills': totalBills,
+              'pendingBills': pendingBills,
+              'overdueBills': overdueBills,
+              'paidBills': paidBills,
+              'totalAmount': totalAmount,
+            };
+          })
+          .handleError((error) {
+            return {
+              'totalBills': 0,
+              'pendingBills': 0,
+              'overdueBills': 0,
+              'paidBills': 0,
+              'totalAmount': 0.0,
+            };
+          });
+    } catch (e) {
+      return Stream.value({
+        'totalBills': 0,
+        'pendingBills': 0,
+        'overdueBills': 0,
+        'paidBills': 0,
+        'totalAmount': 0.0,
+      });
     }
   }
 }

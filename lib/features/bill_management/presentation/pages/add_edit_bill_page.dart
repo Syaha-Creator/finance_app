@@ -520,7 +520,6 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             backgroundColor: Colors.red,
           ),
         );
-        print('Error saving bill: $e'); // Debug log
       }
     }
   }

@@ -21,7 +21,6 @@ import '../../features/receipt_management/presentation/pages/receipt_management_
 import '../../features/receipt_management/presentation/pages/add_receipt_page.dart';
 import '../../features/investment/presentation/pages/investment_management_page.dart';
 import '../../features/investment/presentation/pages/add_edit_investment_page.dart';
-import '../../features/multi_currency/presentation/pages/currency_converter_page.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -37,7 +36,6 @@ class AppRoutes {
   static const String addBill = '/add-bill';
   static const String addReceipt = '/add-receipt';
   static const String addInvestment = '/add-investment';
-  static const String currencyConverter = '/currency-converter';
   static const String editProfile = '/edit-profile';
 
   // Main page routes
@@ -107,11 +105,6 @@ class AppRoutes {
       case addInvestment:
         return MaterialPageRoute(
           builder: (context) => const AddEditInvestmentPage(),
-        );
-
-      case currencyConverter:
-        return MaterialPageRoute(
-          builder: (context) => const CurrencyConverterPage(),
         );
 
       case editProfile:

@@ -34,24 +34,38 @@ final upcomingBillsProvider = StreamProvider<List<BillModel>>((ref) {
   return repository.getUpcomingBills();
 });
 
+final paidBillsProvider = StreamProvider<List<BillModel>>((ref) {
+  final repository = ref.watch(billRepositoryProvider);
+  return repository.getBillsByStatus(BillStatus.paid);
+});
+
 final billsNeedingRemindersProvider = StreamProvider<List<BillModel>>((ref) {
   final repository = ref.watch(billRepositoryProvider);
   return repository.getBillsNeedingReminders();
 });
 
-final billsSummaryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final billsSummaryProvider = StreamProvider<Map<String, dynamic>>((ref) {
   try {
     final repository = ref.watch(billRepositoryProvider);
-    return await repository.getBillsSummary();
+    return repository.getBillsSummaryStream().handleError((error) {
+      // Return default values if there's an error
+      return {
+        'totalBills': 0,
+        'pendingBills': 0,
+        'overdueBills': 0,
+        'paidBills': 0,
+        'totalAmount': 0.0,
+      };
+    });
   } catch (e) {
-    // Return default values if there's an error
-    return {
+    // Return empty stream if there's an error
+    return Stream.value({
       'totalBills': 0,
       'pendingBills': 0,
       'overdueBills': 0,
       'paidBills': 0,
       'totalAmount': 0.0,
-    };
+    });
   }
 });
 

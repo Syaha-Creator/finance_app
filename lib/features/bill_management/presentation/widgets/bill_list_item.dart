@@ -18,9 +18,10 @@ class BillListItem extends ConsumerWidget {
 
     return Card(
       elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,13 +34,14 @@ class BillListItem extends ConsumerWidget {
                     children: [
                       Text(
                         bill.title,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                        maxLines: 1,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (bill.description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           bill.description,
                           style: Theme.of(
@@ -48,19 +50,19 @@ class BillListItem extends ConsumerWidget {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 _buildStatusChip(context, isOverdue),
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Details Row
             Row(
@@ -96,27 +98,27 @@ class BillListItem extends ConsumerWidget {
             ),
 
             if (bill.notes?.isNotEmpty == true) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
                   ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.note_outlined,
-                      size: 16,
+                      size: 18,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         bill.notes!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -126,33 +128,69 @@ class BillListItem extends ConsumerWidget {
               ),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Actions Row
             if (bill.status == BillStatus.pending) ...[
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showActionDialog(context, ref, 'paid'),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Tandai Lunas'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.success,
-                        side: BorderSide(color: AppColors.success),
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            () => _showActionDialog(context, ref, 'paid'),
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: Text(
+                          'Tandai Lunas',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.success,
+                          backgroundColor: AppColors.success.withValues(
+                            alpha: 0.08,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.success,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          textStyle: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          () => _showActionDialog(context, ref, 'cancelled'),
-                      icon: const Icon(Icons.cancel_outlined, size: 18),
-                      label: const Text('Batalkan'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.error),
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            () => _showActionDialog(context, ref, 'cancelled'),
+                        icon: const Icon(Icons.cancel_outlined, size: 20),
+                        label: Text(
+                          'Batalkan',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          backgroundColor: AppColors.error.withValues(
+                            alpha: 0.08,
+                          ),
+                          side: BorderSide(color: AppColors.error, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          textStyle: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ),
@@ -290,6 +328,9 @@ class BillListItem extends ConsumerWidget {
                         .read(billNotifierProvider.notifier)
                         .markAsCancelled(bill.id);
                   }
+                  // Refresh providers for real-time updates
+                  ref.invalidate(billsProvider);
+                  ref.invalidate(billsSummaryProvider);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: actionColor,

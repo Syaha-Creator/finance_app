@@ -88,15 +88,6 @@ class QuickActionsWidget extends StatelessWidget {
                 onTap: () => Navigator.pushNamed(context, '/investments'),
               ),
               const SizedBox(width: 12),
-              _buildQuickActionCard(
-                context,
-                icon: Icons.currency_exchange_outlined,
-                title: 'Konverter',
-                subtitle: 'Mata uang',
-                color: AppColors.warning,
-                onTap:
-                    () => Navigator.pushNamed(context, '/currency-converter'),
-              ),
             ],
           ),
         ),
