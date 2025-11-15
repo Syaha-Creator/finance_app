@@ -48,13 +48,8 @@ app.*.map.json
 # Android local properties (contains SDK path specific to each developer)
 **/local.properties
 /android/local.properties
-# Android - ignore specific files
-android/app/build.gradle.kts
-android/app/src/
-android/build.gradle.kts
-android/gradle.properties
-android/gradle/wrapper/
-android/settings.gradle.kts
+# Android - ignore all Android files
+android/
 
 # iOS related
 **/ios/**/*.mode1v3
@@ -83,13 +78,8 @@ android/settings.gradle.kts
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
-# iOS - ignore specific files
-ios/Podfile.lock
-ios/Runner.xcodeproj/project.pbxproj
-ios/Runner.xcodeproj/xcshareddata/xcschemes/
-ios/Runner/Assets.xcassets/
-ios/Runner/Info.plist
-ios/RunnerTests/
+# iOS - ignore all iOS files
+ios/
 
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
@@ -142,27 +132,15 @@ macos/Runner.xcworkspace/
 macos/Runner.xcodeproj/project.xcworkspace/
 macos/Runner.xcodeproj/xcuserdata/
 macos/Runner.xcodeproj/xcshareddata/swiftpm/
-# macOS - ignore all macOS files (uncomment if you don't want to commit macOS config)
-# macos/
-# macOS - ignore specific files
-macos/Runner.xcodeproj/project.pbxproj
-macos/Runner.xcodeproj/xcshareddata/xcschemes/
-macos/Runner/Assets.xcassets/
-macos/Runner/Configs/
-macos/RunnerTests/
+# macOS - ignore all macOS files
+macos/
 linux/flutter/ephemeral/
-# Linux - ignore specific files
-linux/CMakeLists.txt
-linux/runner/
-# Windows - ignore all Windows files (uncomment if you don't want to commit Windows config)
-# windows/
-# Windows - ignore specific files
-windows/CMakeLists.txt
-windows/runner/
-# Web - ignore specific files
-web/icons/
-web/index.html
-web/manifest.json
+# Linux - ignore all Linux files
+linux/
+# Windows - ignore all Windows files
+windows/
+# Web - ignore all Web files
+web/
 
 # Additional generated/build files
 *.o
