@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/asset_model.dart';
 import '../provider/asset_provider.dart';
@@ -46,21 +45,15 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
   }
 
   Future<void> _submitForm() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-
     if (_formKey.currentState!.validate()) {
       final value = double.parse(_valueController.text.replaceAll('.', ''));
       final userId = ref.read(authStateChangesProvider).value?.uid;
 
       if (userId == null) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Error: Pengguna tidak ditemukan. Silakan login ulang.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        if (!mounted) return;
+        CoreSnackbar.showError(
+          context,
+          'Pengguna tidak ditemukan. Silakan login ulang.',
         );
         return;
       }
@@ -74,21 +67,12 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
         final success = await ref
             .read(assetControllerProvider.notifier)
             .updateAsset(updatedAsset);
+        if (!mounted) return;
         if (success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Aset berhasil diperbarui'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          navigator.pop();
+          CoreSnackbar.showSuccess(context, 'Aset berhasil diperbarui');
+          Navigator.of(context).pop();
         } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Gagal memperbarui aset'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          CoreSnackbar.showError(context, 'Gagal memperbarui aset');
         }
       } else {
         final newAsset = AssetModel(
@@ -102,21 +86,12 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
         final success = await ref
             .read(assetControllerProvider.notifier)
             .addAsset(newAsset);
+        if (!mounted) return;
         if (success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Aset berhasil disimpan'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          navigator.pop();
+          CoreSnackbar.showSuccess(context, 'Aset berhasil disimpan');
+          Navigator.of(context).pop();
         } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Gagal menyimpan aset'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          CoreSnackbar.showError(context, 'Gagal menyimpan aset');
         }
       }
     }
@@ -330,12 +305,11 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Asset Type Dropdown
-            _buildDropdownField(
-              context,
-              theme,
-              label: 'Jenis Aset',
+            CoreDropdown<AssetType>(
               value: _selectedType,
               onChanged: (newValue) => setState(() => _selectedType = newValue),
+              label: 'Jenis Aset',
+              hint: 'Pilih jenis aset',
               validator: (v) => v == null ? 'Pilih jenis aset' : null,
               items:
                   AssetType.values.map((type) {
@@ -359,9 +333,7 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
             const SizedBox(height: 20),
 
             // Asset Name Field
-            _buildTextField(
-              context,
-              theme,
+            CoreTextField(
               controller: _nameController,
               label: 'Nama Aset',
               hint: 'Contoh: Tabungan BCA, Saham Telkom, dll',
@@ -375,18 +347,10 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
             const SizedBox(height: 20),
 
             // Asset Value Field
-            _buildTextField(
-              context,
-              theme,
+            CoreAmountInput(
               controller: _valueController,
               label: 'Nilai / Saldo',
               hint: 'Masukkan nilai aset',
-              prefixText: 'Rp ',
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                ThousandInputFormatter(),
-              ],
               validator:
                   (v) =>
                       (v == null || v.isEmpty)
@@ -397,149 +361,14 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
             const SizedBox(height: 28),
 
             // Submit Button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                _isEditMode ? 'PERBARUI ASET' : 'SIMPAN ASET',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            CoreLoadingButton(
+              onPressed: _submitForm,
+              text: _isEditMode ? 'PERBARUI ASET' : 'SIMPAN ASET',
+              isLoading: _isLoading,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDropdownField(
-    BuildContext context,
-    ThemeData theme, {
-    required String label,
-    required dynamic value,
-    required ValueChanged<dynamic> onChanged,
-    required String? Function(dynamic) validator,
-    required List<DropdownMenuItem> items,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<AssetType>(
-          initialValue: value as AssetType?,
-          onChanged: onChanged as ValueChanged<AssetType?>?,
-          validator: validator as String? Function(AssetType?)?,
-          items: items as List<DropdownMenuItem<AssetType>>,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.3,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-          dropdownColor: theme.colorScheme.surface,
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(
-    BuildContext context,
-    ThemeData theme, {
-    required TextEditingController controller,
-    required String label,
-    String? hint,
-    String? prefixText,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: prefixText,
-            filled: true,
-            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.3,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
