@@ -48,8 +48,10 @@ app.*.map.json
 # Android local properties (contains SDK path specific to each developer)
 **/local.properties
 /android/local.properties
-# Android - ignore all Android files
-android/
+# Android - ignore build artifacts only (keep config files)
+/android/app/debug
+/android/app/profile
+/android/app/release
 
 # iOS related
 **/ios/**/*.mode1v3
@@ -78,8 +80,19 @@ android/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
-# iOS - ignore all iOS files
-ios/
+# iOS - ignore generated and user-specific files only (keep config files)
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/**/xcuserdata/
 
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
@@ -132,15 +145,23 @@ macos/Runner.xcworkspace/
 macos/Runner.xcodeproj/project.xcworkspace/
 macos/Runner.xcodeproj/xcuserdata/
 macos/Runner.xcodeproj/xcshareddata/swiftpm/
-# macOS - ignore all macOS files
-macos/
+# macOS - ignore generated and user-specific files only (keep config files)
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+macos/Runner.xcworkspace/
+macos/Runner.xcodeproj/project.xcworkspace/
+macos/Runner.xcodeproj/xcuserdata/
+macos/Runner.xcodeproj/xcshareddata/swiftpm/
+macos/Pods/
 linux/flutter/ephemeral/
-# Linux - ignore all Linux files
-linux/
-# Windows - ignore all Windows files
-windows/
-# Web - ignore all Web files
-web/
+# Linux - ignore generated files only (keep config files)
+linux/flutter/generated_plugin_registrant.*
+linux/flutter/generated_plugins.cmake
+# Windows - ignore generated files only (keep config files)
+windows/flutter/generated_plugin_registrant.*
+windows/flutter/generated_plugins.cmake
+windows/flutter/ephemeral/
+# Web - keep all web files (needed for web build)
 
 # Additional generated/build files
 *.o
