@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/income_expense_form.dart';
@@ -63,34 +64,16 @@ class _AddEditTransactionPageState
   }
 
   Future<void> _submitForm() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
       final userId = ref.read(authStateChangesProvider).value?.uid;
       if (userId == null) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Error: Pengguna tidak ditemukan. Silakan login ulang.',
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }
+        if (!mounted) return;
+        CoreSnackbar.showError(
+          context,
+          'Pengguna tidak ditemukan. Silakan login ulang.',
+        );
         setState(() => _isLoading = false);
         return;
       }
@@ -126,47 +109,16 @@ class _AddEditTransactionPageState
           }
         }
 
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-          if (_isEditMode) navigator.pop();
-          navigator.pop();
-        }
+        if (!mounted) return;
+        CoreSnackbar.showSuccess(
+          context,
+          'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
+        );
+        if (_isEditMode) Navigator.of(context).pop();
+        Navigator.of(context).pop();
       } catch (e) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text('Gagal: $e'),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }
+        if (!mounted) return;
+        CoreSnackbar.showError(context, 'Gagal: $e');
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -386,64 +338,11 @@ class _AddEditTransactionPageState
                         ),
                       ],
                     ),
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child:
-                          _isLoading
-                              ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _isEditMode
-                                        ? 'Memperbarui...'
-                                        : 'Menyimpan...',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              )
-                              : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _isEditMode
-                                        ? Icons.save_outlined
-                                        : Icons.add,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _isEditMode ? 'PERBARUI' : 'SIMPAN',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    child: CoreLoadingButton(
+                      onPressed: _submitForm,
+                      text: _isEditMode ? 'PERBARUI' : 'SIMPAN',
+                      isLoading: _isLoading,
+                      icon: _isEditMode ? Icons.save_outlined : Icons.add,
                     ),
                   ),
                 ],
@@ -455,11 +354,7 @@ class _AddEditTransactionPageState
           if (_isLoading)
             Container(
               color: Colors.black.withValues(alpha: 0.5),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
-              ),
+              child: const CoreLoadingState(),
             ),
         ],
       ),

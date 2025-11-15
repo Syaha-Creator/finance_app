@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 
@@ -54,117 +52,88 @@ class IncomeExpenseForm extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        TextFormField(
+        CoreTextField(
           controller: descriptionController,
-          decoration: _inputDecoration(
-            'Keterangan',
-            Icons.description_outlined,
-          ),
-          validator:
-              (v) => (v == null || v.isEmpty) ? 'Keterangan wajib diisi' : null,
+          label: 'Keterangan',
+          hint: 'Masukkan keterangan transaksi',
+          icon: Icons.description_outlined,
+          validator: (v) =>
+              (v == null || v.isEmpty) ? 'Keterangan wajib diisi' : null,
         ),
         const SizedBox(height: 16),
-        TextFormField(
+        CoreAmountInput(
           controller: amountController,
-          decoration: _inputDecoration('Jumlah', Icons.attach_money),
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            ThousandInputFormatter(),
-          ],
+          label: 'Jumlah',
+          hint: 'Masukkan jumlah',
           validator: (v) {
             if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
             return null;
           },
         ),
         const SizedBox(height: 16),
-        _buildDatePicker(context, theme),
+        CoreDatePicker(
+          selectedDate: selectedDate,
+          onDateSelected: (date) {
+            final now = DateTime.now();
+            final combinedDateTime = DateTime(
+              date.year,
+              date.month,
+              date.day,
+              now.hour,
+              now.minute,
+              now.second,
+            );
+            onDateChanged(combinedDateTime);
+          },
+          label: 'Tanggal',
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        ),
         const SizedBox(height: 16),
         categoriesValue.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const CoreLoadingState(size: 20),
           error: (err, stack) => Text('Error: $err'),
           data: (categories) {
-            return DropdownButtonFormField<String>(
-              initialValue: selectedCategory,
-              decoration: _inputDecoration('Kategori', Icons.category_outlined),
-              items:
-                  categories
-                      .map(
-                        (c) => DropdownMenuItem(
-                          value: c.name,
-                          child: Text(c.name),
-                        ),
-                      )
-                      .toList(),
+            return CoreDropdown<String>(
+              value: selectedCategory,
               onChanged: onCategoryChanged,
+              label: 'Kategori',
+              icon: Icons.category_outlined,
+              items: categories
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: c.name,
+                      child: Text(c.name),
+                    ),
+                  )
+                  .toList(),
               validator: (v) => v == null ? 'Pilih kategori' : null,
             );
           },
         ),
         const SizedBox(height: 16),
         accountsValue.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const CoreLoadingState(size: 20),
           error: (err, stack) => Text('Error: $err'),
-          data:
-              (accounts) => DropdownButtonFormField<String>(
-                initialValue: selectedAccount,
-                decoration: _inputDecoration(
-                  'Akun',
-                  Icons.account_balance_wallet_outlined,
-                ),
-                items:
-                    accounts
-                        .map(
-                          (a) => DropdownMenuItem(
-                            value: a.name,
-                            child: Text(a.name),
-                          ),
-                        )
-                        .toList(),
-                onChanged: onAccountChanged,
-                validator: (v) => v == null ? 'Pilih akun' : null,
-              ),
+          data: (accounts) {
+            return CoreDropdown<String>(
+              value: selectedAccount,
+              onChanged: onAccountChanged,
+              label: 'Akun',
+              icon: Icons.account_balance_wallet_outlined,
+              items: accounts
+                  .map(
+                    (a) => DropdownMenuItem(
+                      value: a.name,
+                      child: Text(a.name),
+                    ),
+                  )
+                  .toList(),
+              validator: (v) => v == null ? 'Pilih akun' : null,
+            );
+          },
         ),
       ],
-    );
-  }
-
-  Widget _buildDatePicker(BuildContext context, ThemeData theme) {
-    return InkWell(
-      onTap: () async {
-        final DateTime? picked = await showDatePicker(
-          context: context,
-          initialDate: selectedDate,
-          firstDate: DateTime(2020),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-        );
-        if (picked != null && picked != selectedDate) {
-          final now = DateTime.now();
-          final combinedDateTime = DateTime(
-            picked.year,
-            picked.month,
-            picked.day,
-            now.hour,
-            now.minute,
-            now.second,
-          );
-          onDateChanged(combinedDateTime);
-        }
-      },
-      child: InputDecorator(
-        decoration: _inputDecoration('Tanggal', Icons.calendar_today_outlined),
-        child: Text(
-          DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(selectedDate),
-          style: theme.textTheme.bodyLarge,
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: Colors.grey.shade600),
     );
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
@@ -55,39 +54,6 @@ class _AddTransactionWithGoalPageState
           ? AppColors.income
           : AppColors.expense;
 
-  // Helper method to build input decoration with transaction color
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    String? prefixText,
-    TextStyle? prefixStyle,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(
-        color: Theme.of(
-          context,
-        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-      ),
-      prefixText: prefixText,
-      prefixStyle: prefixStyle,
-      suffixIcon: suffixIcon,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _transactionColor.withValues(alpha: 0.3)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _transactionColor.withValues(alpha: 0.3)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _transactionColor, width: 2),
-      ),
-      filled: true,
-      fillColor: Theme.of(context).colorScheme.surface,
-    );
-  }
 
   @override
   void initState() {
@@ -233,7 +199,7 @@ class _AddTransactionWithGoalPageState
                         // Goal Selection (if not pre-selected)
                         if (widget.goalId == null) ...[
                           goalsAsync.when(
-                            loading: () => const CircularProgressIndicator(),
+                            loading: () => const CoreLoadingState(size: 20),
                             error: (error, stack) => Text('Error: $error'),
                             data: (goals) => _buildGoalSelector(goals, theme),
                           ),
@@ -241,19 +207,57 @@ class _AddTransactionWithGoalPageState
                         ],
 
                         // Amount Input
-                        _buildAmountInput(theme),
+                        CoreAmountInput(
+                          controller: _amountController,
+                          label: 'Jumlah',
+                          hint: 'Masukkan jumlah',
+                          primaryColor: _transactionColor,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Masukkan jumlah';
+                            }
+                            return null;
+                          },
+                        ),
                         const SizedBox(height: 24),
 
                         // Description Input
-                        _buildDescriptionInput(theme),
+                        CoreTextField(
+                          controller: _descriptionController,
+                          label: 'Deskripsi',
+                          hint: 'Deskripsi transaksi (opsional)',
+                          icon: Icons.description_outlined,
+                          primaryColor: _transactionColor,
+                        ),
                         const SizedBox(height: 24),
 
                         // Date Input
-                        _buildDateInput(theme),
+                        CoreDatePicker(
+                          selectedDate: _selectedDate,
+                          onDateSelected: (date) {
+                            setState(() {
+                              _selectedDate = date;
+                              _dateController.text = DateFormat(
+                                'dd MMMM yyyy',
+                                'id_ID',
+                              ).format(date);
+                            });
+                          },
+                          label: 'Tanggal',
+                          hint: 'Pilih tanggal',
+                          primaryColor: _transactionColor,
+                        ),
                         const SizedBox(height: 32),
 
                         // Submit Button
-                        _buildSubmitButton(theme),
+                        CoreLoadingButton(
+                          onPressed: _submitTransaction,
+                          text: widget.transactionType == TransactionType.income
+                              ? 'TAMBAH PEMASUKAN'
+                              : 'TAMBAH PENGELUARAN',
+                          isLoading: _isLoading,
+                          gradientColors: [_transactionColor, _transactionColor],
+                        ),
                       ],
                     ),
                   ),
@@ -270,261 +274,42 @@ class _AddTransactionWithGoalPageState
     final activeGoals =
         goals.where((g) => g.status != GoalStatus.completed).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Pilih Goal',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border.all(color: _transactionColor.withValues(alpha: 0.3)),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: _transactionColor.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: DropdownButtonFormField<String>(
-            initialValue: _selectedGoalId,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: 'Pilih goal yang terkait',
-              hintStyle: TextStyle(
-                color: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.7,
-                ),
-              ),
-            ),
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
-            items:
-                activeGoals.map((goal) {
-                  return DropdownMenuItem(
-                    value: goal.id,
-                    child: Text(
-                      goal.name,
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedGoalId = value;
-                _selectedGoalName =
-                    activeGoals.firstWhere((g) => g.id == value).name;
-              });
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Pilih goal yang terkait';
-              }
-              return null;
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAmountInput(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Jumlah',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _amountController,
-          keyboardType: TextInputType.number,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
-          decoration: _buildInputDecoration(
-            hintText: 'Masukkan jumlah',
-            prefixText: 'Rp ',
-            prefixStyle: TextStyle(
-              color: _transactionColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (value) {
-            // Format currency as user types
-            if (value.isNotEmpty) {
-              final numericValue = value.replaceAll(RegExp(r'[^\d]'), '');
-              if (numericValue.isNotEmpty) {
-                final doubleValue = double.parse(numericValue);
-                final formattedValue = AppFormatters.currency.format(
-                  doubleValue,
-                );
-                // Remove "Rp " prefix and update controller
-                final displayValue = formattedValue.replaceFirst('Rp ', '');
-                if (displayValue != value) {
-                  _amountController.value = TextEditingValue(
-                    text: displayValue,
-                    selection: TextSelection.collapsed(
-                      offset: displayValue.length,
-                    ),
-                  );
-                }
-              }
-            }
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Masukkan jumlah';
-            }
-            // Remove formatting for validation
-            final numericValue = value.replaceAll(RegExp(r'[^\d]'), '');
-            if (numericValue.isEmpty) {
-              return 'Masukkan angka yang valid';
-            }
-            final doubleValue = double.tryParse(numericValue);
-            if (doubleValue == null || doubleValue <= 0) {
-              return 'Jumlah harus lebih dari 0';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDescriptionInput(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Deskripsi',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _descriptionController,
-          maxLines: 3,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
-          decoration: _buildInputDecoration(
-            hintText: 'Deskripsi transaksi (opsional)',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateInput(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tanggal',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _dateController,
-          readOnly: true,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
-          decoration: _buildInputDecoration(
-            hintText: 'Pilih tanggal',
-            suffixIcon: Icon(Icons.calendar_today, color: _transactionColor),
-          ),
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
+    return CoreDropdown<String>(
+      value: _selectedGoalId,
+      onChanged: (value) {
+        if (value != null) {
+          setState(() {
+            _selectedGoalId = value;
+            _selectedGoalName =
+                activeGoals.firstWhere((g) => g.id == value).name;
+          });
+        }
+      },
+      label: 'Pilih Goal',
+      hint: 'Pilih goal yang terkait',
+      primaryColor: _transactionColor,
+      items: activeGoals
+          .map((goal) {
+            return DropdownMenuItem(
+              value: goal.id,
+              child: Text(goal.name),
             );
-            if (date != null) {
-              setState(() {
-                _selectedDate = date;
-                _dateController.text = DateFormat(
-                  'dd MMMM yyyy',
-                  'id_ID',
-                ).format(date);
-              });
-            }
-          },
-        ),
-      ],
+          })
+          .toList(),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Pilih goal yang terkait';
+        }
+        return null;
+      },
     );
   }
 
-  Widget _buildSubmitButton(ThemeData theme) {
-    return SizedBox(
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _submitTransaction,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _transactionColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          shadowColor: _transactionColor.withValues(alpha: 0.3),
-        ),
-        child:
-            _isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : Text(
-                  'Simpan Transaksi',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
-                ),
-      ),
-    );
-  }
 
   Future<void> _submitTransaction() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGoalId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih goal yang terkait'),
-          backgroundColor: AppColors.expense,
-        ),
-      );
+      CoreSnackbar.showWarning(context, 'Pilih goal yang terkait');
       return;
     }
 
@@ -580,28 +365,17 @@ class _AddTransactionWithGoalPageState
       }
 
       // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
-            ),
-            backgroundColor: AppColors.income,
-          ),
-        );
+      if (!mounted) return;
+      CoreSnackbar.showSuccess(
+        context,
+        'Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
+      );
 
-        // Navigate back
-        Navigator.of(context).pop();
-      }
+      // Navigate back
+      Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Gagal menambahkan transaksi: $e'),
-            backgroundColor: AppColors.expense,
-          ),
-        );
-      }
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal menambahkan transaksi: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
