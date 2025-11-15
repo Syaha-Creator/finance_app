@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
@@ -47,21 +45,15 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final navigator = Navigator.of(context);
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-
       final targetAmount = double.parse(
         _targetAmountController.text.replaceAll('.', ''),
       );
       final userId = ref.read(authStateChangesProvider).value?.uid;
 
       if (userId == null) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Error: Pengguna tidak ditemukan. Silakan login ulang.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        CoreSnackbar.showError(
+          context,
+          'Pengguna tidak ditemukan. Silakan login ulang.',
         );
         return;
       }
@@ -87,21 +79,15 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
         }
 
         if (success && mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Tujuan berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}',
-              ),
-              backgroundColor: Colors.green,
-            ),
+          CoreSnackbar.showSuccess(
+            context,
+            'Tujuan berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}',
           );
           navigator.pop();
         }
       } catch (e) {
         if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
-          );
+          CoreSnackbar.showError(context, 'Gagal: $e');
         }
       }
     }
@@ -127,7 +113,7 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
           children: [
             // Custom App Bar dengan tombol back
             _buildCustomAppBar(context, theme),
-            
+
             // Content
             Expanded(
               child: SingleChildScrollView(
@@ -137,12 +123,12 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
                   children: [
                     // Header
                     _buildHeader(context, theme),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Form
                     _buildForm(context, theme),
-                    
+
                     // Bottom padding
                     const SizedBox(height: 32),
                   ],
@@ -191,9 +177,9 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Judul halaman
           Expanded(
             child: Text(
@@ -256,7 +242,9 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isEditMode ? 'Edit Tujuan Keuangan' : 'Buat Tujuan Keuangan Baru',
+                  _isEditMode
+                      ? 'Edit Tujuan Keuangan'
+                      : 'Buat Tujuan Keuangan Baru',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontWeight: FontWeight.w600,
@@ -264,7 +252,7 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _isEditMode 
+                  _isEditMode
                       ? 'Perbarui detail tujuan Anda'
                       : 'Tentukan target keuangan yang ingin Anda capai',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -286,250 +274,58 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Nama Tujuan
-          _buildTextField(
-            context,
-            theme,
+          CoreTextField(
             controller: _nameController,
             label: 'Nama Tujuan',
             hint: 'Contoh: Beli Rumah, Liburan ke Bali',
             icon: Icons.flag,
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Nama tidak boleh kosong'
-                : null,
+            validator:
+                (v) =>
+                    (v == null || v.isEmpty) ? 'Nama tidak boleh kosong' : null,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Jumlah Target
-          _buildTextField(
-            context,
-            theme,
+          CoreAmountInput(
             controller: _targetAmountController,
             label: 'Jumlah Target',
             hint: 'Masukkan jumlah target',
-            icon: Icons.attach_money,
-            prefixText: 'Rp ',
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              ThousandInputFormatter(),
-            ],
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Jumlah tidak boleh kosong'
-                : null,
+            validator:
+                (v) =>
+                    (v == null || v.isEmpty)
+                        ? 'Jumlah tidak boleh kosong'
+                        : null,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Target Tanggal
-          _buildDateField(context, theme),
-          
+          CoreDatePicker(
+            selectedDate: _targetDate,
+            onDateSelected: (date) {
+              setState(() => _targetDate = date);
+            },
+            onClear: () {
+              setState(() => _targetDate = null);
+            },
+            label: 'Target Tanggal Tercapai',
+            hint: 'Pilih tanggal target',
+            firstDate: DateTime.now(),
+            errorText:
+                _targetDate == null ? 'Tanggal tidak boleh kosong' : null,
+          ),
+
           const SizedBox(height: 32),
-          
+
           // Submit Button
-          ElevatedButton(
-            onPressed: _isLoading ? null : _submitForm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 0,
-              shadowColor: AppColors.primary.withValues(alpha: 0.3),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(
-                    _isEditMode ? 'UPDATE TUJUAN' : 'SIMPAN TUJUAN',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+          CoreLoadingButton(
+            onPressed: _submitForm,
+            text: _isEditMode ? 'UPDATE TUJUAN' : 'SIMPAN TUJUAN',
+            isLoading: _isLoading,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTextField(
-    BuildContext context,
-    ThemeData theme, {
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    String? prefixText,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            validator: validator,
-            decoration: InputDecoration(
-              hintText: hint,
-              prefixText: prefixText,
-              prefixIcon: Icon(
-                icon,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField(BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Target Tanggal Tercapai',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () async {
-              final pickedDate = await showDatePicker(
-                context: context,
-                initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2101),
-                builder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                        primary: AppColors.primary,
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
-              );
-              if (pickedDate != null) {
-                setState(() => _targetDate = pickedDate);
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _targetDate == null
-                          ? 'Pilih tanggal target'
-                          : DateFormat('dd MMMM yyyy', 'id_ID').format(_targetDate!),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: _targetDate == null
-                            ? theme.colorScheme.onSurfaceVariant
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                  if (_targetDate != null)
-                    IconButton(
-                      onPressed: () => setState(() => _targetDate = null),
-                      icon: Icon(
-                        Icons.clear,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        size: 18,
-                      ),
-                      style: IconButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(24, 24),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (_targetDate == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, left: 16),
-            child: Text(
-              'Tanggal tidak boleh kosong',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
