@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/debt_receivable_model.dart';
 import '../provider/debt_provider.dart';
@@ -54,21 +53,15 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
   }
 
   Future<void> _submitForm() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text.replaceAll('.', ''));
       final userId = ref.read(authStateChangesProvider).value?.uid;
 
       if (userId == null) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Error: Pengguna tidak ditemukan. Silakan login ulang.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        if (!mounted) return;
+        CoreSnackbar.showError(
+          context,
+          'Pengguna tidak ditemukan. Silakan login ulang.',
         );
         return;
       }
@@ -90,21 +83,12 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             .read(debtControllerProvider.notifier)
             .updateDebt(updatedDebt);
 
+        if (!mounted) return;
         if (success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Catatan berhasil diperbarui'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          navigator.pop();
+          CoreSnackbar.showSuccess(context, 'Catatan berhasil diperbarui');
+          Navigator.of(context).pop();
         } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Gagal memperbarui catatan'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          CoreSnackbar.showError(context, 'Gagal memperbarui catatan');
         }
       } else {
         final newDebt = DebtReceivableModel(
@@ -122,21 +106,12 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             .read(debtControllerProvider.notifier)
             .addDebt(newDebt);
 
+        if (!mounted) return;
         if (success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Catatan berhasil disimpan'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          navigator.pop();
+          CoreSnackbar.showSuccess(context, 'Catatan berhasil disimpan');
+          Navigator.of(context).pop();
         } else {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Gagal menyimpan catatan'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          CoreSnackbar.showError(context, 'Gagal menyimpan catatan');
         }
       }
     }
@@ -355,12 +330,11 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             const SizedBox(height: 20),
 
             // Person Name Field
-            _buildTextField(
-              context,
-              theme,
+            CoreTextField(
               controller: _personNameController,
               label: 'Nama Orang',
               hint: 'Masukkan nama orang yang berutang/piutang',
+              icon: Icons.person,
               validator:
                   (v) =>
                       (v == null || v.isEmpty)
@@ -371,18 +345,10 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             const SizedBox(height: 20),
 
             // Amount Field
-            _buildTextField(
-              context,
-              theme,
+            CoreAmountInput(
               controller: _amountController,
               label: 'Jumlah',
               hint: 'Masukkan jumlah utang/piutang',
-              prefixText: 'Rp ',
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                ThousandInputFormatter(),
-              ],
               validator:
                   (v) =>
                       (v == null || v.isEmpty)
@@ -393,12 +359,12 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             const SizedBox(height: 20),
 
             // Description Field
-            _buildTextField(
-              context,
-              theme,
+            CoreTextField(
               controller: _descriptionController,
               label: 'Keterangan',
               hint: 'Tambahkan keterangan atau alasan',
+              icon: Icons.description,
+              maxLines: 3,
               validator:
                   (v) =>
                       (v == null || v.isEmpty)
@@ -409,29 +375,26 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             const SizedBox(height: 20),
 
             // Due Date Field
-            _buildDateField(context, theme),
+            CoreDatePicker(
+              selectedDate: _dueDate,
+              onDateSelected: (date) {
+                setState(() => _dueDate = date);
+              },
+              onClear: () {
+                setState(() => _dueDate = null);
+              },
+              label: 'Tanggal Jatuh Tempo (Opsional)',
+              hint: 'Pilih tanggal jatuh tempo',
+              firstDate: DateTime.now(),
+            ),
 
             const SizedBox(height: 28),
 
             // Submit Button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                _isEditMode ? 'PERBARUI CATATAN' : 'SIMPAN CATATAN',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            CoreLoadingButton(
+              onPressed: _submitForm,
+              text: _isEditMode ? 'PERBARUI CATATAN' : 'SIMPAN CATATAN',
+              isLoading: _isLoading,
             ),
           ],
         ),
@@ -483,142 +446,6 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
               }
               return theme.colorScheme.onSurface;
             }),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(
-    BuildContext context,
-    ThemeData theme, {
-    required TextEditingController controller,
-    required String label,
-    String? hint,
-    String? prefixText,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: prefixText,
-            filled: true,
-            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.3,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField(BuildContext context, ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tanggal Jatuh Tempo (Opsional)',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: () async {
-            final pickedDate = await showDatePicker(
-              context: context,
-              initialDate: _dueDate ?? DateTime.now(),
-              firstDate: DateTime.now(),
-              lastDate: DateTime(2101),
-            );
-            if (pickedDate != null) {
-              setState(() => _dueDate = pickedDate);
-            }
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.3,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _dueDate == null
-                        ? 'Pilih tanggal jatuh tempo'
-                        : DateFormat('dd MMMM yyyy', 'id_ID').format(_dueDate!),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color:
-                          _dueDate == null
-                              ? theme.colorScheme.onSurfaceVariant
-                              : theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                if (_dueDate != null)
-                  IconButton(
-                    onPressed: () => setState(() => _dueDate = null),
-                    icon: Icon(
-                      Icons.clear,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 18,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-              ],
-            ),
           ),
         ),
       ],
