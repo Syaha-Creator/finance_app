@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../application/ocr_service.dart';
 import '../../data/models/receipt_model.dart';
 import '../provider/receipt_provider.dart';
+import '../../data/models/ocr_result.dart';
 
 class AddReceiptPage extends ConsumerStatefulWidget {
   const AddReceiptPage({super.key});
@@ -27,7 +27,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
   File? _selectedImage;
   bool _isProcessing = false;
   bool _isOcrCompleted = false;
-  Map<String, dynamic>? _ocrData;
+  OcrResult? _ocrData;
 
   @override
   void dispose() {
@@ -69,42 +69,10 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 32),
 
             // Save Button
-            ElevatedButton(
+            CoreLoadingButton(
               onPressed: _selectedImage != null ? _saveReceipt : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child:
-                  _isProcessing
-                      ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Text('Memproses...'),
-                        ],
-                      )
-                      : const Text(
-                        'Simpan Struk',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+              text: 'Simpan Struk',
+              isLoading: _isProcessing,
             ),
           ],
         ),
@@ -228,19 +196,19 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 16),
 
             // OCR Data Display
-            if (_ocrData!['merchantName'] != null) ...[
-              _buildOcrDataRow('Nama Merchant:', _ocrData!['merchantName']),
+            if (_ocrData!.merchantName != null) ...[
+              _buildOcrDataRow('Nama Merchant:', _ocrData!.merchantName!),
             ],
-            if (_ocrData!['merchantAddress'] != null) ...[
-              _buildOcrDataRow('Alamat:', _ocrData!['merchantAddress']),
+            if (_ocrData!.merchantAddress != null) ...[
+              _buildOcrDataRow('Alamat:', _ocrData!.merchantAddress!),
             ],
-            if (_ocrData!['totalAmount'] != null) ...[
+            if (_ocrData!.totalAmount != null) ...[
               _buildOcrDataRow(
                 'Total:',
-                AppFormatters.currency.format(_ocrData!['totalAmount']),
+                AppFormatters.currency.format(_ocrData!.totalAmount),
               ),
             ],
-            if (_ocrData!['items'] != null) ...[
+            if (_ocrData!.items != null) ...[
               const SizedBox(height: 8),
               Text(
                 'Item:',
@@ -249,7 +217,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
                 ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
-              ...(_ocrData!['items'] as List<String>)
+              ...(_ocrData!.items!)
                   .take(3)
                   .map(
                     (item) => Padding(
@@ -316,7 +284,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 20),
 
             // Merchant Name
-            _buildTextField(
+            CoreTextField(
               controller: _merchantNameController,
               label: 'Nama Merchant',
               hint: 'Masukkan nama merchant',
@@ -332,7 +300,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 16),
 
             // Merchant Address
-            _buildTextField(
+            CoreTextField(
               controller: _merchantAddressController,
               label: 'Alamat Merchant (Opsional)',
               hint: 'Masukkan alamat merchant',
@@ -343,13 +311,10 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 16),
 
             // Amount
-            _buildTextField(
+            CoreAmountInput(
               controller: _amountController,
               label: 'Total Amount',
               hint: '0',
-              icon: Icons.account_balance_wallet_outlined,
-              keyboardType: TextInputType.number,
-              inputFormatters: [ThousandInputFormatter()],
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Total amount harus diisi';
@@ -365,7 +330,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
             const SizedBox(height: 16),
 
             // Notes
-            _buildTextField(
+            CoreTextField(
               controller: _notesController,
               label: 'Catatan (Opsional)',
               hint: 'Catatan tambahan',
@@ -375,46 +340,6 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -438,9 +363,7 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal memilih gambar: $e')));
+        CoreSnackbar.showError(context, 'Gagal memilih gambar: $e');
       }
     }
   }
@@ -467,29 +390,24 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
         });
 
         // Auto-fill form fields with OCR data
-        if (ocrData['merchantName'] != null) {
-          _merchantNameController.text = ocrData['merchantName'];
+        if (ocrData.merchantName != null) {
+          _merchantNameController.text = ocrData.merchantName!;
         }
-        if (ocrData['merchantAddress'] != null) {
-          _merchantAddressController.text = ocrData['merchantAddress'];
+        if (ocrData.merchantAddress != null) {
+          _merchantAddressController.text = ocrData.merchantAddress!;
         }
-        if (ocrData['totalAmount'] != null) {
-          _amountController.text = ocrData['totalAmount'].toString();
+        if (ocrData.totalAmount != null) {
+          _amountController.text = ocrData.totalAmount!.toStringAsFixed(0);
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('OCR berhasil diproses!')));
+        CoreSnackbar.showSuccess(context, 'OCR berhasil diproses!');
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isProcessing = false;
         });
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal memproses OCR: $e')));
+        CoreSnackbar.showError(context, 'Gagal memproses OCR: $e');
       }
     }
   }
@@ -502,19 +420,16 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
         id: '',
         userId: '',
         imageUrl: '',
-        ocrText: _ocrData?['ocrText'],
+        ocrText: _ocrData?.ocrText,
         merchantName: _merchantNameController.text.trim(),
         merchantAddress:
             _merchantAddressController.text.trim().isEmpty
                 ? null
                 : _merchantAddressController.text.trim(),
-        transactionDate: _ocrData?['transactionDate'] ?? DateTime.now(),
+        transactionDate: _ocrData?.transactionDate ?? DateTime.now(),
         totalAmount: amount,
-        currency: _ocrData?['currency'] ?? 'IDR',
-        items:
-            _ocrData?['items'] != null
-                ? List<String>.from(_ocrData!['items'])
-                : null,
+        currency: _ocrData?.currency ?? 'IDR',
+        items: _ocrData?.items,
         notes:
             _notesController.text.trim().isEmpty
                 ? null

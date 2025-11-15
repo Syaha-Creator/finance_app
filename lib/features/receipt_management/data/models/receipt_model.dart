@@ -56,10 +56,7 @@ class ReceiptModel extends Equatable {
       currency: data['currency'],
       items: data['items'] != null ? List<String>.from(data['items']) : null,
       notes: data['notes'],
-      status: ReceiptStatus.values.firstWhere(
-        (e) => e.toString() == data['status'],
-        orElse: () => ReceiptStatus.pending,
-      ),
+      status: _parseStatus(data['status']),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -78,10 +75,22 @@ class ReceiptModel extends Equatable {
       'currency': currency,
       'items': items,
       'notes': notes,
-      'status': status.toString(),
+      'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
+  }
+
+  static ReceiptStatus _parseStatus(dynamic raw) {
+    if (raw is String) {
+      final String normalized = raw.contains('.') ? raw.split('.').last : raw;
+      try {
+        return ReceiptStatus.values.byName(normalized);
+      } catch (_) {
+        return ReceiptStatus.pending;
+      }
+    }
+    return ReceiptStatus.pending;
   }
 
   ReceiptModel copyWith({

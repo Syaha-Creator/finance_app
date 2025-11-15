@@ -1,10 +1,17 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../data/models/receipt_model.dart';
 import '../../data/repositories/receipt_repository.dart';
 
 final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
-  return ReceiptRepository();
+  return ReceiptRepository(
+    firestore: FirebaseFirestore.instance,
+    auth: FirebaseAuth.instance,
+    storage: FirebaseStorage.instance,
+  );
 });
 
 final receiptsProvider = StreamProvider<List<ReceiptModel>>((ref) {

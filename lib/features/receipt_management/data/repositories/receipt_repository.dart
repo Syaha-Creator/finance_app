@@ -5,9 +5,17 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../models/receipt_model.dart';
 
 class ReceiptRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final FirebaseStorage _storage;
+
+  ReceiptRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+    required FirebaseStorage storage,
+  }) : _firestore = firestore,
+       _auth = auth,
+       _storage = storage;
 
   String get _userId => _auth.currentUser?.uid ?? '';
 
