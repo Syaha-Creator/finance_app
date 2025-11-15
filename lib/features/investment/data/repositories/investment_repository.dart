@@ -3,8 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/investment_model.dart';
 
 class InvestmentRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  InvestmentRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+  }) : _firestore = firestore,
+       _auth = auth;
 
   String get _userId => _auth.currentUser?.uid ?? '';
 
@@ -36,7 +42,7 @@ class InvestmentRepository {
     return _firestore
         .collection('investments')
         .where('userId', isEqualTo: _userId)
-        .where('status', isEqualTo: InvestmentStatus.active.toString())
+        .where('status', isEqualTo: InvestmentStatus.active.name)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
@@ -56,7 +62,7 @@ class InvestmentRepository {
     return _firestore
         .collection('investments')
         .where('userId', isEqualTo: _userId)
-        .where('type', isEqualTo: type.toString())
+        .where('type', isEqualTo: type.name)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
@@ -198,7 +204,7 @@ class InvestmentRepository {
           await _firestore
               .collection('investments')
               .where('userId', isEqualTo: _userId)
-              .where('status', isEqualTo: InvestmentStatus.active.toString())
+              .where('status', isEqualTo: InvestmentStatus.active.name)
               .get();
 
       final investments =

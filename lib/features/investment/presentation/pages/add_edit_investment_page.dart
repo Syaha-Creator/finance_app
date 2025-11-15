@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/investment_model.dart';
 import '../provider/investment_provider.dart';
 
@@ -88,7 +88,7 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
               title: 'Informasi Dasar',
               icon: Icons.info_outline,
               children: [
-                _buildTextField(
+                CoreTextField(
                   controller: _nameController,
                   label: 'Nama Investasi',
                   hint: 'Contoh: Saham Bank BCA',
@@ -103,7 +103,7 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
 
                 const SizedBox(height: 16),
 
-                _buildTextField(
+                CoreTextField(
                   controller: _symbolController,
                   label: 'Symbol/Ticker',
                   hint: 'Contoh: BBCA',
@@ -118,48 +118,47 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
 
                 const SizedBox(height: 16),
 
-                _buildDropdownField(
-                  label: 'Jenis Investasi',
-                  icon: Icons.category,
+                CoreDropdown<InvestmentType>(
                   value: _selectedType,
-                  items:
-                      InvestmentType.values.map((type) {
-                        String label;
-                        switch (type) {
-                          case InvestmentType.stock:
-                            label = 'Saham';
-                            break;
-                          case InvestmentType.mutualFund:
-                            label = 'Reksadana';
-                            break;
-                          case InvestmentType.crypto:
-                            label = 'Cryptocurrency';
-                            break;
-                          case InvestmentType.bond:
-                            label = 'Obligasi';
-                            break;
-                          case InvestmentType.gold:
-                            label = 'Emas';
-                            break;
-                          case InvestmentType.property:
-                            label = 'Properti';
-                            break;
-                          case InvestmentType.other:
-                            label = 'Lainnya';
-                            break;
-                        }
-                        return DropdownMenuItem<InvestmentType>(
-                          value: type,
-                          child: Text(label),
-                        );
-                      }).toList(),
-                  onChanged: (InvestmentType? newValue) {
+                  onChanged: (newValue) {
                     if (newValue != null) {
                       setState(() {
                         _selectedType = newValue;
                       });
                     }
                   },
+                  label: 'Jenis Investasi',
+                  icon: Icons.category,
+                  items: InvestmentType.values.map((type) {
+                    String label;
+                    switch (type) {
+                      case InvestmentType.stock:
+                        label = 'Saham';
+                        break;
+                      case InvestmentType.mutualFund:
+                        label = 'Reksadana';
+                        break;
+                      case InvestmentType.crypto:
+                        label = 'Cryptocurrency';
+                        break;
+                      case InvestmentType.bond:
+                        label = 'Obligasi';
+                        break;
+                      case InvestmentType.gold:
+                        label = 'Emas';
+                        break;
+                      case InvestmentType.property:
+                        label = 'Properti';
+                        break;
+                      case InvestmentType.other:
+                        label = 'Lainnya';
+                        break;
+                    }
+                    return DropdownMenuItem<InvestmentType>(
+                      value: type,
+                      child: Text(label),
+                    );
+                  }).toList(),
                 ),
               ],
             ),
@@ -171,7 +170,7 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
               title: 'Detail Investasi',
               icon: Icons.analytics_outlined,
               children: [
-                _buildTextField(
+                CoreTextField(
                   controller: _quantityController,
                   label: 'Jumlah Unit',
                   hint: '0',
@@ -192,13 +191,10 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
 
                 const SizedBox(height: 16),
 
-                _buildTextField(
+                CoreAmountInput(
                   controller: _averagePriceController,
                   label: 'Harga Rata-rata per Unit',
                   hint: '0',
-                  icon: Icons.price_check_outlined,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [ThousandInputFormatter()],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Harga rata-rata harus diisi';
@@ -213,13 +209,10 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
 
                 const SizedBox(height: 16),
 
-                _buildTextField(
+                CoreAmountInput(
                   controller: _currentPriceController,
                   label: 'Harga Sekarang per Unit',
                   hint: '0',
-                  icon: Icons.trending_up_outlined,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [ThousandInputFormatter()],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Harga sekarang harus diisi';
@@ -234,7 +227,15 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
 
                 const SizedBox(height: 16),
 
-                _buildDateField(),
+                CoreDatePicker(
+                  selectedDate: _selectedPurchaseDate,
+                  onDateSelected: (date) {
+                    setState(() => _selectedPurchaseDate = date);
+                  },
+                  label: 'Tanggal Pembelian',
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                ),
               ],
             ),
 
@@ -245,7 +246,7 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
               title: 'Catatan',
               icon: Icons.note_outlined,
               children: [
-                _buildTextField(
+                CoreTextField(
                   controller: _notesController,
                   label: 'Catatan (Opsional)',
                   hint: 'Catatan tambahan tentang investasi ini',
@@ -258,23 +259,9 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
             const SizedBox(height: 32),
 
             // Save Button
-            ElevatedButton(
+            CoreLoadingButton(
               onPressed: _saveInvestment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                isEditing ? 'Update Investasi' : 'Simpan Investasi',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              text: isEditing ? 'Update Investasi' : 'Simpan Investasi',
             ),
           ],
         ),
@@ -313,131 +300,6 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
         ),
       ),
     );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField<T>({
-    required String label,
-    required IconData icon,
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<T>(
-          initialValue: value,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-          items: items,
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tanggal Pembelian',
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _selectDate,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_outlined, color: AppColors.primary),
-                const SizedBox(width: 12),
-                Text(
-                  '${_selectedPurchaseDate.day}/${_selectedPurchaseDate.month}/${_selectedPurchaseDate.year}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const Spacer(),
-                const Icon(Icons.arrow_drop_down),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedPurchaseDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedPurchaseDate) {
-      setState(() {
-        _selectedPurchaseDate = picked;
-      });
-    }
   }
 
   void _saveInvestment() {

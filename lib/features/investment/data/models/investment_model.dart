@@ -53,10 +53,7 @@ class InvestmentModel extends Equatable {
       userId: data['userId'] ?? '',
       name: data['name'] ?? '',
       symbol: data['symbol'] ?? '',
-      type: InvestmentType.values.firstWhere(
-        (e) => e.toString() == data['type'],
-        orElse: () => InvestmentType.other,
-      ),
+      type: _parseType(data['type']),
       quantity: (data['quantity'] ?? 0.0).toDouble(),
       averagePrice: (data['averagePrice'] ?? 0.0).toDouble(),
       currentPrice: (data['currentPrice'] ?? 0.0).toDouble(),
@@ -64,10 +61,7 @@ class InvestmentModel extends Equatable {
       currentValue: (data['currentValue'] ?? 0.0).toDouble(),
       profitLoss: (data['profitLoss'] ?? 0.0).toDouble(),
       profitLossPercentage: (data['profitLossPercentage'] ?? 0.0).toDouble(),
-      status: InvestmentStatus.values.firstWhere(
-        (e) => e.toString() == data['status'],
-        orElse: () => InvestmentStatus.active,
-      ),
+      status: _parseStatus(data['status']),
       purchaseDate: (data['purchaseDate'] as Timestamp).toDate(),
       sellDate:
           data['sellDate'] != null
@@ -84,7 +78,7 @@ class InvestmentModel extends Equatable {
       'userId': userId,
       'name': name,
       'symbol': symbol,
-      'type': type.toString(),
+      'type': type.name,
       'quantity': quantity,
       'averagePrice': averagePrice,
       'currentPrice': currentPrice,
@@ -92,7 +86,7 @@ class InvestmentModel extends Equatable {
       'currentValue': currentValue,
       'profitLoss': profitLoss,
       'profitLossPercentage': profitLossPercentage,
-      'status': status.toString(),
+      'status': status.name,
       'purchaseDate': Timestamp.fromDate(purchaseDate),
       'sellDate': sellDate != null ? Timestamp.fromDate(sellDate!) : null,
       'notes': notes,
@@ -234,4 +228,28 @@ class InvestmentModel extends Equatable {
     createdAt,
     updatedAt,
   ];
+}
+
+InvestmentType _parseType(dynamic raw) {
+  if (raw is String) {
+    final normalized = raw.contains('.') ? raw.split('.').last : raw;
+    try {
+      return InvestmentType.values.byName(normalized);
+    } catch (_) {
+      return InvestmentType.other;
+    }
+  }
+  return InvestmentType.other;
+}
+
+InvestmentStatus _parseStatus(dynamic raw) {
+  if (raw is String) {
+    final normalized = raw.contains('.') ? raw.split('.').last : raw;
+    try {
+      return InvestmentStatus.values.byName(normalized);
+    } catch (_) {
+      return InvestmentStatus.active;
+    }
+  }
+  return InvestmentStatus.active;
 }

@@ -1,9 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/models/investment_model.dart';
 import '../../data/repositories/investment_repository.dart';
 
 final investmentRepositoryProvider = Provider<InvestmentRepository>((ref) {
-  return InvestmentRepository();
+  return InvestmentRepository(
+    firestore: FirebaseFirestore.instance,
+    auth: FirebaseAuth.instance,
+  );
 });
 
 final investmentsProvider = StreamProvider<List<InvestmentModel>>((ref) {
