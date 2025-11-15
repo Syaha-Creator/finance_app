@@ -82,6 +82,18 @@ class AuthRepository {
     }
   }
 
+  Future<void> resetPassword({required String email}) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Exception on Reset Password: ${e.message}');
+      throw Exception(e.message);
+    } catch (e) {
+      print('Error during Reset Password: $e');
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();

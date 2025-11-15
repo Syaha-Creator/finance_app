@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
+import '../widgets/widgets.dart';
 import 'register_page.dart';
+import 'forgot_password_page.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -23,12 +25,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
-  late AnimationController _pulseController;
 
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -52,11 +52,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
       vsync: this,
     );
 
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
@@ -72,10 +67,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
     // Start animations with delays
     Future.delayed(const Duration(milliseconds: 300), () {
       _fadeController.forward();
@@ -88,8 +79,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
     Future.delayed(const Duration(milliseconds: 900), () {
       _scaleController.forward();
     });
-
-    _pulseController.repeat(reverse: true);
   }
 
   @override
@@ -99,7 +88,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -117,46 +105,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
-
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.error_outline_rounded,
-                      color: AppColors.error,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      e.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+        AuthErrorSnackbar.show(context, e.toString());
       }
     }
   }
@@ -169,46 +118,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.error_outline_rounded,
-                    color: AppColors.error,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    e.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+      AuthErrorSnackbar.show(context, e.toString());
     }
   }
 
@@ -217,491 +127,259 @@ class _LoginPageState extends ConsumerState<LoginPage>
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              AppColors.primaryLight,
-              AppColors.primaryDark,
-              AppColors.primary,
-            ],
-            stops: const [0.0, 0.3, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Animated background elements
-              Positioned(
-                top: -80,
-                right: -80,
-                child: AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+      body: AuthBackground(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Animated Logo and Header - More compact
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            children: [
+                              // Animated logo
+                              AuthLogo(scaleAnimation: _scaleAnimation),
+                              const SizedBox(height: 20),
 
-              Positioned(
-                bottom: -120,
-                left: -120,
-                child: AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value * 0.7,
-                      child: Container(
-                        width: 240,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // Main content - No ScrollView, using LayoutBuilder for responsive design
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Animated Logo and Header - More compact
-                            FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: SlideTransition(
-                                position: _slideAnimation,
-                                child: Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
+                              Text(
+                                'Finance App',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
                                       ),
-                                      width: 1.5,
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, 15),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      // Animated logo - WOW design with gradient and glow!
-                                      ScaleTransition(
-                                        scale: _scaleAnimation,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: [
-                                                Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                Colors.white.withValues(
-                                                  alpha: 0.05,
-                                                ),
-                                                Colors.white.withValues(
-                                                  alpha: 0.15,
-                                                ),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              28,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.4,
-                                              ),
-                                              width: 2.5,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.3,
-                                                ),
-                                                blurRadius: 20,
-                                                spreadRadius: 2,
-                                                offset: const Offset(0, 8),
-                                              ),
-                                              BoxShadow(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                blurRadius: 40,
-                                                spreadRadius: 4,
-                                                offset: const Offset(0, 16),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: Image.asset(
-                                              'assets/finance_app_logo.png',
-                                              height: 80,
-                                              width: 80,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-
-                                      Text(
-                                        'Finance App',
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: -0.5,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.black
-                                                      .withValues(alpha: 0.3),
-                                                  offset: const Offset(0, 2),
-                                                  blurRadius: 4,
-                                                ),
-                                              ],
-                                            ),
-                                      ),
-                                      const SizedBox(height: 8),
-
-                                      Text(
-                                        'Kelola keuanganmu dengan bijak',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.95,
-                                              ),
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.1,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 8),
 
-                            const SizedBox(height: 32),
-
-                            // Animated Login Form - More compact
-                            SlideTransition(
-                              position: _slideAnimation,
-                              child: FadeTransition(
-                                opacity: _fadeAnimation,
-                                child: Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, 15),
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 60,
-                                        offset: const Offset(0, 30),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Welcome text - More compact
-                                      Text(
-                                        'Selamat Datang! 👋',
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: -0.5,
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 6),
-
-                                      Text(
-                                        'Masuk ke akunmu untuk melanjutkan',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color:
-                                                  theme
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                              fontWeight: FontWeight.w500,
-                                              height: 1.3,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 24),
-
-                                      // Email Field - More compact
-                                      _buildCompactTextField(
-                                        controller: _emailController,
-                                        label: 'Email',
-                                        icon: Icons.email_rounded,
-                                        keyboardType:
-                                            TextInputType.emailAddress,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Email tidak boleh kosong';
-                                          }
-                                          if (!value.contains('@')) {
-                                            return 'Email tidak valid';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 16),
-
-                                      // Password Field - More compact
-                                      _buildCompactTextField(
-                                        controller: _passwordController,
-                                        label: 'Password',
-                                        icon: Icons.lock_rounded,
-                                        isPassword: true,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Password tidak boleh kosong';
-                                          }
-                                          if (value.length < 6) {
-                                            return 'Password minimal 6 karakter';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 20),
-
-                                      // Login Button - More compact
-                                      _buildCompactButton(
-                                        onPressed:
-                                            _isLoading ? null : _submitLogin,
-                                        child:
-                                            _isLoading
-                                                ? SizedBox(
-                                                  height: 18,
-                                                  width: 18,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2.5,
-                                                    valueColor:
-                                                        const AlwaysStoppedAnimation<
-                                                          Color
-                                                        >(Colors.white),
-                                                  ),
-                                                )
-                                                : Text(
-                                                  'Masuk Sekarang',
-                                                  style: theme
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                        letterSpacing: 0.3,
-                                                      ),
-                                                ),
-                                      ),
-                                      const SizedBox(height: 20),
-
-                                      // Divider - More compact
-                                      _buildCompactDivider(theme),
-                                      const SizedBox(height: 20),
-
-                                      // Google Login Button - More compact
-                                      _buildCompactGoogleButton(theme),
-                                      const SizedBox(height: 24),
-
-                                      // Register Link - More compact
-                                      _buildCompactRegisterLink(theme),
-                                    ],
-                                  ),
+                              Text(
+                                'Kelola keuanganmu dengan bijak',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.1,
                                 ),
+                                textAlign: TextAlign.center,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+
+                      const SizedBox(height: 32),
+
+                      // Animated Login Form - More compact
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 15),
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 60,
+                                  offset: const Offset(0, 30),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Welcome text - More compact
+                                Text(
+                                  'Selamat Datang! 👋',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 6),
+
+                                Text(
+                                  'Masuk ke akunmu untuk melanjutkan',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.3,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Email Field - More compact
+                                CompactTextField(
+                                  controller: _emailController,
+                                  label: 'Email',
+                                  icon: Icons.email_rounded,
+                                  keyboardType: TextInputType.emailAddress,
+                                  isPasswordVisible: false,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Email tidak boleh kosong';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Email tidak valid';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Password Field - More compact
+                                CompactTextField(
+                                  controller: _passwordController,
+                                  label: 'Password',
+                                  icon: Icons.lock_rounded,
+                                  isPassword: true,
+                                  isPasswordVisible: _isPasswordVisible,
+                                  onPasswordVisibilityToggle: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Password tidak boleh kosong';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'Password minimal 6 karakter';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Forgot Password Link
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                ) => const ForgotPasswordPage(),
+                                            transitionsBuilder: (
+                                              context,
+                                              animation,
+                                              secondaryAnimation,
+                                              child,
+                                            ) {
+                                              return SlideTransition(
+                                                position: Tween<Offset>(
+                                                  begin: const Offset(1.0, 0.0),
+                                                  end: Offset.zero,
+                                                ).animate(animation),
+                                                child: child,
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        child: Text(
+                                          'Lupa Password?',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 13,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Login Button - More compact
+                                CompactButton(
+                                  onPressed: _isLoading ? null : _submitLogin,
+                                  child:
+                                      _isLoading
+                                          ? SizedBox(
+                                            height: 18,
+                                            width: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation<
+                                                    Color
+                                                  >(Colors.white),
+                                            ),
+                                          )
+                                          : Text(
+                                            'Masuk Sekarang',
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                          ),
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Divider - More compact
+                                _buildCompactDivider(theme),
+                                const SizedBox(height: 20),
+
+                                // Google Login Button - More compact
+                                _buildCompactGoogleButton(theme),
+                                const SizedBox(height: 24),
+
+                                // Register Link - More compact
+                                _buildCompactRegisterLink(theme),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool isPassword = false,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword && !_isPasswordVisible,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          prefixIcon: Container(
-            margin: const EdgeInsets.only(right: 10),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 20),
-          ),
-          suffixIcon:
-              isPassword
-                  ? IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility_off_rounded
-                          : Icons.visibility_rounded,
-                      color: Colors.grey[600],
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
-                  )
-                  : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: AppColors.error, width: 1.5),
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        validator: validator,
-      ),
-    );
-  }
-
-  Widget _buildCompactButton({
-    required VoidCallback? onPressed,
-    required Widget child,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      height: 48,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 40,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
-          child: Center(child: child),
+            );
+          },
         ),
       ),
     );
