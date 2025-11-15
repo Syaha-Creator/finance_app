@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -23,7 +24,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   File? _selectedImage;
   bool _isLoading = false;
-  bool _isUploading = false;
 
   @override
   void initState() {
@@ -150,7 +150,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         });
       }
     } catch (e) {
-      _showSnackBar('Gagal memilih gambar: $e', isError: true);
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal memilih gambar: $e');
     }
   }
 
@@ -174,14 +175,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         });
       }
     } catch (e) {
-      _showSnackBar('Gagal mengambil foto: $e', isError: true);
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal mengambil foto: $e');
     }
   }
 
   Future<void> _uploadImage() async {
     if (_selectedImage == null) return;
-
-    setState(() => _isUploading = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -197,11 +197,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
       await user.updatePhotoURL(downloadURL);
 
-      _showSnackBar('Foto profil berhasil diperbarui!');
+      if (!mounted) return;
+      CoreSnackbar.showSuccess(context, 'Foto profil berhasil diperbarui!');
     } catch (e) {
-      _showSnackBar('Gagal upload foto: $e', isError: true);
-    } finally {
-      setState(() => _isUploading = false);
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal upload foto: $e');
     }
   }
 
@@ -222,13 +222,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         await _uploadImage();
       }
 
-      _showSnackBar('Profil berhasil diperbarui!');
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
+      CoreSnackbar.showSuccess(context, 'Profil berhasil diperbarui!');
+      Navigator.pop(context);
     } catch (e) {
-      _showSnackBar('Gagal memperbarui profil: $e', isError: true);
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal memperbarui profil: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -284,29 +283,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         false;
   }
 
-  void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.check_circle,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: isError ? AppColors.error : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -554,26 +530,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           const SizedBox(height: 20),
 
           // Name Field
-          TextFormField(
+          CoreTextField(
             controller: _nameController,
-            decoration: InputDecoration(
-              labelText: 'Nama Lengkap',
-              hintText: 'Masukkan nama lengkap Anda',
-              prefixIcon: Icon(
-                Icons.person_outline,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-              ),
-            ),
+            label: 'Nama Lengkap',
+            hint: 'Masukkan nama lengkap Anda',
+            icon: Icons.person_outline,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Nama tidak boleh kosong';
@@ -590,48 +551,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   Widget _buildSaveButton(BuildContext context, ThemeData theme) {
-    return SizedBox(
-      width: double.infinity,
+    return CoreLoadingButton(
+      onPressed: _saveProfile,
+      text: 'SIMPAN PERUBAHAN',
+      isLoading: _isLoading,
       height: 56,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: AppColors.primary.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child:
-            _isLoading
-                ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text('Menyimpan...'),
-                  ],
-                )
-                : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(_isUploading ? Icons.upload : Icons.save, size: 20),
-                    const SizedBox(width: 8),
-                    Text(_isUploading ? 'Uploading...' : 'Simpan Perubahan'),
-                  ],
-                ),
-      ),
+      icon: Icons.save_outlined,
     );
   }
 }
