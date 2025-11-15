@@ -52,6 +52,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Android - keep gradle wrapper files (important for building)
+!android/gradlew
+!android/gradlew.bat
+!android/gradle/wrapper/gradle-wrapper.jar
 
 # iOS related
 **/ios/**/*.mode1v3
