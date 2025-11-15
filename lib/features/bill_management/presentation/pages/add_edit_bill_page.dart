@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/bill_model.dart';
 import '../provider/bill_provider.dart';
 
@@ -20,9 +19,9 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
-  final _categoryController = TextEditingController();
   final _notesController = TextEditingController();
 
+  String? _selectedCategory;
   DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 7));
   BillFrequency _selectedFrequency = BillFrequency.oneTime;
   bool _isRecurring = false;
@@ -55,7 +54,7 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
     _titleController.text = bill.title;
     _descriptionController.text = bill.description;
     _amountController.text = bill.amount.toString();
-    _categoryController.text = bill.category;
+    _selectedCategory = bill.category;
     _notesController.text = bill.notes ?? '';
     _selectedDueDate = bill.dueDate;
     _selectedFrequency = bill.frequency;
@@ -69,7 +68,6 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
     _titleController.dispose();
     _descriptionController.dispose();
     _amountController.dispose();
-    _categoryController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -99,7 +97,7 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
           padding: const EdgeInsets.all(16),
           children: [
             // Title Field
-            _buildTextField(
+            CoreTextField(
               controller: _titleController,
               label: 'Judul Tagihan',
               hint: 'Contoh: Tagihan Listrik Bulan Januari',
@@ -115,7 +113,7 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 16),
 
             // Description Field
-            _buildTextField(
+            CoreTextField(
               controller: _descriptionController,
               label: 'Deskripsi (Opsional)',
               hint: 'Deskripsi detail tagihan',
@@ -126,13 +124,10 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 16),
 
             // Amount Field
-            _buildTextField(
+            CoreAmountInput(
               controller: _amountController,
               label: 'Jumlah Tagihan',
               hint: '0',
-              icon: Icons.account_balance_wallet_outlined,
-              keyboardType: TextInputType.number,
-              inputFormatters: [ThousandInputFormatter()],
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Jumlah tagihan harus diisi';
@@ -148,11 +143,19 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 16),
 
             // Category Field
-            _buildDropdownField(
-              controller: _categoryController,
+            CoreDropdown<String>(
+              value: _selectedCategory,
+              onChanged: (newValue) {
+                setState(() => _selectedCategory = newValue);
+              },
               label: 'Kategori',
               icon: Icons.category_outlined,
-              items: _categories,
+              items: _categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Kategori harus dipilih';
@@ -164,7 +167,14 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 16),
 
             // Due Date Field
-            _buildDateField(),
+            CoreDatePicker(
+              selectedDate: _selectedDueDate,
+              onDateSelected: (date) {
+                setState(() => _selectedDueDate = date);
+              },
+              label: 'Jatuh Tempo',
+              firstDate: DateTime.now(),
+            ),
 
             const SizedBox(height: 16),
 
@@ -179,7 +189,7 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 16),
 
             // Notes Field
-            _buildTextField(
+            CoreTextField(
               controller: _notesController,
               label: 'Catatan (Opsional)',
               hint: 'Catatan tambahan',
@@ -190,149 +200,13 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 32),
 
             // Save Button
-            ElevatedButton(
+            CoreLoadingButton(
               onPressed: _saveBill,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                isEditing ? 'Update Tagihan' : 'Simpan Tagihan',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              text: isEditing ? 'Update Tagihan' : 'Simpan Tagihan',
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required List<String> items,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: controller.text.isEmpty ? null : controller.text,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-          items:
-              items.map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              controller.text = newValue;
-            }
-          },
-          validator: validator,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Jatuh Tempo',
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _selectDate,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_outlined, color: AppColors.primary),
-                const SizedBox(width: 12),
-                Text(
-                  '${_selectedDueDate.day}/${_selectedDueDate.month}/${_selectedDueDate.year}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const Spacer(),
-                const Icon(Icons.arrow_drop_down),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -464,20 +338,6 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
     );
   }
 
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDueDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null && picked != _selectedDueDate) {
-      setState(() {
-        _selectedDueDate = picked;
-      });
-    }
-  }
-
   void _saveBill() {
     if (_formKey.currentState!.validate()) {
       try {
@@ -489,7 +349,7 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           amount: amount,
-          category: _categoryController.text.trim(),
+          category: _selectedCategory ?? '',
           dueDate: _selectedDueDate,
           status: BillStatus.pending,
           frequency: _selectedFrequency,

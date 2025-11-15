@@ -54,14 +54,8 @@ class BillModel extends Equatable {
       amount: (data['amount'] ?? 0.0).toDouble(),
       category: data['category'] ?? '',
       dueDate: (data['dueDate'] as Timestamp).toDate(),
-      status: BillStatus.values.firstWhere(
-        (e) => e.toString() == data['status'],
-        orElse: () => BillStatus.pending,
-      ),
-      frequency: BillFrequency.values.firstWhere(
-        (e) => e.toString() == data['frequency'],
-        orElse: () => BillFrequency.oneTime,
-      ),
+      status: _parseStatus(data['status']),
+      frequency: _parseFrequency(data['frequency']),
       nextDueDate:
           data['nextDueDate'] != null
               ? (data['nextDueDate'] as Timestamp).toDate()
@@ -87,8 +81,8 @@ class BillModel extends Equatable {
       'amount': amount,
       'category': category,
       'dueDate': Timestamp.fromDate(dueDate),
-      'status': status.toString(),
-      'frequency': frequency.toString(),
+      'status': status.name,
+      'frequency': frequency.name,
       'nextDueDate':
           nextDueDate != null ? Timestamp.fromDate(nextDueDate!) : null,
       'paidDate': paidDate != null ? Timestamp.fromDate(paidDate!) : null,
@@ -161,4 +155,28 @@ class BillModel extends Equatable {
     createdAt,
     updatedAt,
   ];
+}
+
+BillStatus _parseStatus(dynamic raw) {
+  if (raw is String) {
+    final normalized = raw.contains('.') ? raw.split('.').last : raw;
+    try {
+      return BillStatus.values.byName(normalized);
+    } catch (_) {
+      return BillStatus.pending;
+    }
+  }
+  return BillStatus.pending;
+}
+
+BillFrequency _parseFrequency(dynamic raw) {
+  if (raw is String) {
+    final normalized = raw.contains('.') ? raw.split('.').last : raw;
+    try {
+      return BillFrequency.values.byName(normalized);
+    } catch (_) {
+      return BillFrequency.oneTime;
+    }
+  }
+  return BillFrequency.oneTime;
 }

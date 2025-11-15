@@ -3,8 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/bill_model.dart';
 
 class BillRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  BillRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+  }) : _firestore = firestore,
+       _auth = auth;
 
   String get _userId => _auth.currentUser?.uid ?? '';
 
@@ -23,12 +29,9 @@ class BillRepository {
           .orderBy(FieldPath.documentId, descending: false)
           .snapshots()
           .map((snapshot) {
-            final bills =
-                snapshot.docs
-                    .map((doc) => BillModel.fromFirestore(doc))
-                    .toList();
-
-            return bills;
+            return snapshot.docs
+                .map((doc) => BillModel.fromFirestore(doc))
+                .toList();
           })
           .handleError((error) {
             return <BillModel>[];
@@ -48,7 +51,7 @@ class BillRepository {
       return _firestore
           .collection('bills')
           .where('userId', isEqualTo: _userId)
-          .where('status', isEqualTo: status.toString())
+          .where('status', isEqualTo: status.name)
           .orderBy('dueDate', descending: false)
           .orderBy(FieldPath.documentId, descending: false)
           .snapshots()
@@ -78,7 +81,7 @@ class BillRepository {
       return _firestore
           .collection('bills')
           .where('userId', isEqualTo: _userId)
-          .where('status', isEqualTo: BillStatus.pending.toString())
+          .where('status', isEqualTo: BillStatus.pending.name)
           .where('dueDate', isLessThan: now)
           .orderBy('dueDate', descending: false)
           .orderBy(FieldPath.documentId, descending: false)
@@ -111,7 +114,7 @@ class BillRepository {
       return _firestore
           .collection('bills')
           .where('userId', isEqualTo: _userId)
-          .where('status', isEqualTo: BillStatus.pending.toString())
+          .where('status', isEqualTo: BillStatus.pending.name)
           .where('dueDate', isGreaterThanOrEqualTo: now)
           .where('dueDate', isLessThanOrEqualTo: nextWeek)
           .orderBy('dueDate', descending: false)
@@ -175,7 +178,7 @@ class BillRepository {
   Future<void> markAsPaid(String billId) async {
     final now = DateTime.now();
     await _firestore.collection('bills').doc(billId).update({
-      'status': BillStatus.paid.toString(),
+      'status': BillStatus.paid.name,
       'paidDate': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
     });
@@ -185,7 +188,7 @@ class BillRepository {
   Future<void> markAsCancelled(String billId) async {
     final now = DateTime.now();
     await _firestore.collection('bills').doc(billId).update({
-      'status': BillStatus.cancelled.toString(),
+      'status': BillStatus.cancelled.name,
       'updatedAt': Timestamp.fromDate(now),
     });
   }
@@ -196,7 +199,7 @@ class BillRepository {
     return _firestore
         .collection('bills')
         .where('userId', isEqualTo: _userId)
-        .where('status', isEqualTo: BillStatus.pending.toString())
+        .where('status', isEqualTo: BillStatus.pending.name)
         .where('hasReminder', isEqualTo: true)
         .where('dueDate', isGreaterThan: now)
         .snapshots()

@@ -1,9 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/repositories/bill_repository.dart';
 
 final billRepositoryProvider = Provider<BillRepository>((ref) {
-  return BillRepository();
+  return BillRepository(
+    firestore: FirebaseFirestore.instance,
+    auth: FirebaseAuth.instance,
+  );
 });
 
 final billsProvider = StreamProvider<List<BillModel>>((ref) {
