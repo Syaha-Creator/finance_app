@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../data/models/recurring_transaction_model.dart';
 import '../../data/repositories/recurring_transaction_repository.dart';
-import 'transaction_provider.dart';
 
 // 1. Provider untuk Repository
 final recurringTransactionRepositoryProvider =

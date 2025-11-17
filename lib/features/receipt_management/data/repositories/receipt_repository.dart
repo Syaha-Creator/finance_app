@@ -196,7 +196,7 @@ class ReceiptRepository {
       final ref = _storage.refFromURL(imageUrl);
       await ref.delete();
     } catch (e) {
-      Logger.warn('Failed to delete image: $e');
+      AppLogger.error('Failed to delete image', e);
       // Don't throw error for image deletion failure
     }
   }

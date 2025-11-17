@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_providers.dart';
 
 class MonthlyComparison extends ConsumerWidget {
@@ -236,9 +237,7 @@ class MonthlyComparison extends ConsumerWidget {
       ),
       child: const Padding(
         padding: EdgeInsets.all(20),
-        child: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        child: Center(child: CoreLoadingState(color: AppColors.primary)),
       ),
     );
   }

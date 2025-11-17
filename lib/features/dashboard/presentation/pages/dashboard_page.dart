@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_viewmodel_provider.dart';
 import '../widgets/index.dart';
 
@@ -28,7 +29,7 @@ class DashboardPage extends ConsumerWidget {
         child: viewModelAsync.when(
           loading:
               () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CoreLoadingState(color: AppColors.primary),
               ),
           error: (err, stack) => Center(child: Text('Error: $err')),
           data:

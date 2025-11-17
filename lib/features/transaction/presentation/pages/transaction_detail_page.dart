@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/category_icons.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -55,7 +56,6 @@ class TransactionDetailPage extends ConsumerWidget {
               onPressed: () async {
                 final navigator = Navigator.of(dialogContext);
                 final pageNavigator = Navigator.of(context);
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
 
                 try {
                   await ref
@@ -65,40 +65,14 @@ class TransactionDetailPage extends ConsumerWidget {
                   navigator.pop();
                   pageNavigator.pop();
 
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 8),
-                          const Text('Transaksi berhasil dihapus'),
-                        ],
-                      ),
-                      backgroundColor: AppColors.income,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
+                  if (context.mounted) {
+                    CoreSnackbar.showSuccess(context, 'Transaksi berhasil dihapus');
+                  }
                 } catch (e) {
                   navigator.pop();
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Text('Gagal menghapus: $e'),
-                        ],
-                      ),
-                      backgroundColor: AppColors.expense,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
+                  if (context.mounted) {
+                    CoreSnackbar.showError(context, 'Gagal menghapus: $e');
+                  }
                 }
               },
             ),

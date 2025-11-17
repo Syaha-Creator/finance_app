@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/setting_model.dart';
 import '../providers/settings_provider.dart';
 
@@ -150,7 +151,7 @@ class _MasterDataExpansionTileState
                       () => const SizedBox(
                         width: 12,
                         height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CoreLoadingState(size: 12),
                       ),
                   error:
                       (_, __) => const Text(
@@ -249,11 +250,7 @@ class _MasterDataExpansionTileState
       child: const Center(
         child: Column(
           children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            CoreLoadingState(size: 24),
             SizedBox(height: 12),
             Text('Memuat data...'),
           ],
@@ -679,32 +676,16 @@ class _MasterDataExpansionTileState
                               );
                               if (success && dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      '${widget.title} berhasil ditambahkan',
-                                    ),
-                                    backgroundColor: AppColors.success,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
+                                if (context.mounted) {
+                                  CoreSnackbar.showSuccess(
+                                    context,
+                                    '${widget.title} berhasil ditambahkan',
+                                  );
+                                }
                               } else if (dialogContext.mounted) {
-                                ScaffoldMessenger.of(
+                                CoreSnackbar.showError(
                                   dialogContext,
-                                ).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Gagal menambah ${widget.title}',
-                                    ),
-                                    backgroundColor: AppColors.error,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
+                                  'Gagal menambah ${widget.title}',
                                 );
                               }
                             }
@@ -714,7 +695,7 @@ class _MasterDataExpansionTileState
                           ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CoreLoadingState(size: 20),
                           )
                           : const Text('Simpan'),
                 );
@@ -816,27 +797,15 @@ class _MasterDataExpansionTileState
                   final success = await widget.onDelete(item.id);
                   if (success) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${widget.title} berhasil dihapus'),
-                          backgroundColor: AppColors.success,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                      CoreSnackbar.showSuccess(
+                        context,
+                        '${widget.title} berhasil dihapus',
                       );
                     }
                   } else if (dialogContext.mounted) {
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      SnackBar(
-                        content: Text('Gagal menghapus ${widget.title}'),
-                        backgroundColor: AppColors.error,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    CoreSnackbar.showError(
+                      dialogContext,
+                      'Gagal menghapus ${widget.title}',
                     );
                   }
                 },

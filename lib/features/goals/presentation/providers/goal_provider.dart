@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../../data/models/goal_model.dart';

@@ -26,10 +26,10 @@ class AuthRepository {
       await userCredential.user?.reload();
       return _firebaseAuth.currentUser;
     } on FirebaseAuthException catch (e) {
-      Logger.error('Firebase Auth Exception on SignUp', e);
+      AppLogger.error('Firebase Auth Exception on SignUp', e);
       throw Exception(e.message);
     } catch (e) {
-      Logger.error('Error during Email Sign Up', e as Object?);
+      AppLogger.error('Error during Email Sign Up', e);
       rethrow;
     }
   }
@@ -45,10 +45,10 @@ class AuthRepository {
       );
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      Logger.error('Firebase Auth Exception on SignIn', e);
+      AppLogger.error('Firebase Auth Exception on SignIn', e);
       throw Exception(e.message);
     } catch (e) {
-      Logger.error('Error during Email Sign In', e as Object?);
+      AppLogger.error('Error during Email Sign In', e);
       rethrow;
     }
   }
@@ -75,10 +75,10 @@ class AuthRepository {
 
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      Logger.error('Firebase Auth Exception on Google Sign In', e);
+      AppLogger.error('Firebase Auth Exception on Google SignIn', e);
       rethrow;
     } catch (e) {
-      Logger.error('Error during Google Sign In', e as Object?);
+      AppLogger.error('Error during Google Sign In', e);
       rethrow;
     }
   }
@@ -87,10 +87,10 @@ class AuthRepository {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      Logger.error('Firebase Auth Exception on Reset Password', e);
+      AppLogger.error('Firebase Auth Exception on Reset Password', e);
       throw Exception(e.message);
     } catch (e) {
-      Logger.error('Error during Reset Password', e as Object?);
+      AppLogger.error('Error during Reset Password', e);
       rethrow;
     }
   }
@@ -100,7 +100,7 @@ class AuthRepository {
       await _googleSignIn.signOut();
       await _firebaseAuth.signOut();
     } catch (e) {
-      Logger.error('Error during Sign Out', e as Object?);
+      AppLogger.error('Error during Sign Out', e);
       rethrow;
     }
   }

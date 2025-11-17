@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/receipt_model.dart';
-import '../provider/receipt_provider.dart';
+import '../providers/receipt_provider.dart';
 
 class ReceiptListItem extends ConsumerWidget {
   final ReceiptModel receipt;

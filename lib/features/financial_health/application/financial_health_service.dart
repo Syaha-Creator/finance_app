@@ -2,9 +2,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../asset/data/models/asset_model.dart';
-import '../../asset/presentation/provider/asset_provider.dart';
+import '../../asset/presentation/providers/asset_provider.dart';
 import '../../debt/data/models/debt_receivable_model.dart';
-import '../../debt/presentation/provider/debt_provider.dart';
+import '../../debt/presentation/providers/debt_provider.dart';
 import '../../transaction/data/models/transaction_model.dart';
 import '../../transaction/presentation/providers/transaction_provider.dart';
 import '../domain/entities/financial_health_analysis.dart';

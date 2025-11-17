@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/bill_model.dart';
-import '../provider/bill_provider.dart';
+import '../providers/bill_provider.dart';
 
 class BillListItem extends ConsumerWidget {
   final BillModel bill;

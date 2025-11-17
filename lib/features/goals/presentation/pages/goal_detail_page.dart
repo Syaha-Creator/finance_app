@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -429,12 +430,7 @@ class GoalDetailPage extends ConsumerWidget {
                 onPressed: () {
                   Navigator.of(context).pop();
                   // Mark later functionality - will be checked again when page is refreshed
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Goal akan ditandai selesai nanti'),
-                      backgroundColor: AppColors.primary,
-                    ),
-                  );
+                  CoreSnackbar.showInfo(context, 'Goal akan ditandai selesai nanti');
                 },
                 child: const Text('Nanti'),
               ),
@@ -463,25 +459,16 @@ class GoalDetailPage extends ConsumerWidget {
       ref.read(goalControllerProvider.notifier).updateGoal(updatedGoal);
 
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('🎉 "${goal.name}" telah ditandai selesai!'),
-          backgroundColor: AppColors.income,
-          duration: const Duration(seconds: 3),
-        ),
+      CoreSnackbar.showSuccess(
+        context,
+        '🎉 "${goal.name}" telah ditandai selesai!',
       );
 
       // Navigate back to goals page
       Navigator.of(context).pop();
     } catch (e) {
       // Show error message if update fails
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menandai goal selesai: $e'),
-          backgroundColor: AppColors.expense,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      CoreSnackbar.showError(context, 'Gagal menandai goal selesai: $e');
     }
   }
 
@@ -556,8 +543,10 @@ class GoalDetailPage extends ConsumerWidget {
               transactionsAsync.when(
                 loading:
                     () => const Center(
-                      child: CircularProgressIndicator(
+                      child: CoreLoadingState(
+                        size: 20,
                         color: AppColors.primary,
+                        compact: true,
                       ),
                     ),
                 error: (error, stack) => Center(child: Text('Error: $error')),

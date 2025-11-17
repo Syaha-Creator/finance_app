@@ -5,7 +5,7 @@ import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/investment_model.dart';
-import '../provider/investment_provider.dart';
+import '../providers/investment_provider.dart';
 
 class AddEditInvestmentPage extends ConsumerStatefulWidget {
   final InvestmentModel? investment;

@@ -64,7 +64,7 @@ class OCRService {
       }
       return null;
     } catch (e) {
-      Logger.error('Error picking image from camera', e);
+      AppLogger.error('Error picking image from camera', e);
       return null;
     }
   }
@@ -84,7 +84,7 @@ class OCRService {
       }
       return null;
     } catch (e) {
-      Logger.error('Error picking image from gallery', e);
+      AppLogger.error('Error picking image from gallery', e);
       return null;
     }
   }

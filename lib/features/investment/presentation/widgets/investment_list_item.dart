@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/investment_model.dart';
-import '../provider/investment_provider.dart';
+import '../providers/investment_provider.dart';
 
 class InvestmentListItem extends ConsumerWidget {
   final InvestmentModel investment;

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/logger.dart';
-import '../../../core/utils/result.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/result.dart';
 import '../data/models/goal_model.dart';
 import '../data/repositories/goal_repository.dart';
 import '../presentation/providers/goal_provider.dart';
@@ -75,7 +75,7 @@ class GoalProgressService {
       await _goalRepository.updateGoal(updatedGoal);
     } catch (e) {
       // Log error but don't throw to avoid breaking transaction flow
-      Logger.error('Error updating goal progress', e as Object?);
+      AppLogger.error('Error updating goal progress', e);
     }
   }
 
@@ -132,7 +132,7 @@ class GoalProgressService {
         'remainingAmount': remainingAmount,
       };
     } catch (e) {
-      Logger.error('Error getting goal progress summary', e as Object?);
+      AppLogger.error('Error getting goal progress summary', e);
       return {
         'currentAmount': 0.0,
         'progressPercentage': 0.0,

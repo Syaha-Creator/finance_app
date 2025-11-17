@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../data/models/budget_model.dart';
 import '../providers/budget_providers.dart';
@@ -166,13 +167,9 @@ class BudgetCategoryItem extends ConsumerWidget {
                                 navigator.pop();
                               } else {
                                 if (dialogContext.mounted) {
-                                  ScaffoldMessenger.of(
+                                  CoreSnackbar.showError(
                                     dialogContext,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Gagal menyimpan anggaran'),
-                                      backgroundColor: Colors.red,
-                                    ),
+                                    'Gagal menyimpan anggaran',
                                   );
                                 }
                               }
@@ -183,7 +180,7 @@ class BudgetCategoryItem extends ConsumerWidget {
                           ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CoreLoadingState(size: 20),
                           )
                           : const Text('Simpan'),
                 );

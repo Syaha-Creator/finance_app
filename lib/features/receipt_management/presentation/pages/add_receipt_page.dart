@@ -7,7 +7,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../application/ocr_service.dart';
 import '../../data/models/receipt_model.dart';
-import '../provider/receipt_provider.dart';
+import '../providers/receipt_provider.dart';
 import '../../data/models/ocr_result.dart';
 
 class AddReceiptPage extends ConsumerStatefulWidget {

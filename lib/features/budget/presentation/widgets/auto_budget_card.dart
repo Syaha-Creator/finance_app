@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../../widgets/app_loading_indicator.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../data/models/budget_model.dart';
@@ -96,7 +96,6 @@ class AutoBudgetCard extends ConsumerWidget {
     Map<String, double> suggestions,
   ) async {
     final selectedDate = ref.read(selectedDateProvider);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     // Buat daftar model budget dari saran
     final List<BudgetModel> budgetsToSave =
@@ -115,20 +114,11 @@ class AutoBudgetCard extends ConsumerWidget {
         .read(budgetControllerProvider.notifier)
         .saveMultipleBudgets(budgetsToSave);
 
+    if (!context.mounted) return;
     if (success) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Budget otomatis berhasil diterapkan!'),
-          backgroundColor: AppColors.income,
-        ),
-      );
+      CoreSnackbar.showSuccess(context, 'Budget otomatis berhasil diterapkan!');
     } else {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Gagal menerapkan budget.'),
-          backgroundColor: AppColors.expense,
-        ),
-      );
+      CoreSnackbar.showError(context, 'Gagal menerapkan budget.');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../providers/transaction_provider.dart';
 
 class TransferForm extends ConsumerWidget {
@@ -63,7 +64,7 @@ class TransferForm extends ConsumerWidget {
         _buildDatePicker(context, theme),
         const SizedBox(height: 16),
         accountsValue.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CoreLoadingState()),
           error: (err, stack) => Text('Error: $err'),
           data: (accounts) {
             return DropdownButtonFormField<String>(
@@ -88,7 +89,7 @@ class TransferForm extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         accountsValue.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CoreLoadingState()),
           error: (err, stack) => Text('Error: $err'),
           data: (accounts) {
             // --- PERBAIKAN TIPE DROPDOWN ---

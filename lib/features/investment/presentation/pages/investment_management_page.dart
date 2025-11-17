@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../provider/investment_provider.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../providers/investment_provider.dart';
 import '../widgets/portfolio_summary_card.dart';
 import '../widgets/investment_list_item.dart';
 import 'package:go_router/go_router.dart';
@@ -71,7 +72,7 @@ class _InvestmentManagementPageState
                   margin: EdgeInsets.all(16),
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CoreLoadingState()),
                   ),
                 ),
             error:
@@ -254,7 +255,7 @@ class _InvestmentManagementPageState
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CoreLoadingState()),
       error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
@@ -289,7 +290,7 @@ class _InvestmentManagementPageState
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CoreLoadingState()),
       error:
           (error, stack) => Center(
             child: Column(

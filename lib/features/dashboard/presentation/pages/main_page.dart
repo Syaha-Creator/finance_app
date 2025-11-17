@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../transaction/presentation/pages/transaction_page.dart';
@@ -608,15 +609,10 @@ class _MainPageState extends ConsumerState<MainPage> {
 
                     // Notifications List
                     notificationsAsync.when(
-                      loading:
-                          () => const Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CoreLoadingState(),
+                      ),
                       error:
                           (err, stack) => Padding(
                             padding: const EdgeInsets.all(20),

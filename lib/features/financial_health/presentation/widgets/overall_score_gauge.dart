@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../domain/entities/financial_health_analysis.dart';
 
 class OverallScoreGauge extends StatelessWidget {
@@ -99,21 +100,19 @@ class OverallScoreGauge extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   // Background Circle
-                  CircularProgressIndicator(
+                  CoreProgressIndicator(
                     value: 1.0,
                     strokeWidth: 12,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest
                         .withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.outline.withValues(alpha: 0.2),
-                    ),
+                    valueColor: theme.colorScheme.outline.withValues(alpha: 0.2),
                   ),
                   // Progress Circle
-                  CircularProgressIndicator(
+                  CoreProgressIndicator(
                     value: (analysis.overallScore / 100.0).clamp(0.0, 1.0),
                     strokeWidth: 12,
                     backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    valueColor: color,
                   ),
                   // Center Content
                   Center(

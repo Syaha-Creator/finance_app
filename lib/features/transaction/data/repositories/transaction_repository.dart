@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
@@ -189,7 +190,7 @@ class TransactionRepository {
           .map((doc) => TransactionModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      Logger.error('Error getting transactions by goal ID', e);
+      AppLogger.error('Error getting transactions by goal ID', e);
       return [];
     }
   }

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart' as core_widgets;
+import '../../../../core/widgets/core_snackbar.dart';
+import '../../../../core/utils/error_message_formatter.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -109,45 +112,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
   void _submit() async {
     if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.warning_rounded,
-                    color: AppColors.warning,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Anda harus menyetujui syarat dan ketentuan terlebih dahulu',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.warning,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+      CoreSnackbar.showWarning(
+        context,
+        'Anda harus menyetujui syarat dan ketentuan terlebih dahulu',
+      );
       return;
     }
 
@@ -165,7 +133,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
-        AuthErrorSnackbar.show(context, e.toString());
+        CoreSnackbar.showError(
+          context,
+          ErrorMessageFormatter.formatAuthError(e),
+        );
       }
     }
   }
@@ -186,363 +157,331 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
         child: LayoutBuilder(
           builder: (context, constraints) {
             return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Animated Logo and Header - More compact
-                            FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: SlideTransition(
-                                position: _slideAnimation,
-                                child: Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.2,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Animated Logo and Header - More compact
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 25,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                // Animated logo - WOW design with gradient and glow!
+                                ScaleTransition(
+                                  scale: _scaleAnimation,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topRight,
+                                        end: Alignment.bottomLeft,
+                                        colors: [
+                                          Colors.white.withValues(alpha: 0.2),
+                                          Colors.white.withValues(alpha: 0.05),
+                                          Colors.white.withValues(alpha: 0.15),
+                                        ],
                                       ),
-                                      width: 1.5,
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          blurRadius: 18,
+                                          spreadRadius: 2,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                        BoxShadow(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          blurRadius: 35,
+                                          spreadRadius: 3,
+                                          offset: const Offset(0, 12),
+                                        ),
+                                      ],
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
                                           alpha: 0.1,
                                         ),
-                                        blurRadius: 25,
-                                        offset: const Offset(0, 12),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      // Animated logo - WOW design with gradient and glow!
-                                      ScaleTransition(
-                                        scale: _scaleAnimation,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topRight,
-                                              end: Alignment.bottomLeft,
-                                              colors: [
-                                                Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                Colors.white.withValues(
-                                                  alpha: 0.05,
-                                                ),
-                                                Colors.white.withValues(
-                                                  alpha: 0.15,
-                                                ),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              24,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.4,
-                                              ),
-                                              width: 2.5,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.3,
-                                                ),
-                                                blurRadius: 18,
-                                                spreadRadius: 2,
-                                                offset: const Offset(0, 6),
-                                              ),
-                                              BoxShadow(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                blurRadius: 35,
-                                                spreadRadius: 3,
-                                                offset: const Offset(0, 12),
-                                              ),
-                                            ],
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
                                           ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(18),
-                                              border: Border.all(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: Image.asset(
-                                              'assets/finance_app_logo.png',
-                                              height: 72,
-                                              width: 72,
-                                            ),
-                                          ),
+                                          width: 1,
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
-
-                                      Text(
-                                        'Finance App',
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: -0.5,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Colors.black
-                                                      .withValues(alpha: 0.3),
-                                                  offset: const Offset(0, 2),
-                                                  blurRadius: 4,
-                                                ),
-                                              ],
-                                            ),
+                                      child: Image.asset(
+                                        'assets/finance_app_logo.png',
+                                        height: 72,
+                                        width: 72,
                                       ),
-                                      const SizedBox(height: 6),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
 
-                                      Text(
-                                        'Mulai perjalanan keuangan yang cerdas',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.95,
-                                              ),
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.1,
-                                            ),
-                                        textAlign: TextAlign.center,
+                                Text(
+                                  'Finance App',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 4,
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
+                                const SizedBox(height: 6),
 
-                            const SizedBox(height: 24),
-
-                            // Animated Register Form - More compact
-                            SlideTransition(
-                              position: _slideAnimation,
-                              child: FadeTransition(
-                                opacity: _fadeAnimation,
-                                child: Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                        blurRadius: 25,
-                                        offset: const Offset(0, 12),
-                                      ),
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        blurRadius: 50,
-                                        offset: const Offset(0, 25),
-                                      ),
-                                    ],
+                                Text(
+                                  'Mulai perjalanan keuangan yang cerdas',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.1,
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      // Welcome text - More compact
-                                      Text(
-                                        'Buat Akun Baru! 🚀',
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: -0.5,
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 6),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
 
-                                      Text(
-                                        'Daftar untuk mulai mengelola keuanganmu',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color:
-                                                  theme
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                              fontWeight: FontWeight.w500,
-                                              height: 1.3,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                                      // Name Field - More compact
-                                      CompactTextField(
-                                        controller: _nameController,
-                                        label: 'Nama Lengkap',
-                                        icon: Icons.person_rounded,
-                                        primaryColor: AppColors.secondary,
-                                        borderRadius: 14,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Nama tidak boleh kosong';
-                                          }
-                                          if (value.length < 2) {
-                                            return 'Nama minimal 2 karakter';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 14),
+                      // Animated Register Form - More compact
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 25,
+                                  offset: const Offset(0, 12),
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 50,
+                                  offset: const Offset(0, 25),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Welcome text - More compact
+                                Text(
+                                  'Buat Akun Baru! 🚀',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 6),
 
-                                      // Email Field - More compact
-                                      CompactTextField(
-                                        controller: _emailController,
-                                        label: 'Email',
-                                        icon: Icons.email_rounded,
-                                        keyboardType: TextInputType.emailAddress,
-                                        primaryColor: AppColors.secondary,
-                                        borderRadius: 14,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Email tidak boleh kosong';
-                                          }
-                                          if (!value.contains('@')) {
-                                            return 'Email tidak valid';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 14),
+                                Text(
+                                  'Daftar untuk mulai mengelola keuanganmu',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.3,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 20),
 
-                                      // Password Field - More compact
-                                      CompactTextField(
-                                        controller: _passwordController,
-                                        label: 'Password',
-                                        icon: Icons.lock_rounded,
-                                        isPassword: true,
-                                        isPasswordVisible: _isPasswordVisible,
-                                        onPasswordVisibilityToggle: () {
-                                          setState(() {
-                                            _isPasswordVisible =
-                                                !_isPasswordVisible;
-                                          });
-                                        },
-                                        primaryColor: AppColors.secondary,
-                                        borderRadius: 14,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Password tidak boleh kosong';
-                                          }
-                                          if (value.length < 6) {
-                                            return 'Password minimal 6 karakter';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 14),
+                                // Name Field - More compact
+                                CompactTextField(
+                                  controller: _nameController,
+                                  label: 'Nama Lengkap',
+                                  icon: Icons.person_rounded,
+                                  primaryColor: AppColors.secondary,
+                                  borderRadius: 14,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Nama tidak boleh kosong';
+                                    }
+                                    if (value.length < 2) {
+                                      return 'Nama minimal 2 karakter';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
 
-                                      // Confirm Password Field - More compact
-                                      CompactTextField(
-                                        controller: _confirmPasswordController,
-                                        label: 'Konfirmasi Password',
-                                        icon: Icons.lock_reset_rounded,
-                                        isPassword: true,
-                                        isPasswordVisible: _isConfirmPasswordVisible,
-                                        onPasswordVisibilityToggle: () {
-                                          setState(() {
-                                            _isConfirmPasswordVisible =
-                                                !_isConfirmPasswordVisible;
-                                          });
-                                        },
-                                        primaryColor: AppColors.secondary,
-                                        borderRadius: 14,
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Konfirmasi password tidak boleh kosong';
-                                          }
-                                          if (value != _passwordController.text) {
-                                            return 'Password tidak cocok';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                      const SizedBox(height: 20),
+                                // Email Field - More compact
+                                CompactTextField(
+                                  controller: _emailController,
+                                  label: 'Email',
+                                  icon: Icons.email_rounded,
+                                  keyboardType: TextInputType.emailAddress,
+                                  primaryColor: AppColors.secondary,
+                                  borderRadius: 14,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Email tidak boleh kosong';
+                                    }
+                                    if (!value.contains('@')) {
+                                      return 'Email tidak valid';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
 
-                                      // Terms and Conditions - More compact
-                                      _buildCompactTermsCheckbox(theme),
-                                      const SizedBox(height: 20),
+                                // Password Field - More compact
+                                CompactTextField(
+                                  controller: _passwordController,
+                                  label: 'Password',
+                                  icon: Icons.lock_rounded,
+                                  isPassword: true,
+                                  isPasswordVisible: _isPasswordVisible,
+                                  onPasswordVisibilityToggle: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
+                                  primaryColor: AppColors.secondary,
+                                  borderRadius: 14,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Password tidak boleh kosong';
+                                    }
+                                    if (value.length < 6) {
+                                      return 'Password minimal 6 karakter';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
 
-                                      // Register Button - More compact
-                                      CompactButton(
-                                        onPressed: _isLoading ? null : _submit,
-                                        height: 44,
-                                        borderRadius: 14,
-                                        gradientColors: const [
-                                          AppColors.secondary,
-                                          AppColors.secondaryLight,
-                                        ],
-                                        shadowColor: AppColors.secondary,
-                                        child: _isLoading
-                                            ? SizedBox(
-                                                height: 18,
-                                                width: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2.5,
-                                                  valueColor:
-                                                      const AlwaysStoppedAnimation<
-                                                          Color>(Colors.white),
-                                                ),
-                                              )
-                                            : Text(
-                                                'Daftar Sekarang',
-                                                style: theme.textTheme
-                                                    .titleMedium?.copyWith(
+                                // Confirm Password Field - More compact
+                                CompactTextField(
+                                  controller: _confirmPasswordController,
+                                  label: 'Konfirmasi Password',
+                                  icon: Icons.lock_reset_rounded,
+                                  isPassword: true,
+                                  isPasswordVisible: _isConfirmPasswordVisible,
+                                  onPasswordVisibilityToggle: () {
+                                    setState(() {
+                                      _isConfirmPasswordVisible =
+                                          !_isConfirmPasswordVisible;
+                                    });
+                                  },
+                                  primaryColor: AppColors.secondary,
+                                  borderRadius: 14,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Konfirmasi password tidak boleh kosong';
+                                    }
+                                    if (value != _passwordController.text) {
+                                      return 'Password tidak cocok';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Terms and Conditions - More compact
+                                _buildCompactTermsCheckbox(theme),
+                                const SizedBox(height: 20),
+
+                                // Register Button - More compact
+                                CompactButton(
+                                  onPressed: _isLoading ? null : _submit,
+                                  height: 44,
+                                  borderRadius: 14,
+                                  gradientColors: const [
+                                    AppColors.secondary,
+                                    AppColors.secondaryLight,
+                                  ],
+                                  shadowColor: AppColors.secondary,
+                                  child:
+                                      _isLoading
+                                          ? core_widgets.CoreLoadingState(
+                                            size: 18,
+                                            color: Colors.white,
+                                            strokeWidth: 2.5,
+                                            compact: true,
+                                          )
+                                          : Text(
+                                            'Daftar Sekarang',
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 0.3,
                                                 ),
-                                              ),
-                                      ),
-                                      const SizedBox(height: 24),
-
-                                      // Login Link - More compact
-                                      _buildCompactLoginLink(theme),
-                                    ],
-                                  ),
+                                          ),
                                 ),
-                              ),
+                                const SizedBox(height: 24),
+
+                                // Login Link - More compact
+                                _buildCompactLoginLink(theme),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ),
             );
           },
         ),
       ),
     );
   }
-
 
   Widget _buildCompactTermsCheckbox(ThemeData theme) {
     return AnimatedContainer(

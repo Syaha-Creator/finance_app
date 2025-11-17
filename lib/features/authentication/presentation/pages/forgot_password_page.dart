@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart' as core_widgets;
+import '../../../../core/widgets/core_snackbar.dart';
+import '../../../../core/utils/error_message_formatter.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -103,7 +106,10 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
-        AuthErrorSnackbar.show(context, e.toString());
+        CoreSnackbar.showError(
+          context,
+          ErrorMessageFormatter.formatAuthError(e),
+        );
       }
     }
   }
@@ -228,11 +234,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                   ? SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(
+                    child: core_widgets.CoreLoadingState(
+                      size: 18,
+                      color: Colors.white,
                       strokeWidth: 2.5,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
+                      compact: true,
                     ),
                   )
                   : Text(

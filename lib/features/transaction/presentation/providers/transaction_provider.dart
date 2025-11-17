@@ -1,20 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../settings/data/models/setting_model.dart';
 import '../../../settings/presentation/providers/settings_provider.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/repositories/transaction_repository.dart';
-
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
-});
-
-final firebaseAuthProvider = Provider<FirebaseAuth>(
-  (ref) => FirebaseAuth.instance,
-);
 
 final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
   return TransactionRepository(

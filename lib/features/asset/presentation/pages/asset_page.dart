@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/asset_model.dart';
-import '../provider/asset_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/asset_provider.dart';
 
 class AssetPage extends ConsumerWidget {
   const AssetPage({super.key});
@@ -36,43 +37,10 @@ class AssetPage extends ConsumerWidget {
             // Content
             Expanded(
               child: assetsAsyncValue.when(
-                loading:
-                    () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                error:
-                    (err, stack) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: theme.colorScheme.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Terjadi kesalahan',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Error: $err',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                loading: () => const CoreLoadingState(),
+                error: (err, stack) => AppErrorWidget(
+                  message: err.toString(),
+                ),
                 data: (assets) {
                   if (assets.isEmpty) {
                     return _buildEmptyState(context, theme);
@@ -444,10 +412,28 @@ class _AssetListItem extends ConsumerWidget {
               TextButton(
                 onPressed: () async {
                   final navigator = Navigator.of(dialogContext);
-                  await ref
-                      .read(assetControllerProvider.notifier)
-                      .deleteAsset(asset.id!);
                   navigator.pop();
+                  await ref
+                      .read(assetNotifierProvider.notifier)
+                      .deleteAsset(asset.id!);
+                  
+                  // Check state after operation
+                  final state = ref.read(assetNotifierProvider);
+                  state.when(
+                    data: (_) {
+                      CoreSnackbar.showSuccess(
+                        context,
+                        'Aset berhasil dihapus',
+                      );
+                    },
+                    loading: () {},
+                    error: (error, _) {
+                      CoreSnackbar.showError(
+                        context,
+                        'Gagal menghapus aset: $error',
+                      );
+                    },
+                  );
                 },
                 child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               ),

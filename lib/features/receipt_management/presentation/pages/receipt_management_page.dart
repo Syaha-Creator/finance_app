@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../provider/receipt_provider.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../providers/receipt_provider.dart';
 import '../widgets/receipt_list_item.dart';
 import '../widgets/receipt_summary_card.dart';
 import 'package:go_router/go_router.dart';
@@ -70,7 +71,7 @@ class _ReceiptManagementPageState extends ConsumerState<ReceiptManagementPage>
                   margin: EdgeInsets.all(16),
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CoreLoadingState()),
                   ),
                 ),
             error:
@@ -141,7 +142,7 @@ class _ReceiptManagementPageState extends ConsumerState<ReceiptManagementPage>
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CoreLoadingState()),
       error:
           (error, stack) => Center(
             child: Column(

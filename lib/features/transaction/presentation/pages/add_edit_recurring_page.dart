@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/thousand_input_formatter.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/recurring_transaction_model.dart';
 import '../../data/models/transaction_model.dart';
@@ -61,20 +60,14 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      final navigator = Navigator.of(context);
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-
       final amount = double.parse(_amountController.text.replaceAll('.', ''));
       final userId = ref.read(authStateChangesProvider).value?.uid;
 
       if (userId == null) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Error: Pengguna tidak ditemukan. Silakan login ulang.',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        if (!mounted) return;
+        CoreSnackbar.showError(
+          context,
+          'Pengguna tidak ditemukan. Silakan login ulang.',
         );
         return;
       }
@@ -101,23 +94,15 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
               ? await controller.update(newRecurring)
               : await controller.add(newRecurring);
 
-      if (success && mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}',
-            ),
-            backgroundColor: Colors.green,
-          ),
+      if (!mounted) return;
+      if (success) {
+        CoreSnackbar.showSuccess(
+          context,
+          'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}',
         );
-        navigator.pop();
-      } else if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Gagal menyimpan jadwal'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Navigator.of(context).pop();
+      } else {
+        CoreSnackbar.showError(context, 'Gagal menyimpan jadwal');
       }
     }
   }
@@ -190,11 +175,7 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
                   if (isLoading)
                     Container(
                       color: Colors.black.withValues(alpha: 0.5),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
+                      child: const CoreLoadingState(),
                     ),
                 ],
               ),
@@ -333,51 +314,31 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
   }
 
   Widget _buildDescriptionField() {
-    return TextFormField(
+    return CoreTextField(
       controller: _descriptionController,
-      decoration: const InputDecoration(
-        labelText: 'Keterangan',
-        hintText: 'Contoh: Bayar internet, Gaji bulanan, dll',
-        prefixIcon: Icon(Icons.description),
-      ),
-      validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+      label: 'Keterangan',
+      hint: 'Contoh: Bayar internet, Gaji bulanan, dll',
+      icon: Icons.description,
+      validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
     );
   }
 
   Widget _buildAmountField() {
-    return TextFormField(
+    return CoreAmountInput(
       controller: _amountController,
-      decoration: const InputDecoration(
-        labelText: 'Jumlah',
-        hintText: 'Masukkan jumlah transaksi',
-        prefixIcon: Icon(Icons.attach_money),
-        prefixText: 'Rp ',
-      ),
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        ThousandInputFormatter(),
-      ],
-      validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+      label: 'Jumlah',
+      hint: 'Masukkan jumlah transaksi',
+      validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
     );
   }
 
   Widget _buildSubmitButton() {
     final isLoading = ref.watch(recurringTransactionControllerProvider);
 
-    return ElevatedButton(
-      onPressed: isLoading ? null : _submit,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 0,
-      ),
-      child: Text(
-        isEditMode ? 'UPDATE JADWWAL' : 'SIMPAN JADWAL',
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
+    return CoreLoadingButton(
+      onPressed: _submit,
+      text: isEditMode ? 'UPDATE JADWAL' : 'SIMPAN JADWAL',
+      isLoading: isLoading,
     );
   }
 
@@ -407,44 +368,42 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
             : incomeCategoriesProvider;
     final categoriesAsync = ref.watch(provider);
     return categoriesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const CoreLoadingState(size: 20),
       error: (err, stack) => Text('Error: $err'),
-      data:
-          (categories) => DropdownButtonFormField<String>(
-            initialValue: _selectedCategory,
-            decoration: const InputDecoration(labelText: 'Kategori'),
-            items:
-                categories
-                    .map(
-                      (c) =>
-                          DropdownMenuItem(value: c.name, child: Text(c.name)),
-                    )
-                    .toList(),
-            onChanged: (val) => setState(() => _selectedCategory = val),
-            validator: (v) => v == null ? 'Wajib dipilih' : null,
-          ),
+      data: (categories) {
+        return CoreDropdown<String>(
+          value: _selectedCategory,
+          onChanged: (val) => setState(() => _selectedCategory = val),
+          label: 'Kategori',
+          items: categories
+              .map(
+                (c) => DropdownMenuItem(value: c.name, child: Text(c.name)),
+              )
+              .toList(),
+          validator: (v) => v == null ? 'Wajib dipilih' : null,
+        );
+      },
     );
   }
 
   Widget _buildAccountDropdown() {
     final accountsAsync = ref.watch(accountsProvider);
     return accountsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const CoreLoadingState(size: 20),
       error: (err, stack) => Text('Error: $err'),
-      data:
-          (accounts) => DropdownButtonFormField<String>(
-            initialValue: _selectedAccount,
-            decoration: const InputDecoration(labelText: 'Akun'),
-            items:
-                accounts
-                    .map(
-                      (a) =>
-                          DropdownMenuItem(value: a.name, child: Text(a.name)),
-                    )
-                    .toList(),
-            onChanged: (val) => setState(() => _selectedAccount = val),
-            validator: (v) => v == null ? 'Wajib dipilih' : null,
-          ),
+      data: (accounts) {
+        return CoreDropdown<String>(
+          value: _selectedAccount,
+          onChanged: (val) => setState(() => _selectedAccount = val),
+          label: 'Akun',
+          items: accounts
+              .map(
+                (a) => DropdownMenuItem(value: a.name, child: Text(a.name)),
+              )
+              .toList(),
+          validator: (v) => v == null ? 'Wajib dipilih' : null,
+        );
+      },
     );
   }
 

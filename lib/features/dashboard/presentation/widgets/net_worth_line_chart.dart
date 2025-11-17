@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_summary_provider.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -48,7 +49,7 @@ class NetWorthLineChart extends ConsumerWidget {
       child: const Padding(
         padding: EdgeInsets.all(20),
         child: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CoreLoadingState(color: AppColors.primary),
         ),
       ),
     );

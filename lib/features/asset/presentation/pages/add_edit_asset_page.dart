@@ -7,7 +7,7 @@ import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/asset_model.dart';
-import '../provider/asset_provider.dart';
+import '../providers/asset_provider.dart';
 
 class AddEditAssetPage extends ConsumerStatefulWidget {
   final AssetModel? asset;
@@ -24,7 +24,7 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
   AssetType? _selectedType;
 
   bool get _isEditMode => widget.asset != null;
-  bool get _isLoading => ref.watch(assetControllerProvider);
+  bool get _isLoading => ref.watch(assetNotifierProvider).isLoading;
 
   @override
   void initState() {
@@ -65,16 +65,22 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
           value: value,
           type: _selectedType,
         );
-        final success = await ref
-            .read(assetControllerProvider.notifier)
+        await ref
+            .read(assetNotifierProvider.notifier)
             .updateAsset(updatedAsset);
+
         if (!mounted) return;
-        if (success) {
-          CoreSnackbar.showSuccess(context, 'Aset berhasil diperbarui');
-          Navigator.of(context).pop();
-        } else {
-          CoreSnackbar.showError(context, 'Gagal memperbarui aset');
-        }
+        final state = ref.read(assetNotifierProvider);
+        state.when(
+          data: (_) {
+            CoreSnackbar.showSuccess(context, 'Aset berhasil diperbarui');
+            Navigator.of(context).pop();
+          },
+          loading: () {},
+          error: (error, _) {
+            CoreSnackbar.showError(context, 'Gagal memperbarui aset: $error');
+          },
+        );
       } else {
         final newAsset = AssetModel(
           userId: userId,
@@ -84,16 +90,20 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
           createdAt: DateTime.now(),
           lastUpdatedAt: DateTime.now(),
         );
-        final success = await ref
-            .read(assetControllerProvider.notifier)
-            .addAsset(newAsset);
+        await ref.read(assetNotifierProvider.notifier).addAsset(newAsset);
+
         if (!mounted) return;
-        if (success) {
-          CoreSnackbar.showSuccess(context, 'Aset berhasil disimpan');
-          Navigator.of(context).pop();
-        } else {
-          CoreSnackbar.showError(context, 'Gagal menyimpan aset');
-        }
+        final state = ref.read(assetNotifierProvider);
+        state.when(
+          data: (_) {
+            CoreSnackbar.showSuccess(context, 'Aset berhasil disimpan');
+            Navigator.of(context).pop();
+          },
+          loading: () {},
+          error: (error, _) {
+            CoreSnackbar.showError(context, 'Gagal menyimpan aset: $error');
+          },
+        );
       }
     }
   }
@@ -141,8 +151,10 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
                     Container(
                       color: Colors.black.withValues(alpha: 0.5),
                       child: const Center(
-                        child: CircularProgressIndicator(
+                        child: CoreLoadingState(
+                          size: 20,
                           color: AppColors.primary,
+                          compact: true,
                         ),
                       ),
                     ),

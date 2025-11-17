@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_providers.dart';
 import '../../../goals/data/models/goal_model.dart';
 
@@ -84,29 +85,21 @@ class FinancialHealthScore extends ConsumerWidget {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: CircularProgressIndicator(
-                        value: 1.0,
-                        strokeWidth: 8,
-                        backgroundColor: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.1,
-                        ),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.outline.withValues(alpha: 0.2),
-                        ),
+                    CoreProgressIndicator(
+                      value: 1.0,
+                      size: 120,
+                      strokeWidth: 8,
+                      backgroundColor: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.1,
                       ),
+                      valueColor: theme.colorScheme.outline.withValues(alpha: 0.2),
                     ),
-                    SizedBox(
-                      width: 120,
-                      height: 120,
-                      child: CircularProgressIndicator(
-                        value: score / 100,
-                        strokeWidth: 8,
-                        backgroundColor: Colors.transparent,
-                        valueColor: AlwaysStoppedAnimation<Color>(healthColor),
-                      ),
+                    CoreProgressIndicator(
+                      value: score / 100,
+                      size: 120,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.transparent,
+                      valueColor: healthColor,
                     ),
                     Center(
                       child: Column(

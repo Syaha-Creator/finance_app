@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -184,10 +184,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     if (_selectedImage == null) return;
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final firebaseAuth = ref.read(firebaseAuthProvider);
+      final firebaseStorage = ref.read(firebaseStorageProvider);
+
+      final user = firebaseAuth.currentUser;
       if (user == null) throw Exception('User tidak ditemukan');
 
-      final storageRef = FirebaseStorage.instance
+      final storageRef = firebaseStorage
           .ref()
           .child('profile_photos')
           .child('${user.uid}.jpg');
@@ -211,7 +214,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final firebaseAuth = ref.read(firebaseAuthProvider);
+      final user = firebaseAuth.currentUser;
       if (user == null) throw Exception('User tidak ditemukan');
 
       // Update display name
@@ -282,7 +286,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ) ??
         false;
   }
-
 
   @override
   Widget build(BuildContext context) {

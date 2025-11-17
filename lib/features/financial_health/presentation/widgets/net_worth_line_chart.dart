@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../../widgets/app_loading_indicator.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 
@@ -141,14 +142,14 @@ class NetWorthLineChart extends ConsumerWidget {
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CoreLoadingState(size: 20, strokeWidth: 2, compact: true),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Text('Memuat data kekayaan...'),
                     ],
                   ),

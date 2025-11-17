@@ -7,7 +7,7 @@ import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/debt_receivable_model.dart';
-import '../provider/debt_provider.dart';
+import '../providers/debt_provider.dart';
 
 class AddEditDebtPage extends ConsumerStatefulWidget {
   final DebtReceivableModel? debt;
@@ -23,7 +23,7 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   bool get _isEditMode => widget.debt != null;
-  bool get _isLoading => ref.watch(debtControllerProvider);
+  bool get _isLoading => ref.watch(debtNotifierProvider).isLoading;
 
   DateTime? _dueDate;
   DebtReceivableType _selectedType = DebtReceivableType.debt;
@@ -80,17 +80,22 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
           status: widget.debt!.status,
         );
 
-        final success = await ref
-            .read(debtControllerProvider.notifier)
+        await ref
+            .read(debtNotifierProvider.notifier)
             .updateDebt(updatedDebt);
 
         if (!mounted) return;
-        if (success) {
-          CoreSnackbar.showSuccess(context, 'Catatan berhasil diperbarui');
-          Navigator.of(context).pop();
-        } else {
-          CoreSnackbar.showError(context, 'Gagal memperbarui catatan');
-        }
+        final state = ref.read(debtNotifierProvider);
+        state.when(
+          data: (_) {
+            CoreSnackbar.showSuccess(context, 'Catatan berhasil diperbarui');
+            Navigator.of(context).pop();
+          },
+          loading: () {},
+          error: (error, _) {
+            CoreSnackbar.showError(context, 'Gagal memperbarui catatan: $error');
+          },
+        );
       } else {
         final newDebt = DebtReceivableModel(
           userId: userId,
@@ -103,17 +108,22 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
           status: PaymentStatus.unpaid,
         );
 
-        final success = await ref
-            .read(debtControllerProvider.notifier)
+        await ref
+            .read(debtNotifierProvider.notifier)
             .addDebt(newDebt);
 
         if (!mounted) return;
-        if (success) {
-          CoreSnackbar.showSuccess(context, 'Catatan berhasil disimpan');
-          Navigator.of(context).pop();
-        } else {
-          CoreSnackbar.showError(context, 'Gagal menyimpan catatan');
-        }
+        final state = ref.read(debtNotifierProvider);
+        state.when(
+          data: (_) {
+            CoreSnackbar.showSuccess(context, 'Catatan berhasil disimpan');
+            Navigator.of(context).pop();
+          },
+          loading: () {},
+          error: (error, _) {
+            CoreSnackbar.showError(context, 'Gagal menyimpan catatan: $error');
+          },
+        );
       }
     }
   }
@@ -161,8 +171,10 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
                     Container(
                       color: Colors.black.withValues(alpha: 0.5),
                       child: const Center(
-                        child: CircularProgressIndicator(
+                        child: CoreLoadingState(
+                          size: 20,
                           color: AppColors.primary,
+                          compact: true,
                         ),
                       ),
                     ),

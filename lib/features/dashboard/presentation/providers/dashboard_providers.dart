@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../asset/presentation/provider/asset_provider.dart';
+import '../../../asset/presentation/providers/asset_provider.dart';
 import '../../../budget/data/models/budget_model.dart';
 import '../../../budget/presentation/providers/budget_providers.dart';
 import '../../../debt/data/models/debt_receivable_model.dart';
-import '../../../debt/presentation/provider/debt_provider.dart';
+import '../../../debt/presentation/providers/debt_provider.dart';
 import '../../../goals/data/models/goal_model.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../../transaction/data/models/transaction_model.dart';

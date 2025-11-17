@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/bill_model.dart';
-import '../provider/bill_provider.dart';
+import '../providers/bill_provider.dart';
 
 class AddEditBillPage extends ConsumerStatefulWidget {
   final BillModel? bill;
@@ -379,12 +379,8 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
 
         Navigator.pop(context);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal menyimpan tagihan: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (!mounted) return;
+        CoreSnackbar.showError(context, 'Gagal menyimpan tagihan: $e');
       }
     }
   }

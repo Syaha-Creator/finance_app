@@ -17,3 +17,6 @@ class Logger {
     debugPrint('[ERROR] $message$errorPart$stackPart');
   }
 }
+
+// Alias for backward compatibility
+typedef AppLogger = Logger;

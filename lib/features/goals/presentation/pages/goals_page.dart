@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
 
@@ -40,43 +41,10 @@ class GoalsPage extends ConsumerWidget {
             // Content
             Expanded(
               child: goalsAsync.when(
-                loading:
-                    () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                error:
-                    (err, stack) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: theme.colorScheme.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Terjadi kesalahan',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Error: $err',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                loading: () => const CoreLoadingState(),
+                error: (err, stack) => AppErrorWidget(
+                  message: err.toString(),
+                ),
                 data: (goals) {
                   if (goals.isEmpty) {
                     return _buildEmptyState(context, theme);

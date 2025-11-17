@@ -15,4 +15,6 @@ class FirestoreConstants {
   static const String budgetsCollection = 'budgets';
   static const String billsCollection = 'bills';
   static const String assetsCollection = 'assets';
+  // Keep categoriesCollection for backward compatibility if used
+  static const String categoriesCollection = 'categories';
 }

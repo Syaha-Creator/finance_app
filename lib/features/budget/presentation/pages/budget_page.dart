@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
-import '../../../../core/widgets/notification_highlight.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/budget_model.dart';
@@ -50,9 +50,7 @@ class BudgetPage extends ConsumerWidget {
               child: expenseCategoriesAsync.when(
                 loading:
                     () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
+                      child: CoreLoadingState(color: AppColors.primary),
                     ),
                 error: (err, stack) => _buildErrorState(context, theme, err),
                 data: (categories) {
@@ -62,9 +60,7 @@ class BudgetPage extends ConsumerWidget {
                   return budgetsAsyncValue.when(
                     loading:
                         () => const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                          ),
+                          child: CoreLoadingState(color: AppColors.primary),
                         ),
                     error:
                         (err, stack) => _buildErrorState(context, theme, err),

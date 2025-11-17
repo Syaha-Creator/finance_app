@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/error_widget.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../provider/bill_provider.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../providers/bill_provider.dart';
 import '../widgets/bill_list_item.dart';
 import '../widgets/bill_summary_card.dart';
 import '../../data/models/bill_model.dart';
@@ -67,7 +66,7 @@ class _BillManagementPageState extends ConsumerState<BillManagementPage> {
                   margin: EdgeInsets.all(16),
                   child: Padding(
                     padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CoreLoadingState()),
                   ),
                 ),
             error:
@@ -119,7 +118,7 @@ class _BillManagementPageState extends ConsumerState<BillManagementPage> {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CoreLoadingState()),
       error:
           (error, stack) => AppErrorWidget(
             title: 'Gagal Memuat Data',

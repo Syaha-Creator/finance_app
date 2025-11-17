@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import '../theme/app_colors.dart';
-
 import 'package:go_router/go_router.dart';
+
+import '../theme/app_colors.dart';
+import '../utils/logger.dart';
 
 // Custom notification priority enum to avoid conflicts
 enum LocalNotificationPriority { low, medium, high, urgent }
@@ -71,7 +72,7 @@ class LocalNotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap
-    debugPrint('Notification tapped: ${response.payload}');
+    AppLogger.info('Notification tapped: ${response.payload}');
 
     // Parse payload untuk mendapatkan informasi navigasi
     final navigationData = _parseNotificationPayload(response.payload);
@@ -95,7 +96,7 @@ class LocalNotificationService {
         };
       }
     } catch (e) {
-      debugPrint('Error parsing notification payload: $e');
+      AppLogger.error('Error parsing notification payload', e);
     }
     return null;
   }
@@ -108,7 +109,7 @@ class LocalNotificationService {
 
     // Pastikan navigator key tersedia
     if (navigatorKey.currentState == null) {
-      debugPrint('Navigator not available');
+      AppLogger.warn('Navigator not available');
       return;
     }
 
@@ -133,10 +134,10 @@ class LocalNotificationService {
           _handleInvestmentNavigation(action, data);
           break;
         default:
-          debugPrint('Unknown notification type: $type');
+          AppLogger.warn('Unknown notification type: $type');
       }
     } catch (e) {
-      debugPrint('Error navigating to screen: $e');
+      AppLogger.error('Error navigating to screen', e);
     }
   }
 

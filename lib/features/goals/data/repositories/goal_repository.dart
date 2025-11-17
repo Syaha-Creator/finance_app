@@ -73,7 +73,7 @@ class GoalRepository {
       }
       return null;
     } catch (e) {
-      Logger.error('Error getting goal by ID', e as Object?);
+      AppLogger.error('Error getting goal by ID', e);
       return null;
     }
   }

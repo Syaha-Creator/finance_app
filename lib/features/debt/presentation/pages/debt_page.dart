@@ -4,10 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/debt_receivable_model.dart';
-import '../provider/debt_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/debt_provider.dart';
 
 class DebtPage extends ConsumerStatefulWidget {
   const DebtPage({super.key});
@@ -262,10 +263,7 @@ class _DebtList extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return debtsAsyncValue.when(
-      loading:
-          () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
+      loading: () => const Center(child: CoreLoadingState()),
       error:
           (err, stack) => Center(
             child: Padding(
@@ -714,9 +712,9 @@ class _DebtListItem extends ConsumerWidget {
                               ),
                             ],
                         onSelected: (value) {
-                        if (value == 'edit') {
-                          context.push('/add-debt', extra: {'debt': debt});
-                        } else if (value == 'delete') {
+                          if (value == 'edit') {
+                            context.push('/add-debt', extra: {'debt': debt});
+                          } else if (value == 'delete') {
                             _showDeleteConfirmationDialog(context, ref, debt);
                           }
                         },
@@ -761,9 +759,7 @@ class _DebtListItem extends ConsumerWidget {
                   builder: (context, ref, child) {
                     final accountsValue = ref.watch(accountsProvider);
                     return accountsValue.when(
-                      loading:
-                          () =>
-                              const Center(child: CircularProgressIndicator()),
+                      loading: () => const Center(child: CoreLoadingState()),
                       error: (err, stack) => Text('Error: $err'),
                       data:
                           (accounts) => DropdownButtonFormField<String>(
@@ -796,7 +792,8 @@ class _DebtListItem extends ConsumerWidget {
             ),
             Consumer(
               builder: (context, innerRef, child) {
-                final isLoading = innerRef.watch(debtControllerProvider);
+                final isLoading =
+                    innerRef.watch(debtNotifierProvider).isLoading;
                 return ElevatedButton(
                   onPressed:
                       isLoading
@@ -804,11 +801,22 @@ class _DebtListItem extends ConsumerWidget {
                           : () async {
                             if (formKey.currentState!.validate()) {
                               final navigator = Navigator.of(dialogContext);
-                              final success = await innerRef
-                                  .read(debtControllerProvider.notifier)
+                              await innerRef
+                                  .read(debtNotifierProvider.notifier)
                                   .markAsPaid(debt, selectedAccount!);
 
-                              if (success) navigator.pop();
+                              final state = innerRef.read(debtNotifierProvider);
+                              state.when(
+                                data: (_) => navigator.pop(),
+                                loading: () {},
+                                error: (error, _) {
+                                  navigator.pop();
+                                  CoreSnackbar.showError(
+                                    context,
+                                    'Gagal menandai sebagai lunas: $error',
+                                  );
+                                },
+                              );
                             }
                           },
                   child:
@@ -816,7 +824,7 @@ class _DebtListItem extends ConsumerWidget {
                           ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CoreLoadingState(size: 20),
                           )
                           : const Text('LUNAS'),
                 );
@@ -848,25 +856,42 @@ class _DebtListItem extends ConsumerWidget {
             ),
             Consumer(
               builder: (context, innerRef, child) {
-                final isLoading = innerRef.watch(debtControllerProvider);
+                final isLoading =
+                    innerRef.watch(debtNotifierProvider).isLoading;
                 return ElevatedButton(
                   onPressed:
                       isLoading
                           ? null
                           : () async {
                             final navigator = Navigator.of(dialogContext);
-                            final success = await innerRef
-                                .read(debtControllerProvider.notifier)
+                            navigator.pop();
+                            await innerRef
+                                .read(debtNotifierProvider.notifier)
                                 .deleteDebt(debt.id!);
 
-                            if (success) navigator.pop();
+                            final state = innerRef.read(debtNotifierProvider);
+                            state.when(
+                              data: (_) {
+                                CoreSnackbar.showSuccess(
+                                  context,
+                                  'Catatan berhasil dihapus',
+                                );
+                              },
+                              loading: () {},
+                              error: (error, _) {
+                                CoreSnackbar.showError(
+                                  context,
+                                  'Gagal menghapus catatan: $error',
+                                );
+                              },
+                            );
                           },
                   child:
                       isLoading
                           ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CoreLoadingState(size: 20),
                           )
                           : const Text('Hapus'),
                 );
