@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/constants/firestore_constants.dart';
-import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../models/transaction_model.dart';
 

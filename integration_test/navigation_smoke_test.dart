@@ -19,8 +19,8 @@ import 'package:finance_app/features/transaction/presentation/pages/recurring_tr
 import 'package:finance_app/features/dashboard/presentation/pages/financial_health_page.dart';
 // Providers to override in tests (to avoid Firebase in smoke run)
 import 'package:finance_app/features/transaction/presentation/providers/transaction_provider.dart';
-import 'package:finance_app/features/asset/presentation/provider/asset_provider.dart';
-import 'package:finance_app/features/debt/presentation/provider/debt_provider.dart';
+import 'package:finance_app/features/asset/presentation/providers/asset_provider.dart';
+import 'package:finance_app/features/debt/presentation/providers/debt_provider.dart';
 import 'package:finance_app/features/transaction/presentation/providers/recurring_transaction_provider.dart';
 import 'package:finance_app/features/goals/presentation/providers/goal_provider.dart';
 import 'package:finance_app/features/budget/presentation/providers/budget_providers.dart';
