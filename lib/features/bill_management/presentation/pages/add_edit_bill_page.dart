@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/bill_model.dart';
 import '../provider/bill_provider.dart';
 
@@ -150,12 +151,13 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
               },
               label: 'Kategori',
               icon: Icons.category_outlined,
-              items: _categories.map((category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
+              items:
+                  _categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Kategori harus dipilih';
@@ -200,9 +202,12 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
             const SizedBox(height: 32),
 
             // Save Button
-            CoreLoadingButton(
+            LoadingActionButton(
               onPressed: _saveBill,
+              isLoading: false,
               text: isEditing ? 'Update Tagihan' : 'Simpan Tagihan',
+              icon: isEditing ? Icons.save_outlined : Icons.add,
+              height: 56,
             ),
           ],
         ),

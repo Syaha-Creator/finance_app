@@ -4,7 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../provider/investment_provider.dart';
 import '../widgets/portfolio_summary_card.dart';
 import '../widgets/investment_list_item.dart';
-import 'add_edit_investment_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/empty_state.dart';
 
 class InvestmentManagementPage extends ConsumerStatefulWidget {
   const InvestmentManagementPage({super.key});
@@ -102,14 +103,7 @@ class _InvestmentManagementPageState
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddEditInvestmentPage(),
-            ),
-          );
-        },
+        onPressed: () => context.push('/add-investment'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -270,29 +264,15 @@ class _InvestmentManagementPageState
       data: (investments) {
         if (investments.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.trending_up_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Belum ada investasi',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tambahkan investasi pertama Anda',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            child: EmptyState(
+              icon: Icons.trending_up_outlined,
+              title: 'Belum ada investasi',
+              subtitle: 'Tambahkan investasi pertama Anda',
+              action: TextButton.icon(
+                onPressed: () => context.push('/add-investment'),
+                icon: const Icon(Icons.add),
+                label: const Text('Tambah Investasi'),
+              ),
             ),
           );
         }

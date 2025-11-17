@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/debt_receivable_model.dart';
 import '../provider/debt_provider.dart';
@@ -391,10 +392,12 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             const SizedBox(height: 28),
 
             // Submit Button
-            CoreLoadingButton(
+            LoadingActionButton(
               onPressed: _submitForm,
-              text: _isEditMode ? 'PERBARUI CATATAN' : 'SIMPAN CATATAN',
               isLoading: _isLoading,
+              text: _isEditMode ? 'PERBARUI CATATAN' : 'SIMPAN CATATAN',
+              icon: _isEditMode ? Icons.save_outlined : Icons.add,
+              height: 56,
             ),
           ],
         ),

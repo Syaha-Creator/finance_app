@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../theme/app_colors.dart';
-import '../routes/app_routes.dart';
+
+import 'package:go_router/go_router.dart';
 
 // Custom notification priority enum to avoid conflicts
 enum LocalNotificationPriority { low, medium, high, urgent }
@@ -141,144 +142,130 @@ class LocalNotificationService {
 
   // Handle navigasi untuk budget notifications
   void _handleBudgetNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.budget);
+        router.go('/budget');
         break;
       case 'warning':
-        // Navigate ke budget dengan highlight kategori yang warning
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.budget,
-          arguments: {'highlightCategory': data},
-        );
+        router.go('/budget', extra: {'highlightCategory': data});
         break;
       case 'exceeded':
-        // Navigate ke budget dengan highlight kategori yang exceeded
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.budget,
-          arguments: {'highlightCategory': data, 'status': 'exceeded'},
+        router.go(
+          '/budget',
+          extra: {'highlightCategory': data, 'status': 'exceeded'},
         );
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.budget);
+        router.go('/budget');
     }
   }
 
   // Handle navigasi untuk goal notifications
   void _handleGoalNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.goals);
+        router.go('/goals');
         break;
       case 'progress':
-        // Navigate ke goals dengan highlight goal yang progress
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.goals,
-          arguments: {'highlightGoal': data},
-        );
+        router.go('/goals', extra: {'highlightGoal': data});
         break;
       case 'deadline':
-        // Navigate ke goals dengan highlight goal yang deadline
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.goals,
-          arguments: {'highlightGoal': data, 'status': 'deadline'},
+        router.go(
+          '/goals',
+          extra: {'highlightGoal': data, 'status': 'deadline'},
         );
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.goals);
+        router.go('/goals');
     }
   }
 
   // Handle navigasi untuk debt notifications
   void _handleDebtNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.debt);
+        router.go('/debt');
         break;
       case 'due_soon':
-        // Navigate ke debt dengan highlight debt yang due soon
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.debt,
-          arguments: {'highlightDebt': data, 'status': 'due_soon'},
+        router.go(
+          '/debt',
+          extra: {'highlightDebt': data, 'status': 'due_soon'},
         );
         break;
       case 'overdue':
-        // Navigate ke debt dengan highlight debt yang overdue
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.debt,
-          arguments: {'highlightDebt': data, 'status': 'overdue'},
-        );
+        router.go('/debt', extra: {'highlightDebt': data, 'status': 'overdue'});
         break;
       case 'mark_paid':
-        // Navigate ke debt dengan highlight debt untuk mark as paid
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.debt,
-          arguments: {'highlightDebt': data, 'action': 'mark_paid'},
+        router.go(
+          '/debt',
+          extra: {'highlightDebt': data, 'action': 'mark_paid'},
         );
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.debt);
+        router.go('/debt');
     }
   }
 
   // Handle navigasi untuk asset notifications
   void _handleAssetNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.assets);
+        router.go('/assets');
         break;
       case 'investment_suggestion':
-        // Navigate ke assets dengan highlight investment
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.assets,
-          arguments: {'highlightType': 'investment'},
-        );
+        router.go('/assets', extra: {'highlightType': 'investment'});
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.assets);
+        router.go('/assets');
     }
   }
 
   // Handle navigasi untuk transaction notifications
   void _handleTransactionNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.transactions);
+        router.go('/transactions');
         break;
       case 'spending_pattern':
-        // Navigate ke reports dengan highlight spending pattern
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.reports,
-          arguments: {'highlightSection': 'spending_pattern'},
-        );
+        router.go('/reports', extra: {'highlightSection': 'spending_pattern'});
         break;
       case 'income_reminder':
-        // Navigate ke add transaction untuk income
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.addTransaction,
-          arguments: {'type': 'income'},
-        );
+        router.go('/add-transaction', extra: {'type': 'income'});
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.transactions);
+        router.go('/transactions');
     }
   }
 
   // Handle navigasi untuk investment notifications
   void _handleInvestmentNavigation(String action, String? data) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+    final router = GoRouter.of(ctx);
     switch (action) {
       case 'view':
-        navigatorKey.currentState!.pushNamed(AppRoutes.assets);
+        router.go('/assets');
         break;
       case 'suggestion':
-        // Navigate ke assets dengan focus investment
-        navigatorKey.currentState!.pushNamed(
-          AppRoutes.assets,
-          arguments: {'focus': 'investment', 'showGuide': true},
-        );
+        router.go('/assets', extra: {'focus': 'investment', 'showGuide': true});
         break;
       default:
-        navigatorKey.currentState!.pushNamed(AppRoutes.assets);
+        router.go('/assets');
     }
   }
 

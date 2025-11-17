@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/dashboard_providers.dart';
+import '../../../goals/data/models/goal_model.dart';
 
 class OverallScoreGauge extends ConsumerWidget {
   const OverallScoreGauge({super.key});

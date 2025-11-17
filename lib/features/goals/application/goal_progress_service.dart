@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/logger.dart';
+import '../../../core/utils/result.dart';
 import '../data/models/goal_model.dart';
 import '../data/repositories/goal_repository.dart';
 import '../presentation/providers/goal_provider.dart';
@@ -24,8 +26,14 @@ class GoalProgressService {
       if (goal == null) return;
 
       // Get all transactions for this goal
-      final transactions = await _transactionRepository.getTransactionsByGoalId(
-        goalId,
+      final Result<List<TransactionModel>> txRes = await _transactionRepository
+          .getTransactionsByGoalIdR(goalId);
+      final transactions = txRes.when(
+        success: (list) => list,
+        failure: (error, _) {
+          Logger.error('Failed to load transactions for goal progress', error);
+          return <TransactionModel>[];
+        },
       );
 
       // Calculate new progress
@@ -67,7 +75,7 @@ class GoalProgressService {
       await _goalRepository.updateGoal(updatedGoal);
     } catch (e) {
       // Log error but don't throw to avoid breaking transaction flow
-      print('Error updating goal progress: $e');
+      Logger.error('Error updating goal progress', e as Object?);
     }
   }
 
@@ -85,8 +93,14 @@ class GoalProgressService {
         };
       }
 
-      final transactions = await _transactionRepository.getTransactionsByGoalId(
-        goalId,
+      final Result<List<TransactionModel>> txRes = await _transactionRepository
+          .getTransactionsByGoalIdR(goalId);
+      final transactions = txRes.when(
+        success: (list) => list,
+        failure: (error, _) {
+          Logger.error('Failed to load transactions for goal summary', error);
+          return <TransactionModel>[];
+        },
       );
 
       double totalIncome = 0;
@@ -118,7 +132,7 @@ class GoalProgressService {
         'remainingAmount': remainingAmount,
       };
     } catch (e) {
-      print('Error getting goal progress summary: $e');
+      Logger.error('Error getting goal progress summary', e as Object?);
       return {
         'currentAmount': 0.0,
         'progressPercentage': 0.0,

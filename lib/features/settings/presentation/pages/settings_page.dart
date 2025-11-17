@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../asset/presentation/pages/asset_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/routes/route_paths.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
-import '../../../budget/presentation/pages/budget_page.dart';
-import '../../../debt/presentation/pages/debt_page.dart';
-import '../../../financial_health/presentation/pages/financial_health_page.dart';
-import '../../../goals/presentation/pages/goals_page.dart';
-import '../../../transaction/presentation/pages/recurring_transaction_page.dart';
+import '../../../../core/widgets/app_scaffold.dart';
+
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/master_data_expansion_tile.dart';
@@ -22,7 +20,8 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return AppScaffold(
+      title: 'Pengaturan',
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -41,28 +40,28 @@ class SettingsPage extends ConsumerWidget {
             SettingsGroup(
               title: 'PORTOFOLIO SAYA',
               children: [
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Aset Saya',
                   subtitle: 'Kelola aset dan investasi',
                   icon: Icons.account_balance_wallet_outlined,
-                  page: const AssetPage(),
+                  route: RoutePaths.assets,
                   color: AppColors.income,
                 ),
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Utang & Piutang',
                   subtitle: 'Catat utang dan piutang',
                   icon: Icons.credit_card_outlined,
-                  page: const DebtPage(),
+                  route: RoutePaths.debt,
                   color: AppColors.warning,
                 ),
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Tujuan (Goals)',
                   subtitle: 'Set dan capai tujuan finansial',
                   icon: Icons.flag_outlined,
-                  page: const GoalsPage(),
+                  route: RoutePaths.goals,
                   color: AppColors.accent,
                 ),
               ],
@@ -70,28 +69,28 @@ class SettingsPage extends ConsumerWidget {
             SettingsGroup(
               title: 'ANALISIS & PERENCANAAN',
               children: [
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Atur Anggaran Bulanan',
                   subtitle: 'Kelola budget dan pengeluaran',
                   icon: Icons.calculate_outlined,
-                  page: const BudgetPage(),
+                  route: RoutePaths.budget,
                   color: AppColors.primary,
                 ),
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Transaksi Berulang',
                   subtitle: 'Atur transaksi otomatis',
                   icon: Icons.repeat_on_outlined,
-                  page: const RecurringTransactionPage(),
+                  route: RoutePaths.recurringTransactions,
                   color: AppColors.secondary,
                 ),
-                _buildEnhancedNavListTile(
+                _buildGoNavListTile(
                   context,
                   title: 'Cek Kesehatan Finansial',
                   subtitle: 'Analisis kondisi keuangan',
                   icon: Icons.health_and_safety_outlined,
-                  page: const FinancialHealthPage(),
+                  route: RoutePaths.financialHealth,
                   color: AppColors.success,
                 ),
               ],
@@ -151,12 +150,12 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEnhancedNavListTile(
+  Widget _buildGoNavListTile(
     BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,
-    required Widget page,
+    required String route,
     required Color color,
   }) {
     final theme = Theme.of(context);
@@ -204,12 +203,7 @@ class SettingsPage extends ConsumerWidget {
             size: 18,
           ),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => page),
-          );
-        },
+        onTap: () => context.push(route),
       ),
     );
   }

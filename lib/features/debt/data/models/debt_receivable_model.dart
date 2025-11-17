@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'debt_receivable_model.freezed.dart';
+part 'debt_receivable_model.g.dart';
 
 enum DebtReceivableType { debt, receivable }
 
@@ -7,34 +10,25 @@ enum PaymentStatus { unpaid, paid }
 
 enum DebtType { productive, consumptive }
 
-class DebtReceivableModel extends Equatable {
-  final String? id;
-  final String userId;
-  final DebtReceivableType type;
-  final String personName;
-  final String description;
-  final double amount;
-  final DateTime createdAt;
-  final DateTime? dueDate;
-  final PaymentStatus status;
+@freezed
+class DebtReceivableModel with _$DebtReceivableModel {
+  const factory DebtReceivableModel({
+    String? id,
+    required String userId,
+    required DebtReceivableType type,
+    required String personName,
+    required String description,
+    required double amount,
+    required DateTime createdAt,
+    DateTime? dueDate,
+    @Default(PaymentStatus.unpaid) PaymentStatus status,
 
-  final DebtType debtType;
-  final double monthlyPayment;
+    @Default(DebtType.consumptive) DebtType debtType,
+    @Default(0.0) double monthlyPayment,
+  }) = _DebtReceivableModel;
 
-  const DebtReceivableModel({
-    this.id,
-    required this.userId,
-    required this.type,
-    required this.personName,
-    required this.description,
-    required this.amount,
-    required this.createdAt,
-    this.dueDate,
-    this.status = PaymentStatus.unpaid,
-
-    this.debtType = DebtType.consumptive,
-    this.monthlyPayment = 0.0,
-  });
+  factory DebtReceivableModel.fromJson(Map<String, dynamic> json) =>
+      _$DebtReceivableModelFromJson(json);
 
   factory DebtReceivableModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -66,6 +60,8 @@ class DebtReceivableModel extends Equatable {
     );
   }
 
+  const DebtReceivableModel._();
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -83,18 +79,4 @@ class DebtReceivableModel extends Equatable {
     };
   }
 
-  @override
-  List<Object?> get props => [
-    id,
-    userId,
-    type,
-    personName,
-    description,
-    amount,
-    createdAt,
-    dueDate,
-    status,
-    debtType,
-    monthlyPayment,
-  ];
 }

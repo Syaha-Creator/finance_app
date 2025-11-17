@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/asset_model.dart';
 import '../provider/asset_provider.dart';
@@ -361,10 +362,12 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
             const SizedBox(height: 28),
 
             // Submit Button
-            CoreLoadingButton(
+            LoadingActionButton(
               onPressed: _submitForm,
-              text: _isEditMode ? 'PERBARUI ASET' : 'SIMPAN ASET',
               isLoading: _isLoading,
+              text: _isEditMode ? 'PERBARUI ASET' : 'SIMPAN ASET',
+              icon: _isEditMode ? Icons.save_outlined : Icons.add,
+              height: 56,
             ),
           ],
         ),

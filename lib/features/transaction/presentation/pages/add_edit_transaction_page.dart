@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/income_expense_form.dart';
@@ -114,7 +115,6 @@ class _AddEditTransactionPageState
           context,
           'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
         );
-        if (_isEditMode) Navigator.of(context).pop();
         Navigator.of(context).pop();
       } catch (e) {
         if (!mounted) return;
@@ -320,30 +320,12 @@ class _AddEditTransactionPageState
                   const SizedBox(height: 20),
 
                   // Submit Button
-                  Container(
-                    width: double.infinity,
+                  LoadingActionButton(
+                    onPressed: _submitForm,
+                    isLoading: _isLoading,
+                    text: _isEditMode ? 'PERBARUI' : 'SIMPAN',
+                    icon: _isEditMode ? Icons.save_outlined : Icons.add,
                     height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: [AppColors.primary, AppColors.primaryLight],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: CoreLoadingButton(
-                      onPressed: _submitForm,
-                      text: _isEditMode ? 'PERBARUI' : 'SIMPAN',
-                      isLoading: _isLoading,
-                      icon: _isEditMode ? Icons.save_outlined : Icons.add,
-                    ),
                   ),
                 ],
               ),

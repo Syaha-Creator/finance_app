@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/asset_model.dart';
 import '../provider/asset_provider.dart';
-import 'add_edit_asset_page.dart';
+import 'package:go_router/go_router.dart';
 
 class AssetPage extends ConsumerWidget {
   const AssetPage({super.key});
@@ -123,14 +123,7 @@ class AssetPage extends ConsumerWidget {
               // Hanya tampilkan FAB jika ada data
               if (assets.isNotEmpty) {
                 return FloatingActionButton.extended(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddEditAssetPage(),
-                      ),
-                    );
-                  },
+                  onPressed: () => context.push('/add-asset'),
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add),
@@ -223,14 +216,7 @@ class AssetPage extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddEditAssetPage(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/add-asset'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -487,14 +473,7 @@ class _AssetListItem extends ConsumerWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AddEditAssetPage(asset: asset),
-              ),
-            );
-          },
+          onTap: () => context.push('/add-asset', extra: {'asset': asset}),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -597,13 +576,7 @@ class _AssetListItem extends ConsumerWidget {
                           ],
                       onSelected: (value) {
                         if (value == 'edit') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => AddEditAssetPage(asset: asset),
-                            ),
-                          );
+                          context.push('/add-asset', extra: {'asset': asset});
                         } else if (value == 'delete') {
                           _showDeleteConfirmationDialog(context, ref);
                         }

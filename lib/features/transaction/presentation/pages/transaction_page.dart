@@ -6,6 +6,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../../widgets/month_selector.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../widgets/transaction_history_list.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 
 class TransactionPage extends ConsumerWidget {
   const TransactionPage({super.key});
@@ -15,150 +16,142 @@ class TransactionPage extends ConsumerWidget {
     final analysis = ref.watch(dashboardAnalysisProvider);
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        // MonthSelector section - sama persis dengan reports page
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 70,
-                child: MonthSelector(
-                  selectedDate: ref.watch(selectedDateProvider),
-                  onDateChanged: (date) {
-                    ref.read(selectedDateProvider.notifier).state = date;
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-
-        // Content section
-        Expanded(
-          child: Column(
-            children: [
-              // Compact summary section
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    width: 1,
+    return AppScaffold(
+      title: 'Transaksi',
+      body: Column(
+        children: [
+          // MonthSelector
+          Container(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 70,
+                  child: MonthSelector(
+                    selectedDate: ref.watch(selectedDateProvider),
+                    onDateChanged: (date) {
+                      ref.read(selectedDateProvider.notifier).state = date;
+                    },
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  children: [
-                    // Income card - compact
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.trending_up_rounded,
-                        title: 'Pemasukan',
-                        value: analysis.totalIncome,
-                        color: AppColors.income,
-                        theme: theme,
-                      ),
-                    ),
-
-                    // Vertical divider
-                    Container(
-                      height: 40,
-                      width: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    ),
-
-                    // Expense card - compact
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.trending_down_rounded,
-                        title: 'Pengeluaran',
-                        value: analysis.totalExpense,
-                        color: AppColors.expense,
-                        theme: theme,
-                      ),
-                    ),
-
-                    // Vertical divider
-                    Container(
-                      height: 40,
-                      width: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    ),
-
-                    // Balance card - compact
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.account_balance_wallet_outlined,
-                        title: 'Saldo',
-                        value: analysis.balance,
-                        color: AppColors.secondary,
-                        theme: theme,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Transaction list section
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section header dengan margin yang sesuai
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.receipt_long_outlined,
-                              color: theme.colorScheme.primary,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Riwayat Transaksi',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-                    // Transaction list
-                    Expanded(child: const TransactionHistoryList()),
-                  ],
-                ),
-              ),
-            ],
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
-        ),
-      ],
+
+          // Content
+          Expanded(
+            child: Column(
+              children: [
+                // Compact summary section
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.trending_up_rounded,
+                          title: 'Pemasukan',
+                          value: analysis.totalIncome,
+                          color: AppColors.income,
+                          theme: theme,
+                        ),
+                      ),
+                      Container(
+                        height: 40,
+                        width: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.trending_down_rounded,
+                          title: 'Pengeluaran',
+                          value: analysis.totalExpense,
+                          color: AppColors.expense,
+                          theme: theme,
+                        ),
+                      ),
+                      Container(
+                        height: 40,
+                        width: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.account_balance_wallet_outlined,
+                          title: 'Saldo',
+                          value: analysis.balance,
+                          color: AppColors.secondary,
+                          theme: theme,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Transaction list section
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.receipt_long_outlined,
+                                color: theme.colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Riwayat Transaksi',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+                      const Expanded(child: TransactionHistoryList()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../asset/presentation/pages/add_edit_asset_page.dart';
-import '../../../debt/presentation/pages/add_edit_debt_page.dart';
-import '../../../goals/presentation/pages/add_edit_goal_page.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
-import '../../../transaction/presentation/pages/add_edit_transaction_page.dart';
 import '../../../transaction/presentation/pages/transaction_page.dart';
-import '../../../bill_management/presentation/pages/add_edit_bill_page.dart';
-import '../../../receipt_management/presentation/pages/add_receipt_page.dart';
-import '../../../investment/presentation/pages/add_edit_investment_page.dart';
+import 'package:go_router/go_router.dart';
 
 import 'dashboard_page.dart';
 import '../providers/smart_notification_provider.dart';
@@ -163,12 +157,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.primary,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditTransactionPage(),
-                            ),
-                          );
+                          context.push('/add-transaction');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -180,12 +169,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.income,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditAssetPage(),
-                            ),
-                          );
+                          context.push('/add-asset');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -197,12 +181,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.warning,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditDebtPage(),
-                            ),
-                          );
+                          context.push('/add-debt');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -214,12 +193,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.accent,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditGoalPage(),
-                            ),
-                          );
+                          context.push('/add-goal');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -231,12 +205,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.error,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditBillPage(),
-                            ),
-                          );
+                          context.push('/add-bill');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -248,12 +217,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.accent,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddReceiptPage(),
-                            ),
-                          );
+                          context.push('/add-receipt');
                         },
                       ),
                       const SizedBox(height: 12),
@@ -265,12 +229,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         color: AppColors.income,
                         onTap: () {
                           Navigator.pop(ctx);
-                          Navigator.push(
-                            ctx,
-                            MaterialPageRoute(
-                              builder: (_) => const AddEditInvestmentPage(),
-                            ),
-                          );
+                          context.push('/add-investment');
                         },
                       ),
                     ],

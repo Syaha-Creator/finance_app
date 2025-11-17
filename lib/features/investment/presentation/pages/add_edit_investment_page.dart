@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/investment_model.dart';
 import '../provider/investment_provider.dart';
 
@@ -129,36 +130,37 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
                   },
                   label: 'Jenis Investasi',
                   icon: Icons.category,
-                  items: InvestmentType.values.map((type) {
-                    String label;
-                    switch (type) {
-                      case InvestmentType.stock:
-                        label = 'Saham';
-                        break;
-                      case InvestmentType.mutualFund:
-                        label = 'Reksadana';
-                        break;
-                      case InvestmentType.crypto:
-                        label = 'Cryptocurrency';
-                        break;
-                      case InvestmentType.bond:
-                        label = 'Obligasi';
-                        break;
-                      case InvestmentType.gold:
-                        label = 'Emas';
-                        break;
-                      case InvestmentType.property:
-                        label = 'Properti';
-                        break;
-                      case InvestmentType.other:
-                        label = 'Lainnya';
-                        break;
-                    }
-                    return DropdownMenuItem<InvestmentType>(
-                      value: type,
-                      child: Text(label),
-                    );
-                  }).toList(),
+                  items:
+                      InvestmentType.values.map((type) {
+                        String label;
+                        switch (type) {
+                          case InvestmentType.stock:
+                            label = 'Saham';
+                            break;
+                          case InvestmentType.mutualFund:
+                            label = 'Reksadana';
+                            break;
+                          case InvestmentType.crypto:
+                            label = 'Cryptocurrency';
+                            break;
+                          case InvestmentType.bond:
+                            label = 'Obligasi';
+                            break;
+                          case InvestmentType.gold:
+                            label = 'Emas';
+                            break;
+                          case InvestmentType.property:
+                            label = 'Properti';
+                            break;
+                          case InvestmentType.other:
+                            label = 'Lainnya';
+                            break;
+                        }
+                        return DropdownMenuItem<InvestmentType>(
+                          value: type,
+                          child: Text(label),
+                        );
+                      }).toList(),
                 ),
               ],
             ),
@@ -259,9 +261,12 @@ class _AddEditInvestmentPageState extends ConsumerState<AddEditInvestmentPage> {
             const SizedBox(height: 32),
 
             // Save Button
-            CoreLoadingButton(
+            LoadingActionButton(
               onPressed: _saveInvestment,
+              isLoading: false,
               text: isEditing ? 'Update Investasi' : 'Simpan Investasi',
+              icon: isEditing ? Icons.save_outlined : Icons.add,
+              height: 56,
             ),
           ],
         ),

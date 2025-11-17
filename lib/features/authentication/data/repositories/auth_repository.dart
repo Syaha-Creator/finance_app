@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../../core/utils/logger.dart';
 
 class AuthRepository {
   final FirebaseAuth _firebaseAuth;
@@ -25,10 +26,10 @@ class AuthRepository {
       await userCredential.user?.reload();
       return _firebaseAuth.currentUser;
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Exception on SignUp: ${e.message}');
+      Logger.error('Firebase Auth Exception on SignUp', e);
       throw Exception(e.message);
     } catch (e) {
-      print('Error during Email Sign Up: $e');
+      Logger.error('Error during Email Sign Up', e as Object?);
       rethrow;
     }
   }
@@ -44,10 +45,10 @@ class AuthRepository {
       );
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Exception on SignIn: ${e.message}');
+      Logger.error('Firebase Auth Exception on SignIn', e);
       throw Exception(e.message);
     } catch (e) {
-      print('Error during Email Sign In: $e');
+      Logger.error('Error during Email Sign In', e as Object?);
       rethrow;
     }
   }
@@ -74,10 +75,10 @@ class AuthRepository {
 
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Exception: ${e.message}');
+      Logger.error('Firebase Auth Exception on Google Sign In', e);
       rethrow;
     } catch (e) {
-      print('Error during Google Sign In: $e');
+      Logger.error('Error during Google Sign In', e as Object?);
       rethrow;
     }
   }
@@ -86,10 +87,10 @@ class AuthRepository {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      print('Firebase Auth Exception on Reset Password: ${e.message}');
+      Logger.error('Firebase Auth Exception on Reset Password', e);
       throw Exception(e.message);
     } catch (e) {
-      print('Error during Reset Password: $e');
+      Logger.error('Error during Reset Password', e as Object?);
       rethrow;
     }
   }
@@ -99,7 +100,7 @@ class AuthRepository {
       await _googleSignIn.signOut();
       await _firebaseAuth.signOut();
     } catch (e) {
-      print('Error during Sign Out: $e');
+      Logger.error('Error during Sign Out', e as Object?);
       rethrow;
     }
   }

@@ -4,7 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../provider/receipt_provider.dart';
 import '../widgets/receipt_list_item.dart';
 import '../widgets/receipt_summary_card.dart';
-import 'add_receipt_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/empty_state.dart';
 
 class ReceiptManagementPage extends ConsumerStatefulWidget {
   const ReceiptManagementPage({super.key});
@@ -101,12 +102,7 @@ class _ReceiptManagementPageState extends ConsumerState<ReceiptManagementPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddReceiptPage()),
-          );
-        },
+        onPressed: () => context.push('/add-receipt'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.camera_alt),
@@ -120,29 +116,15 @@ class _ReceiptManagementPageState extends ConsumerState<ReceiptManagementPage>
       data: (receipts) {
         if (receipts.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.receipt_long_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Belum ada struk',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Scan struk pertama Anda',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            child: EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'Belum ada struk',
+              subtitle: 'Scan struk pertama Anda',
+              action: TextButton.icon(
+                onPressed: () => context.push('/add-receipt'),
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Scan Struk'),
+              ),
             ),
           );
         }

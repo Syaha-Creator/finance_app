@@ -6,7 +6,7 @@ import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../asset/presentation/provider/asset_provider.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
-import '../pages/edit_profile_page.dart';
+import 'package:go_router/go_router.dart';
 
 class UserProfileCard extends ConsumerWidget {
   const UserProfileCard({super.key});
@@ -120,14 +120,7 @@ class UserProfileCard extends ConsumerWidget {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const EditProfilePage(),
-                                ),
-                              );
-                            },
+                            onTap: () => context.push('/edit-profile'),
                             borderRadius: BorderRadius.circular(20),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(

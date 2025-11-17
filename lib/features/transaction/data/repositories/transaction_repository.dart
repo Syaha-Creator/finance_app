@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/utils/logger.dart';
+import '../../../../core/utils/result.dart';
 import '../models/transaction_model.dart';
 
 class TransactionRepository {
@@ -23,7 +25,7 @@ class TransactionRepository {
       }
 
       final query = _firestore
-          .collection('transactions')
+          .collection(FirestoreConstants.transactionsCollection)
           .where('userId', isEqualTo: userId)
           .orderBy('date', descending: true);
 
@@ -38,6 +40,7 @@ class TransactionRepository {
             return <TransactionModel>[];
           });
     } catch (e) {
+      Logger.error('getTransactionsStream failed', e);
       return Stream.value([]);
     }
   }
@@ -50,9 +53,20 @@ class TransactionRepository {
       }
 
       final data = transaction.toFirestore();
-      await _firestore.collection('transactions').add(data);
+      await _firestore
+          .collection(FirestoreConstants.transactionsCollection)
+          .add(data);
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<Result<void>> addTransactionR(TransactionModel transaction) async {
+    try {
+      await addTransaction(transaction);
+      return const Success(null);
+    } catch (e, st) {
+      return Failure(e, st);
     }
   }
 
@@ -60,7 +74,7 @@ class TransactionRepository {
     try {
       final data = transaction.toFirestore();
       await _firestore
-          .collection('transactions')
+          .collection(FirestoreConstants.transactionsCollection)
           .doc(transaction.id)
           .update(data);
     } catch (e) {
@@ -68,11 +82,32 @@ class TransactionRepository {
     }
   }
 
+  Future<Result<void>> updateTransactionR(TransactionModel transaction) async {
+    try {
+      await updateTransaction(transaction);
+      return const Success(null);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
+  }
+
   Future<void> deleteTransaction(String transactionId) async {
     try {
-      await _firestore.collection('transactions').doc(transactionId).delete();
+      await _firestore
+          .collection(FirestoreConstants.transactionsCollection)
+          .doc(transactionId)
+          .delete();
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<Result<void>> deleteTransactionR(String transactionId) async {
+    try {
+      await deleteTransaction(transactionId);
+      return const Success(null);
+    } catch (e, st) {
+      return Failure(e, st);
     }
   }
 
@@ -116,6 +151,27 @@ class TransactionRepository {
     await batch.commit();
   }
 
+  Future<Result<void>> addTransferR({
+    required double amount,
+    required String fromAccount,
+    required String toAccount,
+    required DateTime date,
+    required String description,
+  }) async {
+    try {
+      await addTransfer(
+        amount: amount,
+        fromAccount: fromAccount,
+        toAccount: toAccount,
+        date: date,
+        description: description,
+      );
+      return const Success(null);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
+  }
+
   Future<List<TransactionModel>> getTransactionsByGoalId(String goalId) async {
     final userId = _currentUserId;
     if (userId == null) return [];
@@ -133,23 +189,70 @@ class TransactionRepository {
           .map((doc) => TransactionModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error getting transactions by goal ID: $e');
+      Logger.error('Error getting transactions by goal ID', e);
       return [];
     }
   }
 
+  Future<Result<List<TransactionModel>>> getTransactionsByGoalIdR(
+    String goalId,
+  ) async {
+    try {
+      final list = await getTransactionsByGoalId(goalId);
+      return Success(list);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
+  }
+
   Future<List<String>> getExpenseCategories() async {
-    final snapshot = await _firestore.collection('expense_categories').get();
+    final snapshot =
+        await _firestore
+            .collection(FirestoreConstants.expenseCategoriesCollection)
+            .get();
     return snapshot.docs.map((doc) => doc['name'] as String).toList();
+  }
+
+  Future<Result<List<String>>> getExpenseCategoriesR() async {
+    try {
+      final list = await getExpenseCategories();
+      return Success(list);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
   }
 
   Future<List<String>> getIncomeCategories() async {
-    final snapshot = await _firestore.collection('income_categories').get();
+    final snapshot =
+        await _firestore
+            .collection(FirestoreConstants.incomeCategoriesCollection)
+            .get();
     return snapshot.docs.map((doc) => doc['name'] as String).toList();
   }
 
+  Future<Result<List<String>>> getIncomeCategoriesR() async {
+    try {
+      final list = await getIncomeCategories();
+      return Success(list);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
+  }
+
   Future<List<String>> getAccounts() async {
-    final snapshot = await _firestore.collection('accounts').get();
+    final snapshot =
+        await _firestore
+            .collection(FirestoreConstants.accountsCollection)
+            .get();
     return snapshot.docs.map((doc) => doc['name'] as String).toList();
+  }
+
+  Future<Result<List<String>>> getAccountsR() async {
+    try {
+      final list = await getAccounts();
+      return Success(list);
+    } catch (e, st) {
+      return Failure(e, st);
+    }
   }
 }

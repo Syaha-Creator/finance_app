@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/utils/logger.dart';
 import '../models/receipt_model.dart';
 
 class ReceiptRepository {
@@ -26,7 +28,7 @@ class ReceiptRepository {
     }
 
     return _firestore
-        .collection('receipts')
+        .collection(FirestoreConstants.receiptsCollection)
         .where('userId', isEqualTo: _userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
@@ -45,7 +47,7 @@ class ReceiptRepository {
     }
 
     return _firestore
-        .collection('receipts')
+        .collection(FirestoreConstants.receiptsCollection)
         .where('userId', isEqualTo: _userId)
         .where('status', isEqualTo: status.toString())
         .orderBy('createdAt', descending: true)
@@ -89,7 +91,9 @@ class ReceiptRepository {
       );
 
       final receiptMap = receiptData.toFirestore();
-      final docRef = await _firestore.collection('receipts').add(receiptMap);
+      final docRef = await _firestore
+          .collection(FirestoreConstants.receiptsCollection)
+          .add(receiptMap);
 
       return docRef.id;
     } catch (e) {
@@ -103,7 +107,7 @@ class ReceiptRepository {
       final receiptData = receipt.copyWith(updatedAt: DateTime.now());
 
       await _firestore
-          .collection('receipts')
+          .collection(FirestoreConstants.receiptsCollection)
           .doc(receipt.id)
           .update(receiptData.toFirestore());
     } catch (e) {
@@ -116,7 +120,10 @@ class ReceiptRepository {
     try {
       // Get receipt to delete image
       final receiptDoc =
-          await _firestore.collection('receipts').doc(receiptId).get();
+          await _firestore
+              .collection(FirestoreConstants.receiptsCollection)
+              .doc(receiptId)
+              .get();
 
       if (receiptDoc.exists) {
         final receipt = ReceiptModel.fromFirestore(receiptDoc);
@@ -127,7 +134,10 @@ class ReceiptRepository {
         }
 
         // Delete document
-        await _firestore.collection('receipts').doc(receiptId).delete();
+        await _firestore
+            .collection(FirestoreConstants.receiptsCollection)
+            .doc(receiptId)
+            .delete();
       }
     } catch (e) {
       throw Exception('Failed to delete receipt: $e');
@@ -137,10 +147,13 @@ class ReceiptRepository {
   // Mark receipt as processed
   Future<void> markAsProcessed(String receiptId) async {
     try {
-      await _firestore.collection('receipts').doc(receiptId).update({
-        'status': ReceiptStatus.processed.toString(),
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
+      await _firestore
+          .collection(FirestoreConstants.receiptsCollection)
+          .doc(receiptId)
+          .update({
+            'status': ReceiptStatus.processed.toString(),
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
     } catch (e) {
       throw Exception('Failed to mark receipt as processed: $e');
     }
@@ -149,10 +162,13 @@ class ReceiptRepository {
   // Mark receipt as archived
   Future<void> markAsArchived(String receiptId) async {
     try {
-      await _firestore.collection('receipts').doc(receiptId).update({
-        'status': ReceiptStatus.archived.toString(),
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
+      await _firestore
+          .collection(FirestoreConstants.receiptsCollection)
+          .doc(receiptId)
+          .update({
+            'status': ReceiptStatus.archived.toString(),
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
     } catch (e) {
       throw Exception('Failed to mark receipt as archived: $e');
     }
@@ -180,7 +196,7 @@ class ReceiptRepository {
       final ref = _storage.refFromURL(imageUrl);
       await ref.delete();
     } catch (e) {
-      print('Failed to delete image: $e');
+      Logger.warn('Failed to delete image: $e');
       // Don't throw error for image deletion failure
     }
   }
@@ -194,7 +210,7 @@ class ReceiptRepository {
 
       final receiptsSnapshot =
           await _firestore
-              .collection('receipts')
+              .collection(FirestoreConstants.receiptsCollection)
               .where('userId', isEqualTo: _userId)
               .get();
 
@@ -232,7 +248,7 @@ class ReceiptRepository {
     try {
       final receiptsSnapshot =
           await _firestore
-              .collection('receipts')
+              .collection(FirestoreConstants.receiptsCollection)
               .where('userId', isEqualTo: _userId)
               .get();
 

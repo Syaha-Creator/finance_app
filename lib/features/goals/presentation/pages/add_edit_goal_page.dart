@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
@@ -319,10 +320,12 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
           const SizedBox(height: 32),
 
           // Submit Button
-          CoreLoadingButton(
+          LoadingActionButton(
             onPressed: _submitForm,
-            text: _isEditMode ? 'UPDATE TUJUAN' : 'SIMPAN TUJUAN',
             isLoading: _isLoading,
+            text: _isEditMode ? 'UPDATE TUJUAN' : 'SIMPAN TUJUAN',
+            icon: _isEditMode ? Icons.save_outlined : Icons.add,
+            height: 56,
           ),
         ],
       ),

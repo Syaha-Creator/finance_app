@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/budget_model.dart';
 
 class BudgetRepository {
@@ -20,7 +21,7 @@ class BudgetRepository {
       }
 
       final query = _firestore
-          .collection('budgets')
+          .collection(FirestoreConstants.budgetsCollection)
           .where('userId', isEqualTo: userId)
           .where('month', isEqualTo: month)
           .where('year', isEqualTo: year);
@@ -51,10 +52,15 @@ class BudgetRepository {
 
       if (budget.id == null) {
         // Create new budget
-        await _firestore.collection('budgets').add(data);
+        await _firestore
+            .collection(FirestoreConstants.budgetsCollection)
+            .add(data);
       } else {
         // Update existing budget
-        await _firestore.collection('budgets').doc(budget.id).update(data);
+        await _firestore
+            .collection(FirestoreConstants.budgetsCollection)
+            .doc(budget.id)
+            .update(data);
       }
     } catch (e) {
       rethrow;

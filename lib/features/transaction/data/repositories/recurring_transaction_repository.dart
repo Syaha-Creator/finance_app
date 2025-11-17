@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/recurring_transaction_model.dart';
 
 class RecurringTransactionRepository {
@@ -21,7 +22,7 @@ class RecurringTransactionRepository {
       }
 
       final query = _firestore
-          .collection('recurring_transactions')
+          .collection(FirestoreConstants.recurringTransactionsCollection)
           .where('userId', isEqualTo: userId)
           .orderBy('nextDueDate', descending: false);
 
@@ -51,7 +52,9 @@ class RecurringTransactionRepository {
       }
 
       final data = transaction.toFirestore();
-      await _firestore.collection('recurring_transactions').add(data);
+      await _firestore
+          .collection(FirestoreConstants.recurringTransactionsCollection)
+          .add(data);
     } catch (e) {
       rethrow;
     }
@@ -64,7 +67,7 @@ class RecurringTransactionRepository {
     try {
       final data = transaction.toFirestore();
       await _firestore
-          .collection('recurring_transactions')
+          .collection(FirestoreConstants.recurringTransactionsCollection)
           .doc(transaction.id)
           .update(data);
     } catch (e) {
@@ -76,7 +79,7 @@ class RecurringTransactionRepository {
   Future<void> deleteRecurringTransaction(String transactionId) async {
     try {
       await _firestore
-          .collection('recurring_transactions')
+          .collection(FirestoreConstants.recurringTransactionsCollection)
           .doc(transactionId)
           .delete();
     } catch (e) {

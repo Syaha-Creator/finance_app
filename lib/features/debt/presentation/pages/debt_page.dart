@@ -7,7 +7,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/debt_receivable_model.dart';
 import '../provider/debt_provider.dart';
-import 'add_edit_debt_page.dart';
+import 'package:go_router/go_router.dart';
 
 class DebtPage extends ConsumerStatefulWidget {
   const DebtPage({super.key});
@@ -122,14 +122,7 @@ class _DebtPageState extends ConsumerState<DebtPage>
               // Hanya tampilkan FAB jika ada data
               if (debts.isNotEmpty) {
                 return FloatingActionButton.extended(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddEditDebtPage(),
-                      ),
-                    );
-                  },
+                  onPressed: () => context.push('/add-debt'),
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add),
@@ -388,14 +381,7 @@ class _DebtList extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditDebtPage(),
-                  ),
-                );
-              },
+              onPressed: () => context.push('/add-debt'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -728,15 +714,9 @@ class _DebtListItem extends ConsumerWidget {
                               ),
                             ],
                         onSelected: (value) {
-                          if (value == 'edit') {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => AddEditDebtPage(debt: debt),
-                              ),
-                            );
-                          } else if (value == 'delete') {
+                        if (value == 'edit') {
+                          context.push('/add-debt', extra: {'debt': debt});
+                        } else if (value == 'delete') {
                             _showDeleteConfirmationDialog(context, ref, debt);
                           }
                         },

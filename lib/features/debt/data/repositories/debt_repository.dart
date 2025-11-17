@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../models/debt_receivable_model.dart';
 
@@ -15,9 +16,10 @@ class DebtRepository {
 
   String? get _currentUserId => _firebaseAuth.currentUser?.uid;
 
-  CollectionReference get _debtCollection => _firestore.collection('debts');
+  CollectionReference get _debtCollection =>
+      _firestore.collection(FirestoreConstants.debtsCollection);
   CollectionReference get _transactionCollection =>
-      _firestore.collection('transactions');
+      _firestore.collection(FirestoreConstants.transactionsCollection);
 
   Stream<List<DebtReceivableModel>> getDebtsStream() {
     try {
@@ -27,7 +29,7 @@ class DebtRepository {
       }
 
       final query = _firestore
-          .collection('debts')
+          .collection(FirestoreConstants.debtsCollection)
           .where('userId', isEqualTo: userId)
           .orderBy('dueDate', descending: false);
 
@@ -54,7 +56,9 @@ class DebtRepository {
       }
 
       final data = debt.toFirestore();
-      await _firestore.collection('debts').add(data);
+      await _firestore
+          .collection(FirestoreConstants.debtsCollection)
+          .add(data);
     } catch (e) {
       rethrow;
     }
@@ -63,7 +67,10 @@ class DebtRepository {
   Future<void> updateDebt(DebtReceivableModel debt) async {
     try {
       final data = debt.toFirestore();
-      await _firestore.collection('debts').doc(debt.id).update(data);
+      await _firestore
+          .collection(FirestoreConstants.debtsCollection)
+          .doc(debt.id)
+          .update(data);
     } catch (e) {
       rethrow;
     }
@@ -71,7 +78,10 @@ class DebtRepository {
 
   Future<void> deleteDebt(String debtId) async {
     try {
-      await _firestore.collection('debts').doc(debtId).delete();
+      await _firestore
+          .collection(FirestoreConstants.debtsCollection)
+          .doc(debtId)
+          .delete();
     } catch (e) {
       rethrow;
     }

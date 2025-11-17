@@ -1,45 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'transaction_model.dart'; // Import TransactionType
+part 'recurring_transaction_model.freezed.dart';
+part 'recurring_transaction_model.g.dart';
 
 // Enum untuk frekuensi pengulangan
 enum RecurringFrequency { daily, weekly, monthly, yearly }
 
-class RecurringTransactionModel extends Equatable {
-  final String? id;
-  final String userId;
-  final String description;
-  final double amount;
-  final String category;
-  final String account;
-  final TransactionType type;
+@freezed
+class RecurringTransactionModel with _$RecurringTransactionModel {
+  const factory RecurringTransactionModel({
+    String? id,
+    required String userId,
+    required String description,
+    required double amount,
+    required String category,
+    required String account,
+    required TransactionType type,
+    required RecurringFrequency frequency,
+    @Default(1) int dayOfWeek,
+    @Default(1) int dayOfMonth,
+    required DateTime startDate,
+    DateTime? endDate,
+    DateTime? lastGeneratedDate,
+    @Default(true) bool isActive,
+  }) = _RecurringTransactionModel;
 
-  final RecurringFrequency frequency;
-  final int dayOfWeek; // 1 (Senin) - 7 (Minggu)
-  final int dayOfMonth; // 1 - 31
-
-  final DateTime startDate;
-  final DateTime? endDate;
-  final DateTime? lastGeneratedDate; // Kapan terakhir kali transaksi dibuat
-  final bool isActive;
-
-  const RecurringTransactionModel({
-    this.id,
-    required this.userId,
-    required this.description,
-    required this.amount,
-    required this.category,
-    required this.account,
-    required this.type,
-    required this.frequency,
-    this.dayOfWeek = 1,
-    this.dayOfMonth = 1,
-    required this.startDate,
-    this.endDate,
-    this.lastGeneratedDate,
-    this.isActive = true,
-  });
+  factory RecurringTransactionModel.fromJson(Map<String, dynamic> json) =>
+      _$RecurringTransactionModelFromJson(json);
 
   factory RecurringTransactionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -73,6 +62,8 @@ class RecurringTransactionModel extends Equatable {
     );
   }
 
+  const RecurringTransactionModel._();
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -93,14 +84,4 @@ class RecurringTransactionModel extends Equatable {
       'isActive': isActive,
     };
   }
-
-  @override
-  List<Object?> get props => [
-    id,
-    userId,
-    description,
-    amount,
-    frequency,
-    startDate,
-  ];
 }

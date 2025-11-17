@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/investment_model.dart';
 
 class InvestmentRepository {
@@ -21,7 +22,7 @@ class InvestmentRepository {
     }
 
     return _firestore
-        .collection('investments')
+        .collection(FirestoreConstants.investmentsCollection)
         .where('userId', isEqualTo: _userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
@@ -40,7 +41,7 @@ class InvestmentRepository {
     }
 
     return _firestore
-        .collection('investments')
+        .collection(FirestoreConstants.investmentsCollection)
         .where('userId', isEqualTo: _userId)
         .where('status', isEqualTo: InvestmentStatus.active.name)
         .orderBy('createdAt', descending: true)
@@ -60,7 +61,7 @@ class InvestmentRepository {
     }
 
     return _firestore
-        .collection('investments')
+        .collection(FirestoreConstants.investmentsCollection)
         .where('userId', isEqualTo: _userId)
         .where('type', isEqualTo: type.name)
         .orderBy('createdAt', descending: true)
@@ -77,7 +78,10 @@ class InvestmentRepository {
   Future<InvestmentModel?> getInvestmentById(String investmentId) async {
     try {
       final doc =
-          await _firestore.collection('investments').doc(investmentId).get();
+          await _firestore
+              .collection(FirestoreConstants.investmentsCollection)
+              .doc(investmentId)
+              .get();
 
       if (doc.exists) {
         return InvestmentModel.fromFirestore(doc);
@@ -98,7 +102,7 @@ class InvestmentRepository {
       );
 
       await _firestore
-          .collection('investments')
+          .collection(FirestoreConstants.investmentsCollection)
           .add(investmentData.toFirestore());
     } catch (e) {
       throw Exception('Failed to add investment: $e');
@@ -111,7 +115,7 @@ class InvestmentRepository {
       final investmentData = investment.copyWith(updatedAt: DateTime.now());
 
       await _firestore
-          .collection('investments')
+          .collection(FirestoreConstants.investmentsCollection)
           .doc(investment.id)
           .update(investmentData.toFirestore());
     } catch (e) {
@@ -122,7 +126,10 @@ class InvestmentRepository {
   // Delete investment
   Future<void> deleteInvestment(String investmentId) async {
     try {
-      await _firestore.collection('investments').doc(investmentId).delete();
+      await _firestore
+          .collection(FirestoreConstants.investmentsCollection)
+          .doc(investmentId)
+          .delete();
     } catch (e) {
       throw Exception('Failed to delete investment: $e');
     }
@@ -202,7 +209,7 @@ class InvestmentRepository {
 
       final investmentsSnapshot =
           await _firestore
-              .collection('investments')
+              .collection(FirestoreConstants.investmentsCollection)
               .where('userId', isEqualTo: _userId)
               .where('status', isEqualTo: InvestmentStatus.active.name)
               .get();
@@ -309,7 +316,7 @@ class InvestmentRepository {
     try {
       final investmentsSnapshot =
           await _firestore
-              .collection('investments')
+              .collection(FirestoreConstants.investmentsCollection)
               .where('userId', isEqualTo: _userId)
               .get();
 

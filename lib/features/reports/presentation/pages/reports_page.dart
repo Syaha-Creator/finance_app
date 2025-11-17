@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../widgets/month_selector.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../widgets/expense_pie_chart.dart';
 
@@ -15,34 +16,31 @@ class ReportsPage extends ConsumerWidget {
     final analysis = ref.watch(dashboardAnalysisProvider);
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        // MonthSelector section - sama persis dengan transaction page
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 70,
-                child: MonthSelector(
-                  selectedDate: ref.watch(selectedDateProvider),
-                  onDateChanged: (date) {
-                    ref.read(selectedDateProvider.notifier).state = date;
-                  },
-                ),
+    return AppScaffold(
+      title: 'Laporan Keuangan',
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // MonthSelector
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 70,
+                    child: MonthSelector(
+                      selectedDate: ref.watch(selectedDateProvider),
+                      onDateChanged: (date) {
+                        ref.read(selectedDateProvider.notifier).state = date;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-
-        // Content section - scrollable
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            ),
                 // Header Section
                 Container(
                   width: double.infinity,
@@ -208,11 +206,9 @@ class ReportsPage extends ConsumerWidget {
                     ),
                   ),
                 ],
-              ],
-            ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

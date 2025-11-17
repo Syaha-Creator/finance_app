@@ -6,7 +6,7 @@ import '../../../../widgets/app_loading_indicator.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/models/recurring_transaction_model.dart';
 import '../providers/recurring_transaction_provider.dart';
-import 'add_edit_recurring_page.dart';
+import 'package:go_router/go_router.dart';
 
 class RecurringTransactionPage extends ConsumerWidget {
   const RecurringTransactionPage({super.key});
@@ -71,12 +71,7 @@ class RecurringTransactionPage extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddEditRecurringPage()),
-          );
-        },
+        onPressed: () => context.push('/add-edit-recurring'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -326,15 +321,7 @@ class RecurringTransactionPage extends ConsumerWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => AddEditRecurringPage(recurringTransaction: item),
-              ),
-            );
-          },
+          onTap: () => context.push('/add-edit-recurring', extra: item),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(

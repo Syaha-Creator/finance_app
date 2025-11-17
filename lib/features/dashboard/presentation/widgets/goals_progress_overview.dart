@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
-import '../../../../core/routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
+import '../../../../core/widgets/empty_state.dart';
 
 class GoalsProgressOverview extends ConsumerWidget {
   const GoalsProgressOverview({super.key});
@@ -18,7 +19,7 @@ class GoalsProgressOverview extends ConsumerWidget {
       error: (err, stack) => _buildErrorState(theme, err),
       data: (goals) {
         if (goals.isEmpty) {
-          return _buildEmptyState(theme);
+          return _buildEmptyState(context, theme);
         }
 
         // Sort goals by progress percentage (highest first)
@@ -130,107 +131,16 @@ class GoalsProgressOverview extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.flag_outlined,
-                    color: AppColors.accent,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Progress Tujuan Keuangan',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Lacak kemajuan tujuan Anda',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.3,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.flag_outlined,
-                    size: 48,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Belum Ada Tujuan',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Buat tujuan keuangan pertama Anda untuk mulai melacak kemajuan',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget _buildEmptyState(BuildContext context, ThemeData theme) {
+    return EmptyState(
+      icon: Icons.flag_outlined,
+      title: 'Belum Ada Tujuan',
+      subtitle:
+          'Buat tujuan keuangan pertama Anda untuk mulai melacak kemajuan',
+      action: TextButton.icon(
+        onPressed: () => GoRouter.of(context).go('/add-goal'),
+        icon: const Icon(Icons.add),
+        label: const Text('Tambah Tujuan'),
       ),
     );
   }
@@ -439,9 +349,7 @@ class GoalsProgressOverview extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Center(
                 child: TextButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.goals);
-                  },
+                  onPressed: () => context.push('/goals'),
                   icon: Icon(
                     Icons.arrow_forward,
                     size: 16,

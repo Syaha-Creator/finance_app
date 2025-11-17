@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/asset_model.dart';
 
 class AssetRepository {
@@ -21,7 +22,7 @@ class AssetRepository {
       }
 
       final query = _firestore
-          .collection('assets')
+          .collection(FirestoreConstants.assetsCollection)
           .where('userId', isEqualTo: userId)
           .orderBy('lastUpdatedAt', descending: true);
 
@@ -49,7 +50,7 @@ class AssetRepository {
       }
 
       final data = asset.toFirestore();
-      await _firestore.collection('assets').add(data);
+      await _firestore.collection(FirestoreConstants.assetsCollection).add(data);
     } catch (e) {
       rethrow;
     }
@@ -61,7 +62,10 @@ class AssetRepository {
 
     try {
       final data = asset.copyWith(lastUpdatedAt: DateTime.now()).toFirestore();
-      await _firestore.collection('assets').doc(asset.id).update(data);
+      await _firestore
+          .collection(FirestoreConstants.assetsCollection)
+          .doc(asset.id)
+          .update(data);
     } catch (e) {
       rethrow;
     }
@@ -70,7 +74,10 @@ class AssetRepository {
   // Menghapus aset
   Future<void> deleteAsset(String assetId) async {
     try {
-      await _firestore.collection('assets').doc(assetId).delete();
+      await _firestore
+          .collection(FirestoreConstants.assetsCollection)
+          .doc(assetId)
+          .delete();
     } catch (e) {
       rethrow;
     }

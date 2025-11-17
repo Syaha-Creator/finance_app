@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../provider/bill_provider.dart';
 import '../widgets/bill_list_item.dart';
 import '../widgets/bill_summary_card.dart';
 import '../../data/models/bill_model.dart';
-import 'add_edit_bill_page.dart';
+import 'package:go_router/go_router.dart';
 
 enum BillFilter { all, pending, overdue, upcoming, paid }
 
@@ -87,14 +88,7 @@ class _BillManagementPageState extends ConsumerState<BillManagementPage> {
         data: (billsList) {
           if (billsList.isEmpty) return null;
           return FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AddEditBillPage(),
-                ),
-              );
-            },
+            onPressed: () => context.push('/add-bill'),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add),
@@ -202,23 +196,20 @@ class _BillManagementPageState extends ConsumerState<BillManagementPage> {
         break;
     }
 
-    return EmptyStateWidget(
-      title: title,
-      message: message,
-      icon: icon,
-      actionLabel: _selectedFilter == BillFilter.all ? 'Tambah Tagihan' : null,
-      onAction:
-          _selectedFilter == BillFilter.all
-              ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditBillPage(),
-                  ),
-                );
-              }
-              : null,
-      iconColor: AppColors.primary,
+    return Center(
+      child: EmptyState(
+        icon: icon,
+        title: title,
+        subtitle: message,
+        action:
+            _selectedFilter == BillFilter.all
+                ? TextButton.icon(
+                  onPressed: () => context.push('/add-bill'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Tagihan'),
+                )
+                : null,
+      ),
     );
   }
 }

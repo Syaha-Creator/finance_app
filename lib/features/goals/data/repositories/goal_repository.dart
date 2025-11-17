@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../models/goal_model.dart';
 
@@ -21,9 +23,10 @@ class GoalRepository {
     return user.uid;
   }
 
-  CollectionReference get _goalsCollection => _firestore.collection('goals');
+  CollectionReference get _goalsCollection =>
+      _firestore.collection(FirestoreConstants.goalsCollection);
   CollectionReference get _transactionsCollection =>
-      _firestore.collection('transactions');
+      _firestore.collection(FirestoreConstants.transactionsCollection);
 
   Stream<List<GoalModel>> getGoalsStream() {
     try {
@@ -70,7 +73,7 @@ class GoalRepository {
       }
       return null;
     } catch (e) {
-      print('Error getting goal by ID: $e');
+      Logger.error('Error getting goal by ID', e as Object?);
       return null;
     }
   }

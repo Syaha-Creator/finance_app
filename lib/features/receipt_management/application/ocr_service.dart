@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import '../../../core/utils/logger.dart';
 import '../data/models/ocr_result.dart';
 
 class OCRService {
@@ -63,7 +64,7 @@ class OCRService {
       }
       return null;
     } catch (e) {
-      print('Error picking image from camera: $e');
+      Logger.error('Error picking image from camera', e);
       return null;
     }
   }
@@ -83,7 +84,7 @@ class OCRService {
       }
       return null;
     } catch (e) {
-      print('Error picking image from gallery: $e');
+      Logger.error('Error picking image from gallery', e);
       return null;
     }
   }

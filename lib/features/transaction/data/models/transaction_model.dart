@@ -1,30 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'transaction_model.freezed.dart';
+part 'transaction_model.g.dart';
 
 enum TransactionType { income, expense, transfer }
 
-class TransactionModel extends Equatable {
-  final String? id;
-  final String userId;
-  final String description;
-  final double amount;
-  final String category;
-  final String account;
-  final DateTime date;
-  final TransactionType type;
-  final String? goalId;
+@freezed
+class TransactionModel with _$TransactionModel {
+  const factory TransactionModel({
+    String? id,
+    required String userId,
+    required String description,
+    required double amount,
+    required String category,
+    required String account,
+    required DateTime date,
+    required TransactionType type,
+    String? goalId,
+  }) = _TransactionModel;
 
-  const TransactionModel({
-    this.id,
-    required this.userId,
-    required this.description,
-    required this.amount,
-    required this.category,
-    required this.account,
-    required this.date,
-    required this.type,
-    this.goalId,
-  });
+  factory TransactionModel.fromJson(Map<String, dynamic> json) =>
+      _$TransactionModelFromJson(json);
 
   factory TransactionModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -36,7 +33,7 @@ class TransactionModel extends Equatable {
       category: data['category'] ?? 'Lainnya',
       account: data['account'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
-      type: _parseTransactionType(data['type']),
+      type: _parseTransactionType(data['type'] as String?),
       goalId: data['goalId'],
     );
   }
@@ -54,6 +51,8 @@ class TransactionModel extends Equatable {
     }
   }
 
+  const TransactionModel._();
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -66,41 +65,4 @@ class TransactionModel extends Equatable {
       'goalId': goalId,
     };
   }
-
-  TransactionModel copyWith({
-    String? id,
-    String? userId,
-    String? description,
-    double? amount,
-    String? category,
-    String? account,
-    DateTime? date,
-    TransactionType? type,
-    String? goalId,
-  }) {
-    return TransactionModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      description: description ?? this.description,
-      amount: amount ?? this.amount,
-      category: category ?? this.category,
-      account: account ?? this.account,
-      date: date ?? this.date,
-      type: type ?? this.type,
-      goalId: goalId ?? this.goalId,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    id,
-    userId,
-    description,
-    amount,
-    category,
-    account,
-    date,
-    type,
-    goalId,
-  ];
 }

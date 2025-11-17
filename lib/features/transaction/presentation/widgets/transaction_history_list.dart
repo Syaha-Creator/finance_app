@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/app_formatters.dart';
-import '../../../../core/routes/app_routes.dart';
+
 import '../../../../widgets/transaction_list_item.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../data/models/transaction_model.dart';
@@ -299,16 +300,10 @@ class TransactionHistoryList extends ConsumerWidget {
   }
 
   void _navigateToDetail(BuildContext context, TransactionModel transaction) {
-    // Navigate to transaction detail page
-    Navigator.pushNamed(
-      context,
-      AppRoutes.transactionDetail,
-      arguments: transaction,
-    );
+    context.push('/transaction-detail', extra: transaction);
   }
 
   void _navigateToAddTransaction(BuildContext context) {
-    // Navigate to add transaction page
-    Navigator.pushNamed(context, AppRoutes.addTransaction);
+    context.push('/add-transaction');
   }
 }

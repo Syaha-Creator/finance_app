@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class QuickActionsWidget extends StatelessWidget {
@@ -31,7 +32,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Aset',
                 subtitle: 'Kelola aset',
                 color: AppColors.success,
-                onTap: () => Navigator.pushNamed(context, '/assets'),
+                onTap: () => context.push('/assets'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -40,7 +41,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Tujuan',
                 subtitle: 'Kelola goals',
                 color: AppColors.accent,
-                onTap: () => Navigator.pushNamed(context, '/goals'),
+                onTap: () => context.push('/goals'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -49,7 +50,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Hutang',
                 subtitle: 'Kelola hutang',
                 color: AppColors.primary,
-                onTap: () => Navigator.pushNamed(context, '/debt'),
+                onTap: () => context.push('/debt'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -58,7 +59,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Anggaran',
                 subtitle: 'Kelola budget',
                 color: AppColors.warning,
-                onTap: () => Navigator.pushNamed(context, '/budget'),
+                onTap: () => context.push('/budget'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -67,7 +68,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Tagihan',
                 subtitle: 'Kelola tagihan',
                 color: AppColors.error,
-                onTap: () => Navigator.pushNamed(context, '/bills'),
+                onTap: () => context.push('/bills'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -76,7 +77,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Struk',
                 subtitle: 'Kelola struk',
                 color: AppColors.accent,
-                onTap: () => Navigator.pushNamed(context, '/receipts'),
+                onTap: () => context.push('/receipts'),
               ),
               const SizedBox(width: 12),
               _buildQuickActionCard(
@@ -85,7 +86,7 @@ class QuickActionsWidget extends StatelessWidget {
                 title: 'Portfolio',
                 subtitle: 'Kelola investasi',
                 color: AppColors.income,
-                onTap: () => Navigator.pushNamed(context, '/investments'),
+                onTap: () => context.push('/investments'),
               ),
               const SizedBox(width: 12),
             ],

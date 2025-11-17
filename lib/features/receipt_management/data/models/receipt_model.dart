@@ -1,40 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'receipt_model.freezed.dart';
+part 'receipt_model.g.dart';
 
 enum ReceiptStatus { pending, processed, archived }
 
-class ReceiptModel extends Equatable {
-  final String id;
-  final String userId;
-  final String imageUrl;
-  final String? ocrText;
-  final String? merchantName;
-  final String? merchantAddress;
-  final DateTime? transactionDate;
-  final double? totalAmount;
-  final String? currency;
-  final List<String>? items;
-  final String? notes;
-  final ReceiptStatus status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+@freezed
+class ReceiptModel with _$ReceiptModel {
+  const factory ReceiptModel({
+    required String id,
+    required String userId,
+    required String imageUrl,
+    String? ocrText,
+    String? merchantName,
+    String? merchantAddress,
+    DateTime? transactionDate,
+    double? totalAmount,
+    String? currency,
+    List<String>? items,
+    String? notes,
+    required ReceiptStatus status,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) = _ReceiptModel;
 
-  const ReceiptModel({
-    required this.id,
-    required this.userId,
-    required this.imageUrl,
-    this.ocrText,
-    this.merchantName,
-    this.merchantAddress,
-    this.transactionDate,
-    this.totalAmount,
-    this.currency,
-    this.items,
-    this.notes,
-    required this.status,
-    required this.createdAt,
-    required this.updatedAt,
-  });
+  factory ReceiptModel.fromJson(Map<String, dynamic> json) =>
+      _$ReceiptModelFromJson(json);
 
   factory ReceiptModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -61,6 +53,8 @@ class ReceiptModel extends Equatable {
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
   }
+
+  const ReceiptModel._();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -92,56 +86,4 @@ class ReceiptModel extends Equatable {
     }
     return ReceiptStatus.pending;
   }
-
-  ReceiptModel copyWith({
-    String? id,
-    String? userId,
-    String? imageUrl,
-    String? ocrText,
-    String? merchantName,
-    String? merchantAddress,
-    DateTime? transactionDate,
-    double? totalAmount,
-    String? currency,
-    List<String>? items,
-    String? notes,
-    ReceiptStatus? status,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return ReceiptModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      imageUrl: imageUrl ?? this.imageUrl,
-      ocrText: ocrText ?? this.ocrText,
-      merchantName: merchantName ?? this.merchantName,
-      merchantAddress: merchantAddress ?? this.merchantAddress,
-      transactionDate: transactionDate ?? this.transactionDate,
-      totalAmount: totalAmount ?? this.totalAmount,
-      currency: currency ?? this.currency,
-      items: items ?? this.items,
-      notes: notes ?? this.notes,
-      status: status ?? this.status,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-    id,
-    userId,
-    imageUrl,
-    ocrText,
-    merchantName,
-    merchantAddress,
-    transactionDate,
-    totalAmount,
-    currency,
-    items,
-    notes,
-    status,
-    createdAt,
-    updatedAt,
-  ];
 }

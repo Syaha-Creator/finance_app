@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
-import 'add_edit_goal_page.dart';
+import 'package:go_router/go_router.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 
@@ -155,14 +155,7 @@ class GoalDetailPage extends ConsumerWidget {
                 ),
               ),
               child: IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddEditGoalPage(goal: goal),
-                    ),
-                  );
-                },
+                onPressed: () => context.push('/add-goal'),
                 icon: Icon(Icons.edit, color: AppColors.primary, size: 20),
                 style: IconButton.styleFrom(
                   padding: const EdgeInsets.all(8),
@@ -875,14 +868,9 @@ class GoalDetailPage extends ConsumerWidget {
 
   void _navigateToAddTransaction(BuildContext context, TransactionType type) {
     // Navigate to add transaction page with goal pre-selected
-    Navigator.pushNamed(
-      context,
+    context.push(
       '/add-transaction-with-goal',
-      arguments: {
-        'transactionType': type,
-        'goalId': goal.id,
-        'goalName': goal.name,
-      },
+      extra: {'transactionType': type, 'goalId': goal.id, 'goalName': goal.name},
     );
   }
 
@@ -890,15 +878,9 @@ class GoalDetailPage extends ConsumerWidget {
     BuildContext context,
     TransactionModel transaction,
   ) {
-    // Navigate to edit transaction page
-    Navigator.pushNamed(
-      context,
+    context.push(
       '/edit-transaction-with-goal',
-      arguments: {
-        'transaction': transaction,
-        'goalId': goal.id,
-        'goalName': goal.name,
-      },
+      extra: {'transaction': transaction, 'goalId': goal.id, 'goalName': goal.name},
     );
   }
 }

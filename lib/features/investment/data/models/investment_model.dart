@@ -1,50 +1,38 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'investment_model.freezed.dart';
+part 'investment_model.g.dart';
 
 enum InvestmentType { stock, mutualFund, crypto, bond, gold, property, other }
 
 enum InvestmentStatus { active, sold, matured }
 
-class InvestmentModel extends Equatable {
-  final String id;
-  final String userId;
-  final String name;
-  final String symbol;
-  final InvestmentType type;
-  final double quantity;
-  final double averagePrice;
-  final double currentPrice;
-  final double totalInvested;
-  final double currentValue;
-  final double profitLoss;
-  final double profitLossPercentage;
-  final InvestmentStatus status;
-  final DateTime purchaseDate;
-  final DateTime? sellDate;
-  final String? notes;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+@freezed
+class InvestmentModel with _$InvestmentModel {
+  const factory InvestmentModel({
+    required String id,
+    required String userId,
+    required String name,
+    required String symbol,
+    required InvestmentType type,
+    required double quantity,
+    required double averagePrice,
+    required double currentPrice,
+    required double totalInvested,
+    required double currentValue,
+    required double profitLoss,
+    required double profitLossPercentage,
+    required InvestmentStatus status,
+    required DateTime purchaseDate,
+    DateTime? sellDate,
+    String? notes,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) = _InvestmentModel;
 
-  const InvestmentModel({
-    required this.id,
-    required this.userId,
-    required this.name,
-    required this.symbol,
-    required this.type,
-    required this.quantity,
-    required this.averagePrice,
-    required this.currentPrice,
-    required this.totalInvested,
-    required this.currentValue,
-    required this.profitLoss,
-    required this.profitLossPercentage,
-    required this.status,
-    required this.purchaseDate,
-    this.sellDate,
-    this.notes,
-    required this.createdAt,
-    required this.updatedAt,
-  });
+  factory InvestmentModel.fromJson(Map<String, dynamic> json) =>
+      _$InvestmentModelFromJson(json);
 
   factory InvestmentModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -73,6 +61,8 @@ class InvestmentModel extends Equatable {
     );
   }
 
+  const InvestmentModel._();
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -93,48 +83,6 @@ class InvestmentModel extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
-  }
-
-  InvestmentModel copyWith({
-    String? id,
-    String? userId,
-    String? name,
-    String? symbol,
-    InvestmentType? type,
-    double? quantity,
-    double? averagePrice,
-    double? currentPrice,
-    double? totalInvested,
-    double? currentValue,
-    double? profitLoss,
-    double? profitLossPercentage,
-    InvestmentStatus? status,
-    DateTime? purchaseDate,
-    DateTime? sellDate,
-    String? notes,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return InvestmentModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      name: name ?? this.name,
-      symbol: symbol ?? this.symbol,
-      type: type ?? this.type,
-      quantity: quantity ?? this.quantity,
-      averagePrice: averagePrice ?? this.averagePrice,
-      currentPrice: currentPrice ?? this.currentPrice,
-      totalInvested: totalInvested ?? this.totalInvested,
-      currentValue: currentValue ?? this.currentValue,
-      profitLoss: profitLoss ?? this.profitLoss,
-      profitLossPercentage: profitLossPercentage ?? this.profitLossPercentage,
-      status: status ?? this.status,
-      purchaseDate: purchaseDate ?? this.purchaseDate,
-      sellDate: sellDate ?? this.sellDate,
-      notes: notes ?? this.notes,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
   }
 
   // Calculate current value and profit/loss
@@ -206,28 +154,6 @@ class InvestmentModel extends Equatable {
       updatedAt: DateTime.now(),
     );
   }
-
-  @override
-  List<Object?> get props => [
-    id,
-    userId,
-    name,
-    symbol,
-    type,
-    quantity,
-    averagePrice,
-    currentPrice,
-    totalInvested,
-    currentValue,
-    profitLoss,
-    profitLossPercentage,
-    status,
-    purchaseDate,
-    sellDate,
-    notes,
-    createdAt,
-    updatedAt,
-  ];
 }
 
 InvestmentType _parseType(dynamic raw) {

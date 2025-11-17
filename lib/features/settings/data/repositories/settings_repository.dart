@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/setting_model.dart';
 
 class SettingsRepository {
@@ -42,7 +43,7 @@ class SettingsRepository {
 
     // 2. Stream untuk data kustom pengguna
     final userStream = _firestore
-        .collection('users')
+        .collection(FirestoreConstants.usersCollection)
         .doc(userId)
         .collection(collectionName)
         .snapshots()
@@ -76,7 +77,7 @@ class SettingsRepository {
     final userId = _uid;
     if (userId == null) throw Exception("Pengguna tidak login");
     await _firestore
-        .collection('users')
+        .collection(FirestoreConstants.usersCollection)
         .doc(userId)
         .collection(collectionName)
         .add({'name': name});
@@ -88,7 +89,7 @@ class SettingsRepository {
     final userId = _uid;
     if (userId == null) throw Exception("Pengguna tidak login");
     await _firestore
-        .collection('users')
+        .collection(FirestoreConstants.usersCollection)
         .doc(userId)
         .collection(collectionName)
         .doc(docId)

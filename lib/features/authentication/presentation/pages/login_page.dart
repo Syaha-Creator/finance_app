@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
-import 'register_page.dart';
-import 'forgot_password_page.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -283,33 +282,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                   child: Material(
                                     color: Colors.transparent,
                                     child: InkWell(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder:
-                                                (
-                                                  context,
-                                                  animation,
-                                                  secondaryAnimation,
-                                                ) => const ForgotPasswordPage(),
-                                            transitionsBuilder: (
-                                              context,
-                                              animation,
-                                              secondaryAnimation,
-                                              child,
-                                            ) {
-                                              return SlideTransition(
-                                                position: Tween<Offset>(
-                                                  begin: const Offset(1.0, 0.0),
-                                                  end: Offset.zero,
-                                                ).animate(animation),
-                                                child: child,
-                                              );
-                                            },
-                                          ),
-                                        );
-                                      },
+                                      onTap: () => context.push('/forgot-password'),
                                       borderRadius: BorderRadius.circular(8),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -504,30 +477,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                PageRouteBuilder(
-                  pageBuilder:
-                      (context, animation, secondaryAnimation) =>
-                          const RegisterPage(),
-                  transitionsBuilder: (
-                    context,
-                    animation,
-                    secondaryAnimation,
-                    child,
-                  ) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1.0, 0.0),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    );
-                  },
-                ),
-              );
-            },
+            onTap: () => context.push('/register'),
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

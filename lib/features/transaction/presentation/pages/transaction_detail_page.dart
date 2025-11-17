@@ -6,7 +6,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/category_icons.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
-import 'add_edit_transaction_page.dart';
+import 'package:go_router/go_router.dart';
 
 class TransactionDetailPage extends ConsumerWidget {
   final TransactionModel transaction;
@@ -358,17 +358,11 @@ class TransactionDetailPage extends ConsumerWidget {
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => AddEditTransactionPage(
-                                      transaction: transaction,
-                                    ),
+                          onTap:
+                              () => context.push(
+                                '/add-transaction',
+                                extra: {'transaction': transaction},
                               ),
-                            );
-                          },
                           borderRadius: BorderRadius.circular(16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,

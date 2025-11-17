@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class BudgetModel extends Equatable {
-  final String? id;
-  final String userId;
-  final String categoryName;
-  final double amount;
-  final int month;
-  final int year;
+part 'budget_model.freezed.dart';
+part 'budget_model.g.dart';
 
-  const BudgetModel({
-    this.id,
-    required this.userId,
-    required this.categoryName,
-    required this.amount,
-    required this.month,
-    required this.year,
-  });
+@freezed
+class BudgetModel with _$BudgetModel {
+  const factory BudgetModel({
+    String? id,
+    required String userId,
+    required String categoryName,
+    required double amount,
+    required int month,
+    required int year,
+  }) = _BudgetModel;
+
+  factory BudgetModel.fromJson(Map<String, dynamic> json) =>
+      _$BudgetModelFromJson(json);
 
   factory BudgetModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -30,6 +30,8 @@ class BudgetModel extends Equatable {
     );
   }
 
+  const BudgetModel._();
+
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -39,7 +41,4 @@ class BudgetModel extends Equatable {
       'year': year,
     };
   }
-
-  @override
-  List<Object?> get props => [id, userId, categoryName, amount, month, year];
 }

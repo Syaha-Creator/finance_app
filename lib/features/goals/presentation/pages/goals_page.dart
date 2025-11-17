@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
@@ -7,9 +8,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
-import 'add_edit_goal_page.dart';
+
 import '../../../transaction/data/models/transaction_model.dart';
-import 'goal_detail_page.dart';
+
 
 class GoalsPage extends ConsumerWidget {
   const GoalsPage({super.key});
@@ -146,14 +147,7 @@ class GoalsPage extends ConsumerWidget {
               // Hanya tampilkan FAB jika ada data
               if (goals.isNotEmpty) {
                 return FloatingActionButton.extended(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddEditGoalPage(),
-                      ),
-                    );
-                  },
+                  onPressed: () => context.push('/add-goal'),
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   icon: const Icon(Icons.add),
@@ -249,14 +243,7 @@ class GoalsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditGoalPage(),
-                  ),
-                );
-              },
+              onPressed: () => context.push('/add-goal'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -537,13 +524,7 @@ class _GoalListItem extends ConsumerWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          // Navigate to goal detail page instead of edit page
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => GoalDetailPage(goal: goal)),
-          );
-        },
+        onTap: () => context.push('/goal-detail', extra: goal),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -608,12 +589,7 @@ class _GoalListItem extends ConsumerWidget {
                           ],
                       onSelected: (value) {
                         if (value == 'edit') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddEditGoalPage(goal: goal),
-                            ),
-                          );
+                          context.push('/add-goal');
                         } else if (value == 'delete') {
                           _showDeleteDialog(context, ref);
                         }
@@ -978,10 +954,9 @@ class _GoalListItem extends ConsumerWidget {
 
   void _navigateToAddTransaction(BuildContext context, TransactionType type) {
     // Navigate to add transaction page with goal pre-selected
-    Navigator.pushNamed(
-      context,
+    context.push(
       '/add-transaction-with-goal',
-      arguments: {'transactionType': type, 'goalId': null, 'goalName': null},
+      extra: {'transactionType': type, 'goalId': null, 'goalName': null},
     );
   }
 }

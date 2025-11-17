@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../models/bill_model.dart';
 
 class BillRepository {
@@ -23,7 +24,7 @@ class BillRepository {
       }
 
       return _firestore
-          .collection('bills')
+          .collection(FirestoreConstants.billsCollection)
           .where('userId', isEqualTo: _userId)
           .orderBy('dueDate', descending: false)
           .orderBy(FieldPath.documentId, descending: false)
@@ -49,7 +50,7 @@ class BillRepository {
       }
 
       return _firestore
-          .collection('bills')
+          .collection(FirestoreConstants.billsCollection)
           .where('userId', isEqualTo: _userId)
           .where('status', isEqualTo: status.name)
           .orderBy('dueDate', descending: false)
@@ -79,7 +80,7 @@ class BillRepository {
 
       final now = DateTime.now();
       return _firestore
-          .collection('bills')
+          .collection(FirestoreConstants.billsCollection)
           .where('userId', isEqualTo: _userId)
           .where('status', isEqualTo: BillStatus.pending.name)
           .where('dueDate', isLessThan: now)
@@ -112,7 +113,7 @@ class BillRepository {
       final now = DateTime.now();
       final nextWeek = now.add(const Duration(days: 7));
       return _firestore
-          .collection('bills')
+          .collection(FirestoreConstants.billsCollection)
           .where('userId', isEqualTo: _userId)
           .where('status', isEqualTo: BillStatus.pending.name)
           .where('dueDate', isGreaterThanOrEqualTo: now)
@@ -153,7 +154,9 @@ class BillRepository {
 
       final billMap = billData.toFirestore();
 
-      await _firestore.collection('bills').add(billMap);
+      await _firestore
+          .collection(FirestoreConstants.billsCollection)
+          .add(billMap);
     } catch (e) {
       throw Exception('Gagal menambahkan tagihan: $e');
     }
@@ -164,20 +167,26 @@ class BillRepository {
     final billData = bill.copyWith(updatedAt: DateTime.now());
 
     await _firestore
-        .collection('bills')
+        .collection(FirestoreConstants.billsCollection)
         .doc(bill.id)
         .update(billData.toFirestore());
   }
 
   // Delete bill
   Future<void> deleteBill(String billId) async {
-    await _firestore.collection('bills').doc(billId).delete();
+    await _firestore
+        .collection(FirestoreConstants.billsCollection)
+        .doc(billId)
+        .delete();
   }
 
   // Mark bill as paid
   Future<void> markAsPaid(String billId) async {
     final now = DateTime.now();
-    await _firestore.collection('bills').doc(billId).update({
+    await _firestore
+        .collection(FirestoreConstants.billsCollection)
+        .doc(billId)
+        .update({
       'status': BillStatus.paid.name,
       'paidDate': Timestamp.fromDate(now),
       'updatedAt': Timestamp.fromDate(now),
@@ -187,7 +196,10 @@ class BillRepository {
   // Mark bill as cancelled
   Future<void> markAsCancelled(String billId) async {
     final now = DateTime.now();
-    await _firestore.collection('bills').doc(billId).update({
+    await _firestore
+        .collection(FirestoreConstants.billsCollection)
+        .doc(billId)
+        .update({
       'status': BillStatus.cancelled.name,
       'updatedAt': Timestamp.fromDate(now),
     });
@@ -197,7 +209,7 @@ class BillRepository {
   Stream<List<BillModel>> getBillsNeedingReminders() {
     final now = DateTime.now();
     return _firestore
-        .collection('bills')
+        .collection(FirestoreConstants.billsCollection)
         .where('userId', isEqualTo: _userId)
         .where('status', isEqualTo: BillStatus.pending.name)
         .where('hasReminder', isEqualTo: true)
@@ -225,7 +237,7 @@ class BillRepository {
 
       final billsSnapshot =
           await _firestore
-              .collection('bills')
+              .collection(FirestoreConstants.billsCollection)
               .where('userId', isEqualTo: _userId)
               .get();
 
