@@ -23,6 +23,9 @@ class ReceiptModel with _$ReceiptModel {
     required ReceiptStatus status,
     required DateTime createdAt,
     required DateTime updatedAt,
+    double? latitude,
+    double? longitude,
+    String? locationAddress,
   }) = _ReceiptModel;
 
   factory ReceiptModel.fromJson(Map<String, dynamic> json) =>
@@ -51,6 +54,13 @@ class ReceiptModel with _$ReceiptModel {
       status: _parseStatus(data['status']),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      latitude: data['latitude'] != null
+          ? (data['latitude'] as num).toDouble()
+          : null,
+      longitude: data['longitude'] != null
+          ? (data['longitude'] as num).toDouble()
+          : null,
+      locationAddress: data['locationAddress'] as String?,
     );
   }
 
@@ -72,6 +82,9 @@ class ReceiptModel with _$ReceiptModel {
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationAddress': locationAddress,
     };
   }
 

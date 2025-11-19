@@ -1,63 +1,43 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../models/receipt_model.dart';
 
-class ReceiptRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
+class ReceiptRepository extends BaseRepository {
   final FirebaseStorage _storage;
 
   ReceiptRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth auth,
+    required super.firestore,
+    required super.firebaseAuth,
     required FirebaseStorage storage,
-  }) : _firestore = firestore,
-       _auth = auth,
-       _storage = storage;
-
-  String get _userId => _auth.currentUser?.uid ?? '';
+  }) : _storage = storage;
 
   // Get all receipts for current user
   Stream<List<ReceiptModel>> getReceipts() {
-    if (_userId.isEmpty) {
-      return Stream.value(<ReceiptModel>[]);
-    }
-
-    return _firestore
-        .collection(FirestoreConstants.receiptsCollection)
-        .where('userId', isEqualTo: _userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => ReceiptModel.fromFirestore(doc))
-                  .toList(),
-        );
+    return createStreamQuery<ReceiptModel>(
+      collectionName: FirestoreConstants.receiptsCollection,
+      fromFirestore: (doc) => ReceiptModel.fromFirestore(doc),
+      orderByField: 'createdAt',
+      descending: true,
+      userIdField: 'userId',
+    );
   }
 
   // Get receipts by status
   Stream<List<ReceiptModel>> getReceiptsByStatus(ReceiptStatus status) {
-    if (_userId.isEmpty) {
-      return Stream.value(<ReceiptModel>[]);
-    }
-
-    return _firestore
-        .collection(FirestoreConstants.receiptsCollection)
-        .where('userId', isEqualTo: _userId)
-        .where('status', isEqualTo: status.toString())
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => ReceiptModel.fromFirestore(doc))
-                  .toList(),
-        );
+    return createStreamQuery<ReceiptModel>(
+      collectionName: FirestoreConstants.receiptsCollection,
+      fromFirestore: (doc) => ReceiptModel.fromFirestore(doc),
+      orderByField: 'createdAt',
+      descending: true,
+      userIdField: 'userId',
+      whereConditions: [
+        WhereCondition(field: 'status', value: status.toString()),
+      ],
+    );
   }
 
   // Get pending receipts
@@ -73,25 +53,19 @@ class ReceiptRepository {
   // Add new receipt
   Future<String> addReceipt(ReceiptModel receipt, File imageFile) async {
     try {
-      if (_userId.isEmpty) {
-        throw Exception(
-          'User tidak terautentikasi. Silakan login terlebih dahulu.',
-        );
-      }
-
       // Upload image to Firebase Storage
       final imageUrl = await _uploadImage(imageFile);
 
       // Create receipt with image URL
       final receiptData = receipt.copyWith(
-        userId: _userId,
+        userId: requiredUserId,
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       final receiptMap = receiptData.toFirestore();
-      final docRef = await _firestore
+      final docRef = await firestore
           .collection(FirestoreConstants.receiptsCollection)
           .add(receiptMap);
 
@@ -103,42 +77,42 @@ class ReceiptRepository {
 
   // Update receipt
   Future<void> updateReceipt(ReceiptModel receipt) async {
-    try {
-      final receiptData = receipt.copyWith(updatedAt: DateTime.now());
+    final receiptData = receipt.copyWith(updatedAt: DateTime.now());
 
-      await _firestore
-          .collection(FirestoreConstants.receiptsCollection)
-          .doc(receipt.id)
-          .update(receiptData.toFirestore());
-    } catch (e) {
-      throw Exception('Failed to update receipt: $e');
-    }
+    await updateDocument(
+      collectionName: FirestoreConstants.receiptsCollection,
+      documentId: receipt.id,
+      data: receiptData.toFirestore(),
+      userIdField: 'userId',
+    );
   }
 
   // Delete receipt
   Future<void> deleteReceipt(String receiptId) async {
     try {
-      // Get receipt to delete image
-      final receiptDoc =
-          await _firestore
-              .collection(FirestoreConstants.receiptsCollection)
-              .doc(receiptId)
-              .get();
+      // Get receipt to delete image and validate ownership
+      final receipt = await getDocumentById<ReceiptModel>(
+        collectionName: FirestoreConstants.receiptsCollection,
+        documentId: receiptId,
+        fromFirestore: (doc) => ReceiptModel.fromFirestore(doc),
+        userIdField: 'userId',
+      );
 
-      if (receiptDoc.exists) {
-        final receipt = ReceiptModel.fromFirestore(receiptDoc);
-
-        // Delete image from storage
-        if (receipt.imageUrl.isNotEmpty) {
-          await _deleteImage(receipt.imageUrl);
-        }
-
-        // Delete document
-        await _firestore
-            .collection(FirestoreConstants.receiptsCollection)
-            .doc(receiptId)
-            .delete();
+      if (receipt == null) {
+        throw Exception('Struk tidak ditemukan');
       }
+
+      // Delete image from storage
+      if (receipt.imageUrl.isNotEmpty) {
+        await _deleteImage(receipt.imageUrl);
+      }
+
+      // Delete document
+      await deleteDocument(
+        collectionName: FirestoreConstants.receiptsCollection,
+        documentId: receiptId,
+        userIdField: 'userId',
+      );
     } catch (e) {
       throw Exception('Failed to delete receipt: $e');
     }
@@ -146,39 +120,36 @@ class ReceiptRepository {
 
   // Mark receipt as processed
   Future<void> markAsProcessed(String receiptId) async {
-    try {
-      await _firestore
-          .collection(FirestoreConstants.receiptsCollection)
-          .doc(receiptId)
-          .update({
-            'status': ReceiptStatus.processed.toString(),
-            'updatedAt': Timestamp.fromDate(DateTime.now()),
-          });
-    } catch (e) {
-      throw Exception('Failed to mark receipt as processed: $e');
-    }
+    await updateDocument(
+      collectionName: FirestoreConstants.receiptsCollection,
+      documentId: receiptId,
+      data: {
+        'status': ReceiptStatus.processed.toString(),
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      },
+      userIdField: 'userId',
+    );
   }
 
   // Mark receipt as archived
   Future<void> markAsArchived(String receiptId) async {
-    try {
-      await _firestore
-          .collection(FirestoreConstants.receiptsCollection)
-          .doc(receiptId)
-          .update({
-            'status': ReceiptStatus.archived.toString(),
-            'updatedAt': Timestamp.fromDate(DateTime.now()),
-          });
-    } catch (e) {
-      throw Exception('Failed to mark receipt as archived: $e');
-    }
+    await updateDocument(
+      collectionName: FirestoreConstants.receiptsCollection,
+      documentId: receiptId,
+      data: {
+        'status': ReceiptStatus.archived.toString(),
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      },
+      userIdField: 'userId',
+    );
   }
 
   // Upload image to Firebase Storage
   Future<String> _uploadImage(File imageFile) async {
     try {
+      final userId = requiredUserId;
       final fileName =
-          'receipts/${_userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          'receipts/$userId/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
       final ref = _storage.ref().child(fileName);
 
       final uploadTask = ref.putFile(imageFile);
@@ -186,38 +157,32 @@ class ReceiptRepository {
 
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
-      throw Exception('Failed to upload image: $e');
+      Logger.error('Failed to upload image', e);
+      throw Exception('Gagal mengunggah gambar: $e');
     }
   }
 
   // Delete image from Firebase Storage
   Future<void> _deleteImage(String imageUrl) async {
     try {
-      final ref = _storage.refFromURL(imageUrl);
-      await ref.delete();
+      await _storage.refFromURL(imageUrl).delete();
     } catch (e) {
-      AppLogger.error('Failed to delete image', e);
-      // Don't throw error for image deletion failure
+      Logger.error('Failed to delete image', e);
+      // Ignore if file not found, it might have been deleted already
+      if (e is! FirebaseException || e.code != 'object-not-found') {
+        throw Exception('Gagal menghapus gambar: $e');
+      }
     }
   }
 
   // Get receipts summary for dashboard
   Future<Map<String, dynamic>> getReceiptsSummary() async {
     try {
-      if (_userId.isEmpty) {
-        throw Exception('User tidak terautentikasi');
-      }
-
-      final receiptsSnapshot =
-          await _firestore
-              .collection(FirestoreConstants.receiptsCollection)
-              .where('userId', isEqualTo: _userId)
-              .get();
-
-      final receipts =
-          receiptsSnapshot.docs
-              .map((doc) => ReceiptModel.fromFirestore(doc))
-              .toList();
+      final receipts = await getDocumentsByQuery<ReceiptModel>(
+        collectionName: FirestoreConstants.receiptsCollection,
+        fromFirestore: (doc) => ReceiptModel.fromFirestore(doc),
+        userIdField: 'userId',
+      );
 
       final totalReceipts = receipts.length;
       final pendingReceipts =
@@ -246,16 +211,11 @@ class ReceiptRepository {
   // Search receipts by text
   Future<List<ReceiptModel>> searchReceipts(String query) async {
     try {
-      final receiptsSnapshot =
-          await _firestore
-              .collection(FirestoreConstants.receiptsCollection)
-              .where('userId', isEqualTo: _userId)
-              .get();
-
-      final receipts =
-          receiptsSnapshot.docs
-              .map((doc) => ReceiptModel.fromFirestore(doc))
-              .toList();
+      final receipts = await getDocumentsByQuery<ReceiptModel>(
+        collectionName: FirestoreConstants.receiptsCollection,
+        fromFirestore: (doc) => ReceiptModel.fromFirestore(doc),
+        userIdField: 'userId',
+      );
 
       // Simple text search
       return receipts.where((receipt) {

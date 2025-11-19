@@ -1,16 +1,17 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/presentation/base_controller.dart';
+import '../../../../core/providers/repository_provider_helpers.dart';
 import '../../data/models/receipt_model.dart';
 import '../../data/repositories/receipt_repository.dart';
 
-final receiptRepositoryProvider = Provider<ReceiptRepository>((ref) {
-  return ReceiptRepository(
-    firestore: ref.watch(firestoreProvider),
-    auth: ref.watch(firebaseAuthProvider),
-    storage: ref.watch(firebaseStorageProvider),
-  );
-});
+final receiptRepositoryProvider = createRepositoryProviderWithStorage<ReceiptRepository>(
+  (firestore, auth, storage) => ReceiptRepository(
+    firestore: firestore,
+    firebaseAuth: auth,
+    storage: storage,
+  ),
+);
 
 final receiptsProvider = StreamProvider.autoDispose<List<ReceiptModel>>((ref) {
   final receiptRepository = ref.watch(receiptRepositoryProvider);
@@ -46,84 +47,53 @@ final receiptNotifierProvider =
       );
     });
 
-class ReceiptController extends StateNotifier<AsyncValue<void>> {
+class ReceiptController extends BaseController {
   final ReceiptRepository _receiptRepository;
-  final Ref _ref;
 
   ReceiptController({
     required ReceiptRepository receiptRepository,
-    required Ref ref,
-  }) : _receiptRepository = receiptRepository,
-       _ref = ref,
-       super(const AsyncValue.data(null));
+    required super.ref,
+  }) : _receiptRepository = receiptRepository;
+
+  List<ProviderOrFamily> get _receiptProvidersToInvalidate => [
+    receiptsProvider,
+    pendingReceiptsProvider,
+    processedReceiptsProvider,
+    receiptsSummaryProvider,
+  ];
 
   Future<void> addReceipt(ReceiptModel receipt, File imageFile) async {
-    state = const AsyncValue.loading();
-    try {
-      await _receiptRepository.addReceipt(receipt, imageFile);
-      _ref.invalidate(receiptsProvider);
-      _ref.invalidate(pendingReceiptsProvider);
-      _ref.invalidate(processedReceiptsProvider);
-      _ref.invalidate(receiptsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _receiptRepository.addReceipt(receipt, imageFile),
+      providersToInvalidate: _receiptProvidersToInvalidate,
+    );
   }
 
   Future<void> updateReceipt(ReceiptModel receipt) async {
-    state = const AsyncValue.loading();
-    try {
-      await _receiptRepository.updateReceipt(receipt);
-      _ref.invalidate(receiptsProvider);
-      _ref.invalidate(pendingReceiptsProvider);
-      _ref.invalidate(processedReceiptsProvider);
-      _ref.invalidate(receiptsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _receiptRepository.updateReceipt(receipt),
+      providersToInvalidate: _receiptProvidersToInvalidate,
+    );
   }
 
   Future<void> deleteReceipt(String receiptId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _receiptRepository.deleteReceipt(receiptId);
-      _ref.invalidate(receiptsProvider);
-      _ref.invalidate(pendingReceiptsProvider);
-      _ref.invalidate(processedReceiptsProvider);
-      _ref.invalidate(receiptsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _receiptRepository.deleteReceipt(receiptId),
+      providersToInvalidate: _receiptProvidersToInvalidate,
+    );
   }
 
   Future<void> markAsProcessed(String receiptId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _receiptRepository.markAsProcessed(receiptId);
-      _ref.invalidate(receiptsProvider);
-      _ref.invalidate(pendingReceiptsProvider);
-      _ref.invalidate(processedReceiptsProvider);
-      _ref.invalidate(receiptsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _receiptRepository.markAsProcessed(receiptId),
+      providersToInvalidate: _receiptProvidersToInvalidate,
+    );
   }
 
   Future<void> markAsArchived(String receiptId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _receiptRepository.markAsArchived(receiptId);
-      _ref.invalidate(receiptsProvider);
-      _ref.invalidate(pendingReceiptsProvider);
-      _ref.invalidate(processedReceiptsProvider);
-      _ref.invalidate(receiptsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _receiptRepository.markAsArchived(receiptId),
+      providersToInvalidate: _receiptProvidersToInvalidate,
+    );
   }
 }
