@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/base_controller.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/repositories/bill_repository.dart';
@@ -6,7 +7,7 @@ import '../../data/repositories/bill_repository.dart';
 final billRepositoryProvider = Provider<BillRepository>((ref) {
   return BillRepository(
     firestore: ref.watch(firestoreProvider),
-    auth: ref.watch(firebaseAuthProvider),
+    firebaseAuth: ref.watch(firebaseAuthProvider),
   );
 });
 
@@ -49,72 +50,44 @@ final billNotifierProvider =
       );
     });
 
-class BillController extends StateNotifier<AsyncValue<void>> {
+class BillController extends BaseController {
   final BillRepository _billRepository;
-  final Ref _ref;
 
-  BillController({required BillRepository billRepository, required Ref ref})
-    : _billRepository = billRepository,
-      _ref = ref,
-      super(const AsyncValue.data(null));
+  BillController({required BillRepository billRepository, required super.ref})
+    : _billRepository = billRepository;
 
   Future<void> addBill(BillModel bill) async {
-    state = const AsyncValue.loading();
-    try {
-      await _billRepository.addBill(bill);
-      _ref.invalidate(billsProvider);
-      _ref.invalidate(billsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _billRepository.addBill(bill),
+      providersToInvalidate: [billsProvider, billsSummaryProvider],
+    );
   }
 
   Future<void> updateBill(BillModel bill) async {
-    state = const AsyncValue.loading();
-    try {
-      await _billRepository.updateBill(bill);
-      _ref.invalidate(billsProvider);
-      _ref.invalidate(billsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _billRepository.updateBill(bill),
+      providersToInvalidate: [billsProvider, billsSummaryProvider],
+    );
   }
 
   Future<void> deleteBill(String billId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _billRepository.deleteBill(billId);
-      _ref.invalidate(billsProvider);
-      _ref.invalidate(billsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _billRepository.deleteBill(billId),
+      providersToInvalidate: [billsProvider, billsSummaryProvider],
+    );
   }
 
   Future<void> markAsPaid(String billId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _billRepository.markAsPaid(billId);
-      _ref.invalidate(billsProvider);
-      _ref.invalidate(billsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _billRepository.markAsPaid(billId),
+      providersToInvalidate: [billsProvider, billsSummaryProvider],
+    );
   }
 
   Future<void> markAsCancelled(String billId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _billRepository.markAsCancelled(billId);
-      _ref.invalidate(billsProvider);
-      _ref.invalidate(billsSummaryProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _billRepository.markAsCancelled(billId),
+      providersToInvalidate: [billsProvider, billsSummaryProvider],
+    );
   }
 }
