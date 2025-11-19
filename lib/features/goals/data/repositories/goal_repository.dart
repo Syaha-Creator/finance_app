@@ -1,37 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../models/goal_model.dart';
 
-class GoalRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _firebaseAuth;
-
-  GoalRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth firebaseAuth,
-  }) : _firestore = firestore,
-       _firebaseAuth = firebaseAuth;
-
-  String get _currentUserId {
-    final user = _firebaseAuth.currentUser;
-    if (user == null) {
-      throw Exception('Pengguna tidak login.');
-    }
-    return user.uid;
-  }
+class GoalRepository extends BaseRepository {
+  GoalRepository({required super.firestore, required super.firebaseAuth});
 
   CollectionReference get _goalsCollection =>
-      _firestore.collection(FirestoreConstants.goalsCollection);
+      getCollection(FirestoreConstants.goalsCollection);
   CollectionReference get _transactionsCollection =>
-      _firestore.collection(FirestoreConstants.transactionsCollection);
+      getCollection(FirestoreConstants.transactionsCollection);
 
   Stream<List<GoalModel>> getGoalsStream() {
     try {
       return _goalsCollection
-          .where('userId', isEqualTo: _currentUserId)
+          .where('userId', isEqualTo: requiredUserId)
           .orderBy('targetDate', descending: false)
           .orderBy(FieldPath.documentId, descending: true)
           .snapshots()
@@ -41,41 +26,56 @@ class GoalRepository {
                 .toList();
           })
           .handleError((error) {
+            Logger.error('getGoalsStream failed', error);
             return <GoalModel>[];
           });
     } catch (e) {
+      Logger.error('getGoalsStream failed', e);
       return Stream.value(<GoalModel>[]);
     }
   }
 
   Future<void> addGoal(GoalModel goal) async {
     final newGoal = goal.copyWith(
-      userId: _currentUserId,
+      userId: requiredUserId,
       createdAt: DateTime.now(),
     );
-    await _goalsCollection.add(newGoal.toFirestore());
+    final data = newGoal.toFirestore();
+    await addDocument(
+      collectionName: FirestoreConstants.goalsCollection,
+      data: data,
+      requireUserId: false, // userId sudah di-set di copyWith
+    );
   }
 
   Future<void> updateGoal(GoalModel goal) async {
-    if (goal.id == null) throw Exception('ID Tujuan tidak boleh kosong.');
-    await _goalsCollection.doc(goal.id).update(goal.toFirestore());
+    if (goal.id == null) {
+      throw Exception('ID Tujuan tidak boleh kosong.');
+    }
+    final data = goal.toFirestore();
+    await updateDocument(
+      collectionName: FirestoreConstants.goalsCollection,
+      documentId: goal.id!,
+      data: data,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   Future<void> deleteGoal(String goalId) async {
-    await _goalsCollection.doc(goalId).delete();
+    await deleteDocument(
+      collectionName: FirestoreConstants.goalsCollection,
+      documentId: goalId,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   Future<GoalModel?> getGoalById(String goalId) async {
-    try {
-      final doc = await _goalsCollection.doc(goalId).get();
-      if (doc.exists) {
-        return GoalModel.fromFirestore(doc);
-      }
-      return null;
-    } catch (e) {
-      AppLogger.error('Error getting goal by ID', e);
-      return null;
-    }
+    return getDocumentById<GoalModel>(
+      collectionName: FirestoreConstants.goalsCollection,
+      documentId: goalId,
+      fromFirestore: (doc) => GoalModel.fromFirestore(doc),
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   Future<void> addFundsToGoal({
@@ -83,13 +83,13 @@ class GoalRepository {
     required double amount,
     required String fromAccountName,
   }) async {
-    final WriteBatch batch = _firestore.batch();
+    final WriteBatch batch = firestore.batch();
 
     final goalDocRef = _goalsCollection.doc(goalId);
     batch.update(goalDocRef, {'currentAmount': FieldValue.increment(amount)});
 
     final newTransaction = TransactionModel(
-      userId: _currentUserId,
+      userId: requiredUserId,
       description: 'Menabung untuk tujuan',
       amount: amount,
       category: 'Tujuan Keuangan',

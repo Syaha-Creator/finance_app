@@ -452,20 +452,33 @@ class GoalDetailPage extends ConsumerWidget {
   }
 
   // Mark goal as completed
-  void _markGoalAsCompleted(BuildContext context, WidgetRef ref) {
+  void _markGoalAsCompleted(BuildContext context, WidgetRef ref) async {
     try {
       // Update goal status to completed
       final updatedGoal = goal.copyWith(status: GoalStatus.completed);
-      ref.read(goalControllerProvider.notifier).updateGoal(updatedGoal);
+      await ref.read(goalControllerProvider.notifier).updateGoal(updatedGoal);
 
-      // Show success message
-      CoreSnackbar.showSuccess(
-        context,
-        '🎉 "${goal.name}" telah ditandai selesai!',
+      if (!context.mounted) return;
+      final state = ref.read(goalControllerProvider);
+      state.when(
+        data: (_) {
+          // Show success message
+          CoreSnackbar.showSuccess(
+            context,
+            '🎉 "${goal.name}" telah ditandai selesai!',
+          );
+
+          // Navigate back to goals page
+          Navigator.of(context).pop();
+        },
+        loading: () {},
+        error: (error, _) {
+          CoreSnackbar.showError(
+            context,
+            'Gagal memperbarui tujuan: $error',
+          );
+        },
       );
-
-      // Navigate back to goals page
-      Navigator.of(context).pop();
     } catch (e) {
       // Show error message if update fails
       CoreSnackbar.showError(context, 'Gagal menandai goal selesai: $e');

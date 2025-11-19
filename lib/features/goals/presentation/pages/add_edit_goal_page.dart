@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
@@ -23,7 +24,7 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
   DateTime? _targetDate;
 
   bool get _isEditMode => widget.goal != null;
-  bool get _isLoading => ref.watch(goalControllerProvider);
+  bool get _isLoading => ref.watch(goalControllerProvider).isLoading;
 
   @override
   void initState() {
@@ -45,13 +46,13 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final navigator = Navigator.of(context);
       final targetAmount = double.parse(
         _targetAmountController.text.replaceAll('.', ''),
       );
       final userId = ref.read(authStateChangesProvider).value?.uid;
 
       if (userId == null) {
+        if (!mounted) return;
         CoreSnackbar.showError(
           context,
           'Pengguna tidak ditemukan. Silakan login ulang.',
@@ -72,20 +73,29 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
 
       try {
         final controller = ref.read(goalControllerProvider.notifier);
-        final bool success;
         if (_isEditMode) {
-          success = await controller.updateGoal(goalData);
+          await controller.updateGoal(goalData);
         } else {
-          success = await controller.addGoal(goalData);
+          await controller.addGoal(goalData);
         }
 
-        if (success && mounted) {
-          CoreSnackbar.showSuccess(
-            context,
-            'Tujuan berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}',
-          );
-          navigator.pop();
-        }
+        if (!mounted) return;
+        final state = ref.read(goalControllerProvider);
+        state.when(
+          data: (_) {
+            CoreSnackbar.showSuccess(
+              context,
+              'Tujuan berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}',
+            );
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
+          loading: () {},
+          error: (error, _) {
+            CoreSnackbar.showError(context, 'Gagal: $error');
+          },
+        );
       } catch (e) {
         if (mounted) {
           CoreSnackbar.showError(context, 'Gagal: $e');
@@ -166,7 +176,11 @@ class _AddEditGoalPageState extends ConsumerState<AddEditGoalPage> {
               ],
             ),
             child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                }
+              },
               icon: Icon(
                 Icons.arrow_back_ios_new,
                 color: theme.colorScheme.onSurface,

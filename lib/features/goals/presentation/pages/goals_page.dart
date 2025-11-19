@@ -12,7 +12,6 @@ import '../providers/goal_provider.dart';
 
 import '../../../transaction/data/models/transaction_model.dart';
 
-
 class GoalsPage extends ConsumerWidget {
   const GoalsPage({super.key});
 
@@ -42,9 +41,7 @@ class GoalsPage extends ConsumerWidget {
             Expanded(
               child: goalsAsync.when(
                 loading: () => const CoreLoadingState(),
-                error: (err, stack) => AppErrorWidget(
-                  message: err.toString(),
-                ),
+                error: (err, stack) => AppErrorWidget(message: err.toString()),
                 data: (goals) {
                   if (goals.isEmpty) {
                     return _buildEmptyState(context, theme);
@@ -455,11 +452,28 @@ class _GoalListItem extends ConsumerWidget {
                 child: const Text('Batal'),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(dialogContext).pop();
-                  ref
+                  await ref
                       .read(goalControllerProvider.notifier)
                       .deleteGoal(goal.id!);
+
+                  final state = ref.read(goalControllerProvider);
+                  state.when(
+                    data: (_) {
+                      CoreSnackbar.showSuccess(
+                        context,
+                        'Tujuan berhasil dihapus',
+                      );
+                    },
+                    loading: () {},
+                    error: (error, _) {
+                      CoreSnackbar.showError(
+                        context,
+                        'Gagal menghapus tujuan: $error',
+                      );
+                    },
+                  );
                 },
                 child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               ),
@@ -469,9 +483,23 @@ class _GoalListItem extends ConsumerWidget {
   }
 
   // --- Fungsi untuk Menandai Selesai ---
-  void _markAsComplete(WidgetRef ref) {
+  void _markAsComplete(WidgetRef ref, BuildContext context) async {
     final updatedGoal = goal.copyWith(status: GoalStatus.completed);
-    ref.read(goalControllerProvider.notifier).updateGoal(updatedGoal);
+    await ref.read(goalControllerProvider.notifier).updateGoal(updatedGoal);
+
+    final state = ref.read(goalControllerProvider);
+    state.when(
+      data: (_) {
+        CoreSnackbar.showSuccess(
+          context,
+          '🎉 "${goal.name}" telah ditandai selesai!',
+        );
+      },
+      loading: () {},
+      error: (error, _) {
+        CoreSnackbar.showError(context, 'Gagal memperbarui tujuan: $error');
+      },
+    );
   }
 
   @override
@@ -704,7 +732,7 @@ class _GoalListItem extends ConsumerWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => _markAsComplete(ref),
+                      onPressed: () => _markAsComplete(ref, context),
                       icon: const Icon(Icons.check),
                       label: const Text('Tandai Telah Tercapai'),
                       style: ElevatedButton.styleFrom(
