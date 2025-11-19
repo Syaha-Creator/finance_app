@@ -25,6 +25,18 @@ import 'package:finance_app/features/transaction/presentation/providers/recurrin
 import 'package:finance_app/features/goals/presentation/providers/goal_provider.dart';
 import 'package:finance_app/features/budget/presentation/providers/budget_providers.dart';
 import 'package:finance_app/features/authentication/presentation/providers/auth_providers.dart';
+import 'package:finance_app/features/bill_management/presentation/providers/bill_provider.dart';
+import 'package:finance_app/features/receipt_management/presentation/providers/receipt_provider.dart';
+import 'package:finance_app/features/investment/presentation/providers/investment_provider.dart';
+import 'package:finance_app/features/financial_health/application/financial_health_service.dart';
+import 'package:finance_app/features/financial_health/domain/entities/financial_health_analysis.dart';
+import 'package:finance_app/features/settings/presentation/providers/settings_provider.dart';
+import 'package:finance_app/features/settings/data/repositories/settings_repository.dart';
+import 'package:finance_app/core/data/base_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:finance_app/features/settings/data/models/setting_model.dart';
+import 'dart:async';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +100,15 @@ void main() {
         testWidgets('builds: $name', (tester) async {
           final page = builder();
           await tester.pumpWidget(_TestApp(home: page, overrides: overrides));
-          await pumpUntilStable(tester);
+          // SettingsPage may take longer due to NetworkImage loading
+          await pumpUntilStable(
+            tester,
+            maxPumps: name == 'SettingsPage' ? 40 : 20,
+            step:
+                name == 'SettingsPage'
+                    ? const Duration(milliseconds: 200)
+                    : const Duration(milliseconds: 150),
+          );
           expect(
             find.byWidget(page),
             findsOneWidget,
@@ -120,7 +140,84 @@ List<Override> _testOverrides() {
       year: now.year,
       month: now.month,
     )).overrideWith((ref) => Stream.value([])),
+    // Bills
+    billsProvider.overrideWith((ref) => Stream.value([])),
+    billsSummaryProvider.overrideWith(
+      (ref) => Future.value({
+        'totalBills': 0,
+        'pendingBills': 0,
+        'paidBills': 0,
+        'overdueBills': 0,
+        'totalAmount': 0.0,
+        'pendingAmount': 0.0,
+      }),
+    ),
+    // Receipts
+    receiptsProvider.overrideWith((ref) => Stream.value([])),
+    pendingReceiptsProvider.overrideWith((ref) => Stream.value([])),
+    processedReceiptsProvider.overrideWith((ref) => Stream.value([])),
+    receiptsSummaryProvider.overrideWith(
+      (ref) => Future.value({
+        'totalReceipts': 0,
+        'pendingReceipts': 0,
+        'processedReceipts': 0,
+        'totalAmount': 0.0,
+      }),
+    ),
+    // Investments
+    investmentsProvider.overrideWith((ref) => Stream.value([])),
+    activeInvestmentsProvider.overrideWith((ref) => Stream.value([])),
+    portfolioSummaryProvider.overrideWith(
+      (ref) => Future.value({
+        'totalInvestments': 0,
+        'activeInvestments': 0,
+        'totalInvested': 0.0,
+        'currentValue': 0.0,
+        'totalProfitLoss': 0.0,
+      }),
+    ),
+    // Financial Health
+    financialHealthAnalysisProvider.overrideWith(
+      (ref) => Future.value(FinancialHealthAnalysis.empty()),
+    ),
+    // Settings - Categories and Accounts
+    expenseCategoriesProvider.overrideWith((ref) => Stream.value([])),
+    incomeCategoriesProvider.overrideWith((ref) => Stream.value([])),
+    accountsProvider.overrideWith((ref) => Stream.value([])),
+    // Settings Repository - Mock to avoid Firebase calls
+    settingsRepositoryProvider.overrideWith((ref) => _MockSettingsRepository()),
+    // Settings Controller - uses mocked repository
+    settingsControllerProvider.overrideWith(
+      (ref) => SettingsController(
+        settingsRepository: ref.watch(settingsRepositoryProvider),
+        ref: ref,
+      ),
+    ),
   ];
+}
+
+// Mock SettingsRepository that doesn't call Firebase
+class _MockSettingsRepository extends BaseRepository implements SettingsRepository {
+  _MockSettingsRepository()
+      : super(
+          firestore: FirebaseFirestore.instance,
+          firebaseAuth: FirebaseAuth.instance,
+        );
+
+  @override
+  Stream<List<CategoryModel>> getCombinedStream(String collectionName) {
+    return Stream.value([]);
+  }
+
+  @override
+  Future<void> addCustomData(String collectionName, String name) async {
+    // No-op for tests
+  }
+
+  @override
+  Future<void> deleteCustomData(String collectionName, String docId) async {
+    // No-op for tests
+  }
 }
 
 class _TestApp extends StatelessWidget {
@@ -136,7 +233,7 @@ class _TestApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData.light(useMaterial3: true),
         darkTheme: ThemeData.dark(useMaterial3: true),
-        home: home,
+        home: Material(child: home),
       ),
     );
   }
