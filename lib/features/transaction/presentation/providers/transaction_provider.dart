@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/base_controller.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../settings/data/models/setting_model.dart';
@@ -45,111 +46,59 @@ final accountsProvider = StreamProvider.autoDispose<List<CategoryModel>>((ref) {
 
 // Provider untuk transaction controller
 final transactionControllerProvider =
-    StateNotifierProvider.autoDispose<TransactionController, bool>((ref) {
+    StateNotifierProvider.autoDispose<TransactionController, AsyncValue<void>>((
+      ref,
+    ) {
       return TransactionController(
         transactionRepository: ref.watch(transactionRepositoryProvider),
         ref: ref,
       );
     });
 
-class TransactionController extends StateNotifier<bool> {
+class TransactionController extends BaseController {
   final TransactionRepository _transactionRepository;
-  final Ref _ref;
 
   TransactionController({
     required TransactionRepository transactionRepository,
-    required Ref ref,
-  }) : _transactionRepository = transactionRepository,
-       _ref = ref,
-       super(false);
+    required super.ref,
+  }) : _transactionRepository = transactionRepository;
 
-  Future<bool> addTransaction(TransactionModel transaction) async {
-    state = true;
-    try {
-      await _transactionRepository.addTransaction(transaction);
-
-      // Invalidate semua provider yang terkait
-      _ref.invalidate(transactionsStreamProvider);
-
-      // Jika transaksi terkait dengan goal, invalidate goals provider juga
-      if (transaction.goalId != null) {
-        _ref.invalidate(goalsStreamProvider);
-        // Invalidate provider goals yang baru jika ada
-        try {
-          _ref.invalidate(goalsWithProgressProvider);
-        } catch (e) {
-          // Provider mungkin belum ada, ignore error
-        }
+  List<ProviderOrFamily> _getProvidersToInvalidate(String? goalId) {
+    final providers = <ProviderOrFamily>[transactionsStreamProvider];
+    if (goalId != null) {
+      providers.add(goalsStreamProvider);
+      try {
+        providers.add(goalsWithProgressProvider);
+      } catch (e) {
+        // Provider mungkin belum ada, ignore error
       }
-
-      if (!mounted) return false;
-      state = false;
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-      state = false;
-      return false;
     }
+    return providers;
   }
 
-  Future<bool> updateTransaction(TransactionModel transaction) async {
-    state = true;
-    try {
-      await _transactionRepository.updateTransaction(transaction);
-
-      // Invalidate semua provider yang terkait
-      _ref.invalidate(transactionsStreamProvider);
-
-      // Jika transaksi terkait dengan goal, invalidate goals provider juga
-      if (transaction.goalId != null) {
-        _ref.invalidate(goalsStreamProvider);
-        try {
-          _ref.invalidate(goalsWithProgressProvider);
-        } catch (e) {
-          // Provider mungkin belum ada, ignore error
-        }
-      }
-
-      if (!mounted) return false;
-      state = false;
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-      state = false;
-      return false;
-    }
+  Future<void> addTransaction(TransactionModel transaction) async {
+    await executeWithLoading(
+      () => _transactionRepository.addTransaction(transaction),
+      providersToInvalidate: _getProvidersToInvalidate(transaction.goalId),
+    );
   }
 
-  Future<bool> deleteTransaction(String transactionId) async {
-    state = true;
-    try {
-      // Get transaction first to check if it has goalId
-      final transactions =
-          await _transactionRepository.getTransactionsStream().first;
-      final transaction = transactions.firstWhere((t) => t.id == transactionId);
+  Future<void> updateTransaction(TransactionModel transaction) async {
+    await executeWithLoading(
+      () => _transactionRepository.updateTransaction(transaction),
+      providersToInvalidate: _getProvidersToInvalidate(transaction.goalId),
+    );
+  }
 
-      await _transactionRepository.deleteTransaction(transactionId);
+  Future<void> deleteTransaction(String transactionId) async {
+    // Get transaction first to check if it has goalId
+    final transactions =
+        await _transactionRepository.getTransactionsStream().first;
+    final transaction = transactions.firstWhere((t) => t.id == transactionId);
 
-      // Invalidate semua provider yang terkait
-      _ref.invalidate(transactionsStreamProvider);
-
-      // Jika transaksi terkait dengan goal, invalidate goals provider juga
-      if (transaction.goalId != null) {
-        _ref.invalidate(goalsStreamProvider);
-        try {
-          _ref.invalidate(goalsWithProgressProvider);
-        } catch (e) {
-          // Provider mungkin belum ada, ignore error
-        }
-      }
-
-      if (!mounted) return false;
-      state = false;
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-      state = false;
-      return false;
-    }
+    await executeWithLoading(
+      () => _transactionRepository.deleteTransaction(transactionId),
+      providersToInvalidate: _getProvidersToInvalidate(transaction.goalId),
+    );
   }
 }

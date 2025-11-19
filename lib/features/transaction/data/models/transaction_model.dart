@@ -18,6 +18,9 @@ class TransactionModel with _$TransactionModel {
     required DateTime date,
     required TransactionType type,
     String? goalId,
+    double? latitude,
+    double? longitude,
+    String? locationAddress,
   }) = _TransactionModel;
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
@@ -35,6 +38,13 @@ class TransactionModel with _$TransactionModel {
       date: (data['date'] as Timestamp).toDate(),
       type: _parseTransactionType(data['type'] as String?),
       goalId: data['goalId'],
+      latitude: data['latitude'] != null
+          ? (data['latitude'] as num).toDouble()
+          : null,
+      longitude: data['longitude'] != null
+          ? (data['longitude'] as num).toDouble()
+          : null,
+      locationAddress: data['locationAddress'] as String?,
     );
   }
 
@@ -63,6 +73,9 @@ class TransactionModel with _$TransactionModel {
       'date': Timestamp.fromDate(date),
       'type': type.name,
       'goalId': goalId,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationAddress': locationAddress,
     };
   }
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
+import '../../../../core/widgets/location_picker_widget.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/income_expense_form.dart';
@@ -35,6 +37,9 @@ class _AddEditTransactionPageState
   late DateTime _selectedDate;
   late TransactionType _selectedType;
   bool _isLoading = false;
+  double? _latitude;
+  double? _longitude;
+  String? _locationAddress;
 
   bool get _isEditMode => widget.transaction != null;
 
@@ -55,6 +60,9 @@ class _AddEditTransactionPageState
 
     _selectedDate = _isEditMode ? t!.date : DateTime.now();
     _selectedType = _isEditMode ? t!.type : TransactionType.expense;
+    _latitude = t?.latitude;
+    _longitude = t?.longitude;
+    _locationAddress = t?.locationAddress;
   }
 
   @override
@@ -102,6 +110,9 @@ class _AddEditTransactionPageState
             account: _selectedAccount!,
             date: _selectedDate,
             type: _selectedType,
+            latitude: _latitude,
+            longitude: _longitude,
+            locationAddress: _locationAddress,
           );
           if (_isEditMode) {
             await repo.updateTransaction(transactionData);
@@ -115,7 +126,9 @@ class _AddEditTransactionPageState
           context,
           'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
         );
-        Navigator.of(context).pop();
+        if (context.canPop()) {
+          context.pop();
+        }
       } catch (e) {
         if (!mounted) return;
         CoreSnackbar.showError(context, 'Gagal: $e');
@@ -314,6 +327,40 @@ class _AddEditTransactionPageState
                                   (val) => setState(() => _selectedDate = val),
                             ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Location Picker
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16.0),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: LocationPickerWidget(
+                      initialLatitude: _latitude,
+                      initialLongitude: _longitude,
+                      initialAddress: _locationAddress,
+                      onLocationSelected: (lat, lng, address) {
+                        setState(() {
+                          _latitude = lat;
+                          _longitude = lng;
+                          _locationAddress = address;
+                        });
+                      },
                     ),
                   ),
 

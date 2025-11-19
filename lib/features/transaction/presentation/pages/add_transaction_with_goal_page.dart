@@ -354,25 +354,35 @@ class _AddTransactionWithGoalPageState
           .read(transactionControllerProvider.notifier)
           .addTransaction(transaction);
 
-      // Update goal progress
-      if (_selectedGoalId != null) {
-        await ref
-            .read(goalProgressServiceProvider)
-            .updateGoalProgress(_selectedGoalId!);
-
-        // Invalidate providers to trigger UI refresh
-        _invalidateProviders();
-      }
-
-      // Show success message
       if (!mounted) return;
-      CoreSnackbar.showSuccess(
-        context,
-        'Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
-      );
+      final state = ref.read(transactionControllerProvider);
+      state.when(
+        data: (_) async {
+          // Update goal progress
+          if (_selectedGoalId != null) {
+            await ref
+                .read(goalProgressServiceProvider)
+                .updateGoalProgress(_selectedGoalId!);
 
-      // Navigate back
-      Navigator.of(context).pop();
+            // Invalidate providers to trigger UI refresh
+            _invalidateProviders();
+          }
+
+          // Show success message
+          if (!mounted) return;
+          CoreSnackbar.showSuccess(
+            context,
+            'Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
+          );
+
+          // Navigate back
+          Navigator.of(context).pop();
+        },
+        loading: () {},
+        error: (error, _) {
+          CoreSnackbar.showError(context, 'Gagal menambahkan transaksi: $error');
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       CoreSnackbar.showError(context, 'Gagal menambahkan transaksi: $e');

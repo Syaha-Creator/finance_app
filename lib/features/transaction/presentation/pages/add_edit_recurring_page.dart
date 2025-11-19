@@ -89,27 +89,34 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
       final controller = ref.read(
         recurringTransactionControllerProvider.notifier,
       );
-      final success =
-          isEditMode
-              ? await controller.update(newRecurring)
-              : await controller.add(newRecurring);
+      if (isEditMode) {
+        await controller.update(newRecurring);
+      } else {
+        await controller.add(newRecurring);
+      }
 
       if (!mounted) return;
-      if (success) {
-        CoreSnackbar.showSuccess(
-          context,
-          'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}',
-        );
-        Navigator.of(context).pop();
-      } else {
-        CoreSnackbar.showError(context, 'Gagal menyimpan jadwal');
-      }
+      final state = ref.read(recurringTransactionControllerProvider);
+      state.when(
+        data: (_) {
+          CoreSnackbar.showSuccess(
+            context,
+            'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}!',
+          );
+          Navigator.of(context).pop();
+        },
+        loading: () {},
+        error: (error, _) {
+          CoreSnackbar.showError(context, 'Gagal: $error');
+        },
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(recurringTransactionControllerProvider);
+    final isLoading =
+        ref.watch(recurringTransactionControllerProvider).isLoading;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -333,7 +340,8 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
   }
 
   Widget _buildSubmitButton() {
-    final isLoading = ref.watch(recurringTransactionControllerProvider);
+    final isLoading =
+        ref.watch(recurringTransactionControllerProvider).isLoading;
 
     return CoreLoadingButton(
       onPressed: _submit,
@@ -375,11 +383,12 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
           value: _selectedCategory,
           onChanged: (val) => setState(() => _selectedCategory = val),
           label: 'Kategori',
-          items: categories
-              .map(
-                (c) => DropdownMenuItem(value: c.name, child: Text(c.name)),
-              )
-              .toList(),
+          items:
+              categories
+                  .map(
+                    (c) => DropdownMenuItem(value: c.name, child: Text(c.name)),
+                  )
+                  .toList(),
           validator: (v) => v == null ? 'Wajib dipilih' : null,
         );
       },
@@ -396,11 +405,12 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
           value: _selectedAccount,
           onChanged: (val) => setState(() => _selectedAccount = val),
           label: 'Akun',
-          items: accounts
-              .map(
-                (a) => DropdownMenuItem(value: a.name, child: Text(a.name)),
-              )
-              .toList(),
+          items:
+              accounts
+                  .map(
+                    (a) => DropdownMenuItem(value: a.name, child: Text(a.name)),
+                  )
+                  .toList(),
           validator: (v) => v == null ? 'Wajib dipilih' : null,
         );
       },
