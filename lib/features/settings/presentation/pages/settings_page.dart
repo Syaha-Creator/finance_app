@@ -5,7 +5,6 @@ import '../../../../core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routes/route_paths.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../providers/settings_provider.dart';
@@ -20,22 +19,20 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    return AppScaffold(
-      title: 'Pengaturan',
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            ],
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          ],
         ),
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
-          children: [
+      ),
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 2.0),
+        children: [
             const UserProfileCard(),
             SettingsGroup(
               title: 'PORTOFOLIO SAYA',
@@ -144,8 +141,7 @@ class SettingsPage extends ConsumerWidget {
               children: [_buildEnhancedLogoutTile(context, ref)],
             ),
             const SizedBox(height: 20),
-          ],
-        ),
+        ],
       ),
     );
   }

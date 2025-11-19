@@ -1,31 +1,20 @@
-import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../models/setting_model.dart';
 
-class SettingsRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _firebaseAuth;
+class SettingsRepository extends BaseRepository {
+  SettingsRepository({required super.firestore, required super.firebaseAuth});
 
-  SettingsRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth firebaseAuth,
-  }) : _firestore = firestore,
-       _firebaseAuth = firebaseAuth;
-
-  String? get _uid => _firebaseAuth.currentUser?.uid;
-
-  // --- FUNGSI BARU UNTUK MENGGABUNGKAN DATA ---
-
+  /// Gets combined stream of default data and user custom data.
+  /// Combines data from main collection (default) and user subcollection (custom).
   Stream<List<CategoryModel>> getCombinedStream(String collectionName) {
-    final userId = _uid;
+    final userId = currentUserId;
     if (userId == null) return Stream.value([]);
 
-    // 1. Stream untuk data default
-    final defaultStream = _firestore
+    // 1. Stream untuk data default (dari collection utama)
+    final defaultStream = firestore
         .collection(collectionName)
         .snapshots()
         .map(
@@ -41,24 +30,17 @@ class SettingsRepository {
                   .toList(),
         );
 
-    // 2. Stream untuk data kustom pengguna
-    final userStream = _firestore
-        .collection(FirestoreConstants.usersCollection)
-        .doc(userId)
-        .collection(collectionName)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map(
-                    (doc) => CategoryModel(
-                      id: doc.id,
-                      name: doc['name'] as String,
-                      isDefault: false,
-                    ),
-                  )
-                  .toList(),
-        );
+    // 2. Stream untuk data kustom pengguna (dari subcollection)
+    final userStream = createSubcollectionStreamQuery<CategoryModel>(
+      parentCollection: FirestoreConstants.usersCollection,
+      subcollectionName: collectionName,
+      fromFirestore:
+          (doc) => CategoryModel(
+            id: doc.id,
+            name: doc['name'] as String,
+            isDefault: false,
+          ),
+    );
 
     // 3. Gabungkan kedua stream
     return Rx.combineLatest2(defaultStream, userStream, (
@@ -71,28 +53,21 @@ class SettingsRepository {
     });
   }
 
-  // --- FUNGSI LAMA (PENAMBAHAN) DIMODIFIKASI UNTUK MENYIMPAN KE SUB-KOLEKSI ---
-
+  /// Adds custom data to user's subcollection.
   Future<void> addCustomData(String collectionName, String name) async {
-    final userId = _uid;
-    if (userId == null) throw Exception("Pengguna tidak login");
-    await _firestore
-        .collection(FirestoreConstants.usersCollection)
-        .doc(userId)
-        .collection(collectionName)
-        .add({'name': name});
+    await addDocumentToSubcollection(
+      parentCollection: FirestoreConstants.usersCollection,
+      subcollectionName: collectionName,
+      data: {'name': name},
+    );
   }
 
-  // --- FUNGSI BARU UNTUK MENGHAPUS ---
-
+  /// Deletes custom data from user's subcollection.
   Future<void> deleteCustomData(String collectionName, String docId) async {
-    final userId = _uid;
-    if (userId == null) throw Exception("Pengguna tidak login");
-    await _firestore
-        .collection(FirestoreConstants.usersCollection)
-        .doc(userId)
-        .collection(collectionName)
-        .doc(docId)
-        .delete();
+    await deleteDocumentFromSubcollection(
+      parentCollection: FirestoreConstants.usersCollection,
+      subcollectionName: collectionName,
+      documentId: docId,
+    );
   }
 }

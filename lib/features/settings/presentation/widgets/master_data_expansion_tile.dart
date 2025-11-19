@@ -10,8 +10,8 @@ class MasterDataExpansionTile extends ConsumerStatefulWidget {
   final String title;
   final IconData icon;
   final AutoDisposeStreamProvider<List<CategoryModel>> provider;
-  final Future<bool> Function(String) onAdd;
-  final Future<bool> Function(String) onDelete;
+  final Future<void> Function(String) onAdd;
+  final Future<void> Function(String) onDelete;
 
   const MasterDataExpansionTile({
     super.key,
@@ -657,7 +657,8 @@ class _MasterDataExpansionTileState
             ),
             Consumer(
               builder: (_, innerRef, __) {
-                final isLoading = innerRef.watch(settingsControllerProvider);
+                final isLoading =
+                    innerRef.watch(settingsControllerProvider).isLoading;
                 return ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -671,23 +672,32 @@ class _MasterDataExpansionTileState
                           ? null
                           : () async {
                             if (formKey.currentState!.validate()) {
-                              final success = await widget.onAdd(
-                                controller.text.trim(),
+                              await widget.onAdd(controller.text.trim());
+
+                              if (!dialogContext.mounted) return;
+                              final state = innerRef.read(
+                                settingsControllerProvider,
                               );
-                              if (success && dialogContext.mounted) {
-                                Navigator.of(dialogContext).pop();
-                                if (context.mounted) {
-                                  CoreSnackbar.showSuccess(
-                                    context,
-                                    '${widget.title} berhasil ditambahkan',
-                                  );
-                                }
-                              } else if (dialogContext.mounted) {
-                                CoreSnackbar.showError(
-                                  dialogContext,
-                                  'Gagal menambah ${widget.title}',
-                                );
-                              }
+                              state.when(
+                                data: (_) {
+                                  Navigator.of(dialogContext).pop();
+                                  if (context.mounted) {
+                                    CoreSnackbar.showSuccess(
+                                      context,
+                                      '${widget.title} berhasil ditambahkan',
+                                    );
+                                  }
+                                },
+                                loading: () {},
+                                error: (error, _) {
+                                  if (dialogContext.mounted) {
+                                    CoreSnackbar.showError(
+                                      dialogContext,
+                                      'Gagal menambah ${widget.title}: $error',
+                                    );
+                                  }
+                                },
+                              );
                             }
                           },
                   child:
@@ -794,20 +804,28 @@ class _MasterDataExpansionTileState
                 ),
                 onPressed: () async {
                   Navigator.of(dialogContext).pop();
-                  final success = await widget.onDelete(item.id);
-                  if (success) {
-                    if (context.mounted) {
-                      CoreSnackbar.showSuccess(
-                        context,
-                        '${widget.title} berhasil dihapus',
-                      );
-                    }
-                  } else if (dialogContext.mounted) {
-                    CoreSnackbar.showError(
-                      dialogContext,
-                      'Gagal menghapus ${widget.title}',
-                    );
-                  }
+                  await widget.onDelete(item.id);
+
+                  final state = ref.read(settingsControllerProvider);
+                  state.when(
+                    data: (_) {
+                      if (context.mounted) {
+                        CoreSnackbar.showSuccess(
+                          context,
+                          '${widget.title} berhasil dihapus',
+                        );
+                      }
+                    },
+                    loading: () {},
+                    error: (error, _) {
+                      if (dialogContext.mounted) {
+                        CoreSnackbar.showError(
+                          dialogContext,
+                          'Gagal menghapus ${widget.title}: $error',
+                        );
+                      }
+                    },
+                  );
                 },
                 child: const Text('Hapus'),
               ),
