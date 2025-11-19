@@ -1,1 +1,58 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"finance-app-b875c","appId":"1:421155499766:android:22114548db4224ddad06d7","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"finance-app-b875c","appId":"1:421155499766:ios:41211e02843e4891ad06d7","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"finance-app-b875c","appId":"1:421155499766:ios:41211e02843e4891ad06d7","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"finance-app-b875c","configurations":{"android":"1:421155499766:android:22114548db4224ddad06d7","ios":"1:421155499766:ios:41211e02843e4891ad06d7","macos":"1:421155499766:ios:41211e02843e4891ad06d7","web":"1:421155499766:web:baf92ebb816498c2ad06d7","windows":"1:421155499766:web:05fa07bf0c743a24ad06d7"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "finance-app-b875c",
+          "appId": "1:421155499766:android:22114548db4224ddad06d7",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "finance-app-b875c",
+          "appId": "1:421155499766:ios:41211e02843e4891ad06d7",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "finance-app-b875c",
+          "appId": "1:421155499766:ios:41211e02843e4891ad06d7",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "finance-app-b875c",
+          "configurations": {
+            "android": "1:421155499766:android:22114548db4224ddad06d7",
+            "ios": "1:421155499766:ios:41211e02843e4891ad06d7",
+            "macos": "1:421155499766:ios:41211e02843e4891ad06d7",
+            "web": "1:421155499766:web:baf92ebb816498c2ad06d7",
+            "windows": "1:421155499766:web:05fa07bf0c743a24ad06d7"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}
