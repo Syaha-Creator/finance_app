@@ -1,99 +1,75 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../../../transaction/data/models/transaction_model.dart';
 import '../models/debt_receivable_model.dart';
 
-class DebtRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _firebaseAuth;
-
-  DebtRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth firebaseAuth,
-  }) : _firestore = firestore,
-       _firebaseAuth = firebaseAuth;
-
-  String? get _currentUserId => _firebaseAuth.currentUser?.uid;
+class DebtRepository extends BaseRepository {
+  DebtRepository({required super.firestore, required super.firebaseAuth});
 
   CollectionReference get _debtCollection =>
-      _firestore.collection(FirestoreConstants.debtsCollection);
+      getCollection(FirestoreConstants.debtsCollection);
   CollectionReference get _transactionCollection =>
-      _firestore.collection(FirestoreConstants.transactionsCollection);
+      getCollection(FirestoreConstants.transactionsCollection);
 
   Stream<List<DebtReceivableModel>> getDebtsStream() {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return Stream.value([]);
-      }
-
-      final query = _firestore
-          .collection(FirestoreConstants.debtsCollection)
-          .where('userId', isEqualTo: userId)
-          .orderBy('dueDate', descending: false);
-
-      return query
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs
-                .map((doc) => DebtReceivableModel.fromFirestore(doc))
-                .toList();
-          })
-          .handleError((error) {
-            return <DebtReceivableModel>[];
-          });
-    } catch (e) {
-      return Stream.value([]);
-    }
+    return createStreamQuery<DebtReceivableModel>(
+      collectionName: FirestoreConstants.debtsCollection,
+      fromFirestore: (doc) => DebtReceivableModel.fromFirestore(doc),
+      orderByField: 'dueDate',
+      descending: false,
+      userIdField: 'userId',
+    );
   }
 
   Future<void> addDebt(DebtReceivableModel debt) async {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return;
-      }
-
-      final data = debt.toFirestore();
-      await _firestore
-          .collection(FirestoreConstants.debtsCollection)
-          .add(data);
-    } catch (e) {
-      rethrow;
-    }
+    final data = debt.toFirestore();
+    await addDocument(
+      collectionName: FirestoreConstants.debtsCollection,
+      data: data,
+      requireUserId: true,
+    );
   }
 
   Future<void> updateDebt(DebtReceivableModel debt) async {
-    try {
-      final data = debt.toFirestore();
-      await _firestore
-          .collection(FirestoreConstants.debtsCollection)
-          .doc(debt.id)
-          .update(data);
-    } catch (e) {
-      rethrow;
+    if (debt.id == null) {
+      throw Exception('Debt ID is null, cannot update.');
     }
+    final data = debt.toFirestore();
+    await updateDocument(
+      collectionName: FirestoreConstants.debtsCollection,
+      documentId: debt.id!,
+      data: data,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   Future<void> deleteDebt(String debtId) async {
-    try {
-      await _firestore
-          .collection(FirestoreConstants.debtsCollection)
-          .doc(debtId)
-          .delete();
-    } catch (e) {
-      rethrow;
-    }
+    await deleteDocument(
+      collectionName: FirestoreConstants.debtsCollection,
+      documentId: debtId,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   Future<void> markAsPaid(DebtReceivableModel debt, String account) async {
-    final userId = _currentUserId;
-    if (userId == null) throw Exception('User not logged in');
+    if (debt.id == null) {
+      throw Exception('Debt ID is null, cannot mark as paid.');
+    }
 
-    final batch = _firestore.batch();
+    // Security: Validate that debt belongs to current user
+    final userId = requiredUserId;
+    final debtDoc = await _debtCollection.doc(debt.id!).get();
+    if (!debtDoc.exists) {
+      throw Exception('Utang/Piutang tidak ditemukan');
+    }
+    final debtData = debtDoc.data() as Map<String, dynamic>?;
+    if (debtData == null || debtData['userId'] != userId) {
+      throw Exception('Anda tidak memiliki izin untuk mengubah data ini');
+    }
 
-    final debtDocRef = _debtCollection.doc(debt.id);
+    final batch = firestore.batch();
+    final debtDocRef = _debtCollection.doc(debt.id!);
     batch.update(debtDocRef, {'status': 'paid'});
 
     TransactionModel newTransaction;

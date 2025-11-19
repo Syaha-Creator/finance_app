@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/base_controller.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/debt_receivable_model.dart';
@@ -25,57 +26,37 @@ final debtNotifierProvider =
       );
     });
 
-class DebtController extends StateNotifier<AsyncValue<void>> {
+class DebtController extends BaseController {
   final DebtRepository _debtRepository;
-  final Ref _ref;
 
-  DebtController({required DebtRepository debtRepository, required Ref ref})
-    : _debtRepository = debtRepository,
-      _ref = ref,
-      super(const AsyncValue.data(null));
+  DebtController({required DebtRepository debtRepository, required super.ref})
+    : _debtRepository = debtRepository;
 
   Future<void> addDebt(DebtReceivableModel debt) async {
-    state = const AsyncValue.loading();
-    try {
-      await _debtRepository.addDebt(debt);
-      _ref.invalidate(debtsStreamProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _debtRepository.addDebt(debt),
+      providersToInvalidate: [debtsStreamProvider],
+    );
   }
 
   Future<void> updateDebt(DebtReceivableModel debt) async {
-    state = const AsyncValue.loading();
-    try {
-      await _debtRepository.updateDebt(debt);
-      _ref.invalidate(debtsStreamProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _debtRepository.updateDebt(debt),
+      providersToInvalidate: [debtsStreamProvider],
+    );
   }
 
   Future<void> deleteDebt(String debtId) async {
-    state = const AsyncValue.loading();
-    try {
-      await _debtRepository.deleteDebt(debtId);
-      _ref.invalidate(debtsStreamProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _debtRepository.deleteDebt(debtId),
+      providersToInvalidate: [debtsStreamProvider],
+    );
   }
 
   Future<void> markAsPaid(DebtReceivableModel debt, String account) async {
-    state = const AsyncValue.loading();
-    try {
-      await _debtRepository.markAsPaid(debt, account);
-      _ref.invalidate(transactionsStreamProvider);
-      _ref.invalidate(debtsStreamProvider);
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
+    await executeWithLoading(
+      () => _debtRepository.markAsPaid(debt, account),
+      providersToInvalidate: [transactionsStreamProvider, debtsStreamProvider],
+    );
   }
 }
