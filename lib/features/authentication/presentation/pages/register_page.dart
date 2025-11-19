@@ -130,6 +130,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               email: _emailController.text,
               password: _passwordController.text,
             );
+
+        if (!mounted) return;
+        final state = ref.read(authControllerProvider);
+        state.when(
+          data: (_) {
+            // Success - navigation handled by auth wrapper
+          },
+          loading: () {},
+          error: (error, _) {
+            setState(() => _isLoading = false);
+            CoreSnackbar.showError(
+              context,
+              ErrorMessageFormatter.formatAuthError(error),
+            );
+          },
+        );
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
@@ -170,120 +186,41 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
                         opacity: _fadeAnimation,
                         child: SlideTransition(
                           position: _slideAnimation,
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                width: 1.5,
+                          child: Column(
+                            children: [
+                              // Animated logo
+                              AuthLogo(scaleAnimation: _scaleAnimation),
+                              const SizedBox(height: 20),
+
+                              Text(
+                                'Finance App',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 25,
-                                  offset: const Offset(0, 12),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                // Animated logo - WOW design with gradient and glow!
-                                ScaleTransition(
-                                  scale: _scaleAnimation,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topRight,
-                                        end: Alignment.bottomLeft,
-                                        colors: [
-                                          Colors.white.withValues(alpha: 0.2),
-                                          Colors.white.withValues(alpha: 0.05),
-                                          Colors.white.withValues(alpha: 0.15),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        width: 2.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.3,
-                                          ),
-                                          blurRadius: 18,
-                                          spreadRadius: 2,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                        BoxShadow(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          blurRadius: 35,
-                                          spreadRadius: 3,
-                                          offset: const Offset(0, 12),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(18),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Image.asset(
-                                        'assets/finance_app_logo.png',
-                                        height: 72,
-                                        width: 72,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
+                              const SizedBox(height: 8),
 
-                                Text(
-                                  'Finance App',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.5,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        offset: const Offset(0, 2),
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
+                              Text(
+                                'Mulai perjalanan keuangan yang cerdas',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.1,
                                 ),
-                                const SizedBox(height: 6),
-
-                                Text(
-                                  'Mulai perjalanan keuangan yang cerdas',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.95),
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.1,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                       ),

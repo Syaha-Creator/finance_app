@@ -11,76 +11,68 @@ final authStateChangesProvider = StreamProvider<User?>((ref) {
   return authRepository.authStateChanges;
 });
 
-final authControllerProvider = StateNotifierProvider<AuthController, bool>((
+final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((
   ref,
 ) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthController(authRepository: authRepository);
 });
 
-class AuthController extends StateNotifier<bool> {
+class AuthController extends StateNotifier<AsyncValue<void>> {
   final AuthRepository _authRepository;
 
   AuthController({required AuthRepository authRepository})
     : _authRepository = authRepository,
-      super(false);
+      super(const AsyncValue.data(null));
 
-  Future<bool> signUpWithEmail({
+  Future<void> signUpWithEmail({
     required String email,
     required String password,
     required String displayName,
   }) async {
-    state = true;
+    state = const AsyncValue.loading();
     try {
       await _authRepository.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
       );
-      state = false;
-      return true;
-    } catch (e) {
-      state = false;
-      rethrow;
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 
-  Future<bool> signInWithEmail({
+  Future<void> signInWithEmail({
     required String email,
     required String password,
   }) async {
-    state = true;
+    state = const AsyncValue.loading();
     try {
       await _authRepository.signInWithEmail(email: email, password: password);
-      state = false;
-      return true;
-    } catch (e) {
-      state = false;
-      rethrow;
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 
   Future<void> signInWithGoogle() async {
-    state = true;
+    state = const AsyncValue.loading();
     try {
       await _authRepository.signInWithGoogle();
-    } catch (e) {
-      // Error bisa ditangani di sini jika perlu
-    }
-    if (mounted) {
-      state = false;
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 
-  Future<bool> resetPassword({required String email}) async {
-    state = true;
+  Future<void> resetPassword({required String email}) async {
+    state = const AsyncValue.loading();
     try {
       await _authRepository.resetPassword(email: email);
-      state = false;
-      return true;
-    } catch (e) {
-      state = false;
-      rethrow;
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 

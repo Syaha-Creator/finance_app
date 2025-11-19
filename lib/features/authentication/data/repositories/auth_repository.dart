@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/utils/logger.dart';
 
 class AuthRepository {
@@ -97,8 +98,17 @@ class AuthRepository {
 
   Future<void> signOut() async {
     try {
+      // Delete FCM token before signing out
+      // This removes the device token from Firestore
+      await FCMService().deleteToken();
+
+      // Sign out from Google Sign In
       await _googleSignIn.signOut();
+
+      // Sign out from Firebase Auth
       await _firebaseAuth.signOut();
+
+      AppLogger.info('User signed out successfully');
     } catch (e) {
       AppLogger.error('Error during Sign Out', e);
       rethrow;

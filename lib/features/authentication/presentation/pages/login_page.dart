@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart' as core_widgets;
 import '../../../../core/widgets/core_snackbar.dart';
 import '../../../../core/utils/error_message_formatter.dart';
+import '../../../../core/routes/route_paths.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -104,6 +106,30 @@ class _LoginPageState extends ConsumerState<LoginPage>
               email: _emailController.text,
               password: _passwordController.text,
             );
+
+        if (!mounted) return;
+        final state = ref.read(authControllerProvider);
+        state.when(
+          data: (_) {
+            // Check if user is logged in and navigate
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              setState(() => _isLoading = false);
+              // Navigate to main page
+              context.go(RoutePaths.main);
+            } else {
+              setState(() => _isLoading = false);
+            }
+          },
+          loading: () {},
+          error: (error, _) {
+            setState(() => _isLoading = false);
+            CoreSnackbar.showError(
+              context,
+              ErrorMessageFormatter.formatAuthError(error),
+            );
+          },
+        );
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
@@ -120,10 +146,34 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
     try {
       await ref.read(authControllerProvider.notifier).signInWithGoogle();
+
+      if (!mounted) return;
+      final state = ref.read(authControllerProvider);
+      state.when(
+        data: (_) {
+          // Check if user is logged in and navigate
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            setState(() => _isLoading = false);
+            // Navigate to main page
+            context.go(RoutePaths.main);
+          } else {
+            setState(() => _isLoading = false);
+          }
+        },
+        loading: () {},
+        error: (error, _) {
+          setState(() => _isLoading = false);
+          CoreSnackbar.showError(
+            context,
+            ErrorMessageFormatter.formatAuthError(error),
+          );
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      CoreSnackbar.showError(context, e.toString());
+      CoreSnackbar.showError(context, ErrorMessageFormatter.formatAuthError(e));
     }
   }
 
@@ -288,7 +338,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                   child: Material(
                                     color: Colors.transparent,
                                     child: InkWell(
-                                      onTap: () => context.push('/forgot-password'),
+                                      onTap:
+                                          () => context.push(
+                                            RoutePaths.forgotPassword,
+                                          ),
                                       borderRadius: BorderRadius.circular(8),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -318,12 +371,13 @@ class _LoginPageState extends ConsumerState<LoginPage>
                                           ? SizedBox(
                                             height: 18,
                                             width: 18,
-                                            child: core_widgets.CoreLoadingState(
-                                              size: 18,
-                                              color: Colors.white,
-                                              strokeWidth: 2.5,
-                                              compact: true,
-                                            ),
+                                            child:
+                                                core_widgets.CoreLoadingState(
+                                                  size: 18,
+                                                  color: Colors.white,
+                                                  strokeWidth: 2.5,
+                                                  compact: true,
+                                                ),
                                           )
                                           : Text(
                                             'Masuk Sekarang',
@@ -482,7 +536,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => context.push('/register'),
+            onTap: () => context.push(RoutePaths.register),
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

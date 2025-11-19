@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -98,11 +99,25 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
         await ref
             .read(authControllerProvider.notifier)
             .resetPassword(email: _emailController.text);
+
         if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _isEmailSent = true;
-        });
+        final state = ref.read(authControllerProvider);
+        state.when(
+          data: (_) {
+            setState(() {
+              _isLoading = false;
+              _isEmailSent = true;
+            });
+          },
+          loading: () {},
+          error: (error, _) {
+            setState(() => _isLoading = false);
+            CoreSnackbar.showError(
+              context,
+              ErrorMessageFormatter.formatAuthError(error),
+            );
+          },
+        );
       } catch (e) {
         if (!mounted) return;
         setState(() => _isLoading = false);
@@ -131,12 +146,47 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Animated Logo
+                      // Animated Logo and Header
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: SlideTransition(
                           position: _slideAnimation,
-                          child: AuthLogo(scaleAnimation: _scaleAnimation),
+                          child: Column(
+                            children: [
+                              // Animated logo
+                              AuthLogo(scaleAnimation: _scaleAnimation),
+                              const SizedBox(height: 20),
+
+                              Text(
+                                'Finance App',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              Text(
+                                'Kelola keuanganmu dengan bijak',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.1,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -254,7 +304,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
 
         // Back Button
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
           ),
@@ -324,7 +378,11 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage>
 
         // Back to Login Button
         CompactButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            }
+          },
           child: Text(
             'Kembali ke Login',
             style: theme.textTheme.titleMedium?.copyWith(
