@@ -1,143 +1,101 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../models/investment_model.dart';
 
-class InvestmentRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _auth;
-
-  InvestmentRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth auth,
-  }) : _firestore = firestore,
-       _auth = auth;
-
-  String get _userId => _auth.currentUser?.uid ?? '';
+class InvestmentRepository extends BaseRepository {
+  InvestmentRepository({required super.firestore, required super.firebaseAuth});
 
   // Get all investments for current user
   Stream<List<InvestmentModel>> getInvestments() {
-    if (_userId.isEmpty) {
-      return Stream.value(<InvestmentModel>[]);
-    }
-
-    return _firestore
-        .collection(FirestoreConstants.investmentsCollection)
-        .where('userId', isEqualTo: _userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => InvestmentModel.fromFirestore(doc))
-                  .toList(),
-        );
+    return createStreamQuery<InvestmentModel>(
+      collectionName: FirestoreConstants.investmentsCollection,
+      fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+      orderByField: 'createdAt',
+      descending: true,
+      userIdField: 'userId',
+    );
   }
 
   // Get active investments only
   Stream<List<InvestmentModel>> getActiveInvestments() {
-    if (_userId.isEmpty) {
-      return Stream.value(<InvestmentModel>[]);
-    }
-
-    return _firestore
-        .collection(FirestoreConstants.investmentsCollection)
-        .where('userId', isEqualTo: _userId)
-        .where('status', isEqualTo: InvestmentStatus.active.name)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => InvestmentModel.fromFirestore(doc))
-                  .toList(),
-        );
+    return createStreamQuery<InvestmentModel>(
+      collectionName: FirestoreConstants.investmentsCollection,
+      fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+      orderByField: 'createdAt',
+      descending: true,
+      userIdField: 'userId',
+      whereConditions: [
+        WhereCondition(field: 'status', value: InvestmentStatus.active.name),
+      ],
+    );
   }
 
   // Get investments by type
   Stream<List<InvestmentModel>> getInvestmentsByType(InvestmentType type) {
-    if (_userId.isEmpty) {
-      return Stream.value(<InvestmentModel>[]);
-    }
-
-    return _firestore
-        .collection(FirestoreConstants.investmentsCollection)
-        .where('userId', isEqualTo: _userId)
-        .where('type', isEqualTo: type.name)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => InvestmentModel.fromFirestore(doc))
-                  .toList(),
-        );
+    return createStreamQuery<InvestmentModel>(
+      collectionName: FirestoreConstants.investmentsCollection,
+      fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+      orderByField: 'createdAt',
+      descending: true,
+      userIdField: 'userId',
+      whereConditions: [WhereCondition(field: 'type', value: type.name)],
+    );
   }
 
   // Get investment by ID
   Future<InvestmentModel?> getInvestmentById(String investmentId) async {
-    try {
-      final doc =
-          await _firestore
-              .collection(FirestoreConstants.investmentsCollection)
-              .doc(investmentId)
-              .get();
-
-      if (doc.exists) {
-        return InvestmentModel.fromFirestore(doc);
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get investment: $e');
-    }
+    return getDocumentById<InvestmentModel>(
+      collectionName: FirestoreConstants.investmentsCollection,
+      documentId: investmentId,
+      fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+      userIdField: 'userId',
+    );
   }
 
   // Add new investment
   Future<void> addInvestment(InvestmentModel investment) async {
-    try {
-      final investmentData = investment.copyWith(
-        userId: _userId,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+    final investmentData = investment.copyWith(
+      userId: requiredUserId,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
 
-      await _firestore
-          .collection(FirestoreConstants.investmentsCollection)
-          .add(investmentData.toFirestore());
-    } catch (e) {
-      throw Exception('Failed to add investment: $e');
-    }
+    await addDocument(
+      collectionName: FirestoreConstants.investmentsCollection,
+      data: investmentData.toFirestore(),
+      requireUserId: false, // userId sudah di-set di copyWith
+    );
   }
 
   // Update investment
   Future<void> updateInvestment(InvestmentModel investment) async {
-    try {
-      final investmentData = investment.copyWith(updatedAt: DateTime.now());
-
-      await _firestore
-          .collection(FirestoreConstants.investmentsCollection)
-          .doc(investment.id)
-          .update(investmentData.toFirestore());
-    } catch (e) {
-      throw Exception('Failed to update investment: $e');
+    if (investment.id.isEmpty) {
+      throw Exception('Investment ID is empty, cannot update.');
     }
+
+    final investmentData = investment.copyWith(updatedAt: DateTime.now());
+
+    await updateDocument(
+      collectionName: FirestoreConstants.investmentsCollection,
+      documentId: investment.id,
+      data: investmentData.toFirestore(),
+      userIdField: 'userId',
+    );
   }
 
   // Delete investment
   Future<void> deleteInvestment(String investmentId) async {
-    try {
-      await _firestore
-          .collection(FirestoreConstants.investmentsCollection)
-          .doc(investmentId)
-          .delete();
-    } catch (e) {
-      throw Exception('Failed to delete investment: $e');
-    }
+    await deleteDocument(
+      collectionName: FirestoreConstants.investmentsCollection,
+      documentId: investmentId,
+      userIdField: 'userId',
+    );
   }
 
   // Update current price for an investment
   Future<void> updateCurrentPrice(String investmentId, double newPrice) async {
     try {
+      // Security: getInvestmentById already validates userId
       final investment = await getInvestmentById(investmentId);
       if (investment != null) {
         final updatedInvestment = investment.calculateCurrentMetrics(newPrice);
@@ -203,21 +161,14 @@ class InvestmentRepository {
   // Get portfolio summary
   Future<Map<String, dynamic>> getPortfolioSummary() async {
     try {
-      if (_userId.isEmpty) {
-        throw Exception('User tidak terautentikasi');
-      }
-
-      final investmentsSnapshot =
-          await _firestore
-              .collection(FirestoreConstants.investmentsCollection)
-              .where('userId', isEqualTo: _userId)
-              .where('status', isEqualTo: InvestmentStatus.active.name)
-              .get();
-
-      final investments =
-          investmentsSnapshot.docs
-              .map((doc) => InvestmentModel.fromFirestore(doc))
-              .toList();
+      final investments = await getDocumentsByQuery<InvestmentModel>(
+        collectionName: FirestoreConstants.investmentsCollection,
+        fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+        userIdField: 'userId',
+        whereConditions: [
+          WhereCondition(field: 'status', value: InvestmentStatus.active.name),
+        ],
+      );
 
       final totalInvested = investments.fold(
         0.0,
@@ -314,16 +265,11 @@ class InvestmentRepository {
   // Search investments
   Future<List<InvestmentModel>> searchInvestments(String query) async {
     try {
-      final investmentsSnapshot =
-          await _firestore
-              .collection(FirestoreConstants.investmentsCollection)
-              .where('userId', isEqualTo: _userId)
-              .get();
-
-      final investments =
-          investmentsSnapshot.docs
-              .map((doc) => InvestmentModel.fromFirestore(doc))
-              .toList();
+      final investments = await getDocumentsByQuery<InvestmentModel>(
+        collectionName: FirestoreConstants.investmentsCollection,
+        fromFirestore: (doc) => InvestmentModel.fromFirestore(doc),
+        userIdField: 'userId',
+      );
 
       // Simple text search
       return investments.where((investment) {
