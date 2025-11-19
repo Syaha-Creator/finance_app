@@ -1,69 +1,40 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../models/budget_model.dart';
 
-class BudgetRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _firebaseAuth;
-
-  BudgetRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth firebaseAuth,
-  }) : _firestore = firestore,
-       _firebaseAuth = firebaseAuth;
+class BudgetRepository extends BaseRepository {
+  BudgetRepository({required super.firestore, required super.firebaseAuth});
 
   Stream<List<BudgetModel>> getBudgetsForMonth(int month, int year) {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return Stream.value([]);
-      }
-
-      final query = _firestore
-          .collection(FirestoreConstants.budgetsCollection)
-          .where('userId', isEqualTo: userId)
-          .where('month', isEqualTo: month)
-          .where('year', isEqualTo: year);
-
-      return query
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs
-                .map((doc) => BudgetModel.fromFirestore(doc))
-                .toList();
-          })
-          .handleError((error) {
-            return <BudgetModel>[];
-          });
-    } catch (e) {
-      return Stream.value([]);
-    }
+    return createStreamQuery<BudgetModel>(
+      collectionName: FirestoreConstants.budgetsCollection,
+      fromFirestore: (doc) => BudgetModel.fromFirestore(doc),
+      userIdField: 'userId',
+      whereConditions: [
+        WhereCondition(field: 'month', value: month),
+        WhereCondition(field: 'year', value: year),
+      ],
+    );
   }
 
   Future<void> saveOrUpdateBudget(BudgetModel budget) async {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return;
-      }
+    final data = budget.toFirestore();
 
-      final data = budget.toFirestore();
-
-      if (budget.id == null) {
-        // Create new budget
-        await _firestore
-            .collection(FirestoreConstants.budgetsCollection)
-            .add(data);
-      } else {
-        // Update existing budget
-        await _firestore
-            .collection(FirestoreConstants.budgetsCollection)
-            .doc(budget.id)
-            .update(data);
-      }
-    } catch (e) {
-      rethrow;
+    if (budget.id == null) {
+      // Create new budget
+      await addDocument(
+        collectionName: FirestoreConstants.budgetsCollection,
+        data: data,
+        requireUserId: true,
+      );
+    } else {
+      // Update existing budget
+      await updateDocument(
+        collectionName: FirestoreConstants.budgetsCollection,
+        documentId: budget.id!,
+        data: data,
+        userIdField: 'userId',
+      );
     }
   }
 }

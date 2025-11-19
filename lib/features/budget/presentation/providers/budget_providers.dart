@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/base_controller.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
@@ -24,7 +25,9 @@ final budgetsForMonthProvider = StreamProvider.autoDispose
     });
 
 final budgetControllerProvider =
-    StateNotifierProvider.autoDispose<BudgetController, bool>((ref) {
+    StateNotifierProvider.autoDispose<BudgetController, AsyncValue<void>>((
+      ref,
+    ) {
       return BudgetController(
         budgetRepository: ref.watch(budgetRepositoryProvider),
         ref: ref,
@@ -111,55 +114,40 @@ class BudgetWarning {
   });
 }
 
-class BudgetController extends StateNotifier<bool> {
+class BudgetController extends BaseController {
   final BudgetRepository _budgetRepository;
-  final Ref _ref;
 
   BudgetController({
     required BudgetRepository budgetRepository,
-    required Ref ref,
-  }) : _budgetRepository = budgetRepository,
-       _ref = ref,
-       super(false);
+    required super.ref,
+  }) : _budgetRepository = budgetRepository;
 
-  Future<bool> saveOrUpdateBudget(BudgetModel budget) async {
-    state = true;
-    try {
-      await _budgetRepository.saveOrUpdateBudget(budget);
-      _ref.invalidate(
+  Future<void> saveOrUpdateBudget(BudgetModel budget) async {
+    await executeWithLoading(
+      () => _budgetRepository.saveOrUpdateBudget(budget),
+      providersToInvalidate: [
         budgetsForMonthProvider((year: budget.year, month: budget.month)),
-      );
-      state = false;
-      return true;
-    } catch (e) {
-      state = false;
-      return false;
-    }
+      ],
+    );
   }
 
-  Future<bool> saveMultipleBudgets(List<BudgetModel> budgets) async {
-    state = true;
-    try {
-      // Kita panggil saveOrUpdateBudget untuk setiap item
-      for (final budget in budgets) {
-        await _budgetRepository.saveOrUpdateBudget(budget);
-      }
-      if (!mounted) return false;
-      // Invalidate provider setelah semua selesai
-      if (budgets.isNotEmpty) {
-        _ref.invalidate(
-          budgetsForMonthProvider((
-            year: budgets.first.year,
-            month: budgets.first.month,
-          )),
-        );
-      }
-      state = false;
-      return true;
-    } catch (e) {
-      if (!mounted) return false;
-      state = false;
-      return false;
-    }
+  Future<void> saveMultipleBudgets(List<BudgetModel> budgets) async {
+    await executeWithLoading(
+      () async {
+        // Kita panggil saveOrUpdateBudget untuk setiap item
+        for (final budget in budgets) {
+          await _budgetRepository.saveOrUpdateBudget(budget);
+        }
+      },
+      providersToInvalidate:
+          budgets.isNotEmpty
+              ? [
+                budgetsForMonthProvider((
+                  year: budgets.first.year,
+                  month: budgets.first.month,
+                )),
+              ]
+              : [],
+    );
   }
 }

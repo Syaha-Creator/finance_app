@@ -138,7 +138,7 @@ class BudgetCategoryItem extends ConsumerWidget {
             ),
             Consumer(
               builder: (context, innerRef, child) {
-                final isLoading = innerRef.watch(budgetControllerProvider);
+                final isLoading = innerRef.watch(budgetControllerProvider).isLoading;
                 return ElevatedButton(
                   onPressed:
                       isLoading
@@ -159,20 +159,23 @@ class BudgetCategoryItem extends ConsumerWidget {
                                 month: existingBudget.month,
                                 year: existingBudget.year,
                               );
-                              final success = await innerRef
+                              await innerRef
                                   .read(budgetControllerProvider.notifier)
                                   .saveOrUpdateBudget(newBudget);
 
-                              if (success) {
-                                navigator.pop();
-                              } else {
-                                if (dialogContext.mounted) {
-                                  CoreSnackbar.showError(
-                                    dialogContext,
-                                    'Gagal menyimpan anggaran',
-                                  );
-                                }
-                              }
+                              final state = innerRef.read(budgetControllerProvider);
+                              state.when(
+                                data: (_) => navigator.pop(),
+                                loading: () {},
+                                error: (error, _) {
+                                  if (dialogContext.mounted) {
+                                    CoreSnackbar.showError(
+                                      dialogContext,
+                                      'Gagal menyimpan anggaran: $error',
+                                    );
+                                  }
+                                },
+                              );
                             }
                           },
                   child:

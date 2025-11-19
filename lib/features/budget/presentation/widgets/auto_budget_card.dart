@@ -110,15 +110,23 @@ class AutoBudgetCard extends ConsumerWidget {
         }).toList();
 
     // Panggil controller untuk menyimpan semua budget
-    final success = await ref
+    await ref
         .read(budgetControllerProvider.notifier)
         .saveMultipleBudgets(budgetsToSave);
 
     if (!context.mounted) return;
-    if (success) {
-      CoreSnackbar.showSuccess(context, 'Budget otomatis berhasil diterapkan!');
-    } else {
-      CoreSnackbar.showError(context, 'Gagal menerapkan budget.');
-    }
+    final state = ref.read(budgetControllerProvider);
+    state.when(
+      data: (_) {
+        CoreSnackbar.showSuccess(
+          context,
+          'Budget otomatis berhasil diterapkan!',
+        );
+      },
+      loading: () {},
+      error: (error, _) {
+        CoreSnackbar.showError(context, 'Gagal menerapkan budget: $error');
+      },
+    );
   }
 }
