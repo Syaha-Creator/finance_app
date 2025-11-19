@@ -53,9 +53,7 @@ class GoalsProgressOverview extends ConsumerWidget {
       ),
       child: const Padding(
         padding: EdgeInsets.all(20),
-        child: Center(
-          child: CoreLoadingState(color: AppColors.primary),
-        ),
+        child: Center(child: CoreLoadingState(color: AppColors.primary)),
       ),
     );
   }
@@ -139,7 +137,7 @@ class GoalsProgressOverview extends ConsumerWidget {
       subtitle:
           'Buat tujuan keuangan pertama Anda untuk mulai melacak kemajuan',
       action: TextButton.icon(
-        onPressed: () => GoRouter.of(context).go('/add-goal'),
+        onPressed: () => context.push('/add-goal'),
         icon: const Icon(Icons.add),
         label: const Text('Tambah Tujuan'),
       ),

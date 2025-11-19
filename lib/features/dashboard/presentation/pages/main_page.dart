@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 
 import 'dashboard_page.dart';
 import '../providers/smart_notification_provider.dart';
+// SmartNotification is exported from smart_notification_provider.dart
 
 final mainPageProvider = StateProvider<int>((ref) => 0);
 
