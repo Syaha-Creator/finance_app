@@ -26,11 +26,15 @@ import '../../features/receipt_management/presentation/pages/add_receipt_page.da
 import '../../features/investment/presentation/pages/investment_management_page.dart';
 import '../../features/investment/presentation/pages/add_edit_investment_page.dart';
 import '../../features/authentication/presentation/pages/auth_wrapper.dart';
+import '../../features/authentication/presentation/pages/register_page.dart';
+import '../../features/authentication/presentation/pages/forgot_password_page.dart';
 import '../../features/dashboard/presentation/pages/main_page.dart';
 import '../../features/transaction/presentation/pages/recurring_transaction_page.dart';
 import '../../features/transaction/presentation/pages/add_edit_recurring_page.dart';
 import '../../features/dashboard/presentation/pages/financial_health_page.dart';
+import '../services/analytics_service.dart';
 import '../services/local_notification_service.dart';
+import 'performance_observer.dart';
 import 'route_paths.dart';
 
 class AppRouter {
@@ -40,8 +44,18 @@ class AppRouter {
       LocalNotificationService.navigatorKey;
 
   static GoRouter buildRouter() {
+    final analyticsObserver = AnalyticsService().observer;
+    final performanceObserver = PerformanceRouteObserver();
+
+    final observers = <NavigatorObserver>[];
+    if (analyticsObserver != null) {
+      observers.add(analyticsObserver);
+    }
+    observers.add(performanceObserver);
+
     return GoRouter(
       navigatorKey: rootNavigatorKey,
+      observers: observers,
       initialLocation: RoutePaths.auth,
       refreshListenable: _GoRouterRefreshStream(
         FirebaseAuth.instance.authStateChanges(),
@@ -50,8 +64,14 @@ class AppRouter {
         final bool loggedIn = FirebaseAuth.instance.currentUser != null;
         final String loc = state.matchedLocation;
         final bool atAuth = loc == RoutePaths.auth;
-        if (!loggedIn && !atAuth) return RoutePaths.auth;
-        if (loggedIn && atAuth) return RoutePaths.main;
+        final bool atRegister = loc == RoutePaths.register;
+        final bool atForgotPassword = loc == RoutePaths.forgotPassword;
+        final bool isAuthRoute = atAuth || atRegister || atForgotPassword;
+
+        // Allow access to auth routes (login, register, forgot password) when not logged in
+        if (!loggedIn && !isAuthRoute) return RoutePaths.auth;
+        // Redirect to main if logged in and trying to access auth routes
+        if (loggedIn && isAuthRoute) return RoutePaths.main;
         return null;
       },
       routes: [
@@ -60,6 +80,18 @@ class AppRouter {
           pageBuilder:
               (context, state) =>
                   _buildFadeSlidePage(state, const AuthWrapper()),
+        ),
+        GoRoute(
+          path: RoutePaths.register,
+          pageBuilder:
+              (context, state) =>
+                  _buildFadeSlidePage(state, const RegisterPage()),
+        ),
+        GoRoute(
+          path: RoutePaths.forgotPassword,
+          pageBuilder:
+              (context, state) =>
+                  _buildFadeSlidePage(state, const ForgotPasswordPage()),
         ),
         GoRoute(
           name: 'main',

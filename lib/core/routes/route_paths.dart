@@ -3,6 +3,8 @@ class RoutePaths {
 
   static const String auth = '/';
   static const String main = '/main';
+  static const String register = '/register';
+  static const String forgotPassword = '/forgot-password';
 
   static const String transactions = '/transactions';
   static const String transactionDetail = '/transaction-detail';

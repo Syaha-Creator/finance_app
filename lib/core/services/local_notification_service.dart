@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 
+import '../routes/route_paths.dart';
 import '../theme/app_colors.dart';
 import '../utils/logger.dart';
 
@@ -81,6 +82,16 @@ class LocalNotificationService {
     }
   }
 
+  /// Public method untuk handle navigation dari FCM atau external sources
+  void handleNavigationFromPayload(String? payload) {
+    if (payload == null) return;
+    
+    final navigationData = _parseNotificationPayload(payload);
+    if (navigationData != null) {
+      _navigateToScreen(navigationData);
+    }
+  }
+
   // Parse payload notifikasi untuk mendapatkan data navigasi
   Map<String, dynamic>? _parseNotificationPayload(String? payload) {
     if (payload == null) return null;
@@ -101,172 +112,113 @@ class LocalNotificationService {
     return null;
   }
 
+  // Navigation routing configuration
+  static final Map<String, Map<String, Function(String?, GoRouter)>>
+  _navigationRoutes = {
+    'budget': {
+      'view': (data, router) => router.go(RoutePaths.budget),
+      'warning':
+          (data, router) =>
+              router.go(RoutePaths.budget, extra: {'highlightCategory': data}),
+      'exceeded':
+          (data, router) => router.go(
+            RoutePaths.budget,
+            extra: {'highlightCategory': data, 'status': 'exceeded'},
+          ),
+    },
+    'goal': {
+      'view': (data, router) => router.go(RoutePaths.goals),
+      'progress':
+          (data, router) =>
+              router.go(RoutePaths.goals, extra: {'highlightGoal': data}),
+      'deadline':
+          (data, router) => router.go(
+            RoutePaths.goals,
+            extra: {'highlightGoal': data, 'status': 'deadline'},
+          ),
+    },
+    'debt': {
+      'view': (data, router) => router.go(RoutePaths.debt),
+      'due_soon':
+          (data, router) => router.go(
+            RoutePaths.debt,
+            extra: {'highlightDebt': data, 'status': 'due_soon'},
+          ),
+      'overdue':
+          (data, router) => router.go(
+            RoutePaths.debt,
+            extra: {'highlightDebt': data, 'status': 'overdue'},
+          ),
+      'mark_paid':
+          (data, router) => router.go(
+            RoutePaths.debt,
+            extra: {'highlightDebt': data, 'action': 'mark_paid'},
+          ),
+    },
+    'asset': {
+      'view': (data, router) => router.go(RoutePaths.assets),
+      'investment_suggestion':
+          (data, router) => router.go(
+            RoutePaths.assets,
+            extra: {'highlightType': 'investment'},
+          ),
+    },
+    'transaction': {
+      'view': (data, router) => router.go(RoutePaths.transactions),
+      'spending_pattern':
+          (data, router) => router.go(
+            RoutePaths.reports,
+            extra: {'highlightSection': 'spending_pattern'},
+          ),
+      'income_reminder':
+          (data, router) =>
+              router.go(RoutePaths.addTransaction, extra: {'type': 'income'}),
+    },
+    'investment': {
+      'view': (data, router) => router.go(RoutePaths.assets),
+      'suggestion':
+          (data, router) => router.go(
+            RoutePaths.assets,
+            extra: {'focus': 'investment', 'showGuide': true},
+          ),
+    },
+  };
+
   // Navigate ke screen berdasarkan tipe notifikasi
   void _navigateToScreen(Map<String, dynamic> navigationData) {
-    final type = navigationData['type'];
-    final action = navigationData['action'];
-    final data = navigationData['data'];
+    final type = navigationData['type'] as String?;
+    final action = navigationData['action'] as String?;
+    final data = navigationData['data'] as String?;
 
     // Pastikan navigator key tersedia
-    if (navigatorKey.currentState == null) {
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) {
       AppLogger.warn('Navigator not available');
       return;
     }
 
     try {
-      switch (type) {
-        case 'budget':
-          _handleBudgetNavigation(action, data);
-          break;
-        case 'goal':
-          _handleGoalNavigation(action, data);
-          break;
-        case 'debt':
-          _handleDebtNavigation(action, data);
-          break;
-        case 'asset':
-          _handleAssetNavigation(action, data);
-          break;
-        case 'transaction':
-          _handleTransactionNavigation(action, data);
-          break;
-        case 'investment':
-          _handleInvestmentNavigation(action, data);
-          break;
-        default:
-          AppLogger.warn('Unknown notification type: $type');
+      final router = GoRouter.of(ctx);
+      final typeRoutes = _navigationRoutes[type];
+
+      if (typeRoutes == null) {
+        AppLogger.warn('Unknown notification type: $type');
+        return;
+      }
+
+      // Get handler for specific action, fallback to 'view'
+      final handler = typeRoutes[action] ?? typeRoutes['view'];
+      if (handler != null) {
+        handler(data, router);
+      } else {
+        // Fallback to default view
+        final defaultHandler = typeRoutes['view'];
+        if (defaultHandler != null) {
+          defaultHandler(data, router);
+        }
       }
     } catch (e) {
       AppLogger.error('Error navigating to screen', e);
-    }
-  }
-
-  // Handle navigasi untuk budget notifications
-  void _handleBudgetNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/budget');
-        break;
-      case 'warning':
-        router.go('/budget', extra: {'highlightCategory': data});
-        break;
-      case 'exceeded':
-        router.go(
-          '/budget',
-          extra: {'highlightCategory': data, 'status': 'exceeded'},
-        );
-        break;
-      default:
-        router.go('/budget');
-    }
-  }
-
-  // Handle navigasi untuk goal notifications
-  void _handleGoalNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/goals');
-        break;
-      case 'progress':
-        router.go('/goals', extra: {'highlightGoal': data});
-        break;
-      case 'deadline':
-        router.go(
-          '/goals',
-          extra: {'highlightGoal': data, 'status': 'deadline'},
-        );
-        break;
-      default:
-        router.go('/goals');
-    }
-  }
-
-  // Handle navigasi untuk debt notifications
-  void _handleDebtNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/debt');
-        break;
-      case 'due_soon':
-        router.go(
-          '/debt',
-          extra: {'highlightDebt': data, 'status': 'due_soon'},
-        );
-        break;
-      case 'overdue':
-        router.go('/debt', extra: {'highlightDebt': data, 'status': 'overdue'});
-        break;
-      case 'mark_paid':
-        router.go(
-          '/debt',
-          extra: {'highlightDebt': data, 'action': 'mark_paid'},
-        );
-        break;
-      default:
-        router.go('/debt');
-    }
-  }
-
-  // Handle navigasi untuk asset notifications
-  void _handleAssetNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/assets');
-        break;
-      case 'investment_suggestion':
-        router.go('/assets', extra: {'highlightType': 'investment'});
-        break;
-      default:
-        router.go('/assets');
-    }
-  }
-
-  // Handle navigasi untuk transaction notifications
-  void _handleTransactionNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/transactions');
-        break;
-      case 'spending_pattern':
-        router.go('/reports', extra: {'highlightSection': 'spending_pattern'});
-        break;
-      case 'income_reminder':
-        router.go('/add-transaction', extra: {'type': 'income'});
-        break;
-      default:
-        router.go('/transactions');
-    }
-  }
-
-  // Handle navigasi untuk investment notifications
-  void _handleInvestmentNavigation(String action, String? data) {
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null) return;
-    final router = GoRouter.of(ctx);
-    switch (action) {
-      case 'view':
-        router.go('/assets');
-        break;
-      case 'suggestion':
-        router.go('/assets', extra: {'focus': 'investment', 'showGuide': true});
-        break;
-      default:
-        router.go('/assets');
     }
   }
 
@@ -419,7 +371,30 @@ class LocalNotificationService {
     );
   }
 
-  // Show budget notification with specific category
+  /// Show notification with specific category identifier.
+  ///
+  /// [category] - The notification category (e.g., 'BUDGET_CATEGORY', 'GOAL_CATEGORY', 'DEBT_CATEGORY')
+  Future<void> showCategoryNotification({
+    required int id,
+    required String title,
+    required String body,
+    required LocalNotificationPriority priority,
+    required String category,
+    String? payload,
+    Color? color,
+  }) async {
+    await showSmartNotification(
+      id: id,
+      title: title,
+      body: body,
+      priority: priority,
+      payload: payload,
+      color: color,
+      categoryIdentifier: category,
+    );
+  }
+
+  // Convenience methods for specific categories (backward compatibility)
   Future<void> showBudgetNotification({
     required int id,
     required String title,
@@ -428,18 +403,17 @@ class LocalNotificationService {
     String? payload,
     Color? color,
   }) async {
-    await showSmartNotification(
+    await showCategoryNotification(
       id: id,
       title: title,
       body: body,
       priority: priority,
+      category: 'BUDGET_CATEGORY',
       payload: payload,
       color: color,
-      categoryIdentifier: 'BUDGET_CATEGORY',
     );
   }
 
-  // Show goal notification with specific category
   Future<void> showGoalNotification({
     required int id,
     required String title,
@@ -448,18 +422,17 @@ class LocalNotificationService {
     String? payload,
     Color? color,
   }) async {
-    await showSmartNotification(
+    await showCategoryNotification(
       id: id,
       title: title,
       body: body,
       priority: priority,
+      category: 'GOAL_CATEGORY',
       payload: payload,
       color: color,
-      categoryIdentifier: 'GOAL_CATEGORY',
     );
   }
 
-  // Show debt notification with specific category
   Future<void> showDebtNotification({
     required int id,
     required String title,
@@ -468,14 +441,14 @@ class LocalNotificationService {
     String? payload,
     Color? color,
   }) async {
-    await showSmartNotification(
+    await showCategoryNotification(
       id: id,
       title: title,
       body: body,
       priority: priority,
+      category: 'DEBT_CATEGORY',
       payload: payload,
       color: color,
-      categoryIdentifier: 'DEBT_CATEGORY',
     );
   }
 
