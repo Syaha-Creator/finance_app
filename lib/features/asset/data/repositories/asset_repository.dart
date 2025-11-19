@@ -1,85 +1,52 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/firestore_constants.dart';
+import '../../../../core/data/base_repository.dart';
 import '../models/asset_model.dart';
 
-class AssetRepository {
-  final FirebaseFirestore _firestore;
-  final FirebaseAuth _firebaseAuth;
-
-  AssetRepository({
-    required FirebaseFirestore firestore,
-    required FirebaseAuth firebaseAuth,
-  }) : _firestore = firestore,
-       _firebaseAuth = firebaseAuth;
+class AssetRepository extends BaseRepository {
+  AssetRepository({required super.firestore, required super.firebaseAuth});
 
   // Mendapatkan stream/aliran data semua aset milik pengguna saat ini
   Stream<List<AssetModel>> getAssetsStream() {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return Stream.value([]);
-      }
-
-      final query = _firestore
-          .collection(FirestoreConstants.assetsCollection)
-          .where('userId', isEqualTo: userId)
-          .orderBy('lastUpdatedAt', descending: true);
-
-      return query
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs
-                .map((doc) => AssetModel.fromFirestore(doc))
-                .toList();
-          })
-          .handleError((error) {
-            return <AssetModel>[];
-          });
-    } catch (e) {
-      return Stream.value([]);
-    }
+    return createStreamQuery<AssetModel>(
+      collectionName: FirestoreConstants.assetsCollection,
+      fromFirestore: (doc) => AssetModel.fromFirestore(doc),
+      orderByField: 'lastUpdatedAt',
+      descending: true,
+      userIdField: 'userId',
+    );
   }
 
   // Menambah aset baru
   Future<void> addAsset(AssetModel asset) async {
-    try {
-      final userId = _firebaseAuth.currentUser?.uid;
-      if (userId == null || userId.isEmpty) {
-        return;
-      }
-
-      final data = asset.toFirestore();
-      await _firestore.collection(FirestoreConstants.assetsCollection).add(data);
-    } catch (e) {
-      rethrow;
-    }
+    final data = asset.toFirestore();
+    await addDocument(
+      collectionName: FirestoreConstants.assetsCollection,
+      data: data,
+      requireUserId: true,
+    );
   }
 
   // Mengupdate aset yang sudah ada
   Future<void> updateAsset(AssetModel asset) async {
-    if (asset.id == null) throw Exception('Asset ID is null, cannot update.');
-
-    try {
-      final data = asset.copyWith(lastUpdatedAt: DateTime.now()).toFirestore();
-      await _firestore
-          .collection(FirestoreConstants.assetsCollection)
-          .doc(asset.id)
-          .update(data);
-    } catch (e) {
-      rethrow;
+    if (asset.id == null) {
+      throw Exception('Asset ID is null, cannot update.');
     }
+
+    final data = asset.copyWith(lastUpdatedAt: DateTime.now()).toFirestore();
+    await updateDocument(
+      collectionName: FirestoreConstants.assetsCollection,
+      documentId: asset.id!,
+      data: data,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 
   // Menghapus aset
   Future<void> deleteAsset(String assetId) async {
-    try {
-      await _firestore
-          .collection(FirestoreConstants.assetsCollection)
-          .doc(assetId)
-          .delete();
-    } catch (e) {
-      rethrow;
-    }
+    await deleteDocument(
+      collectionName: FirestoreConstants.assetsCollection,
+      documentId: assetId,
+      userIdField: 'userId', // Security: validate user ownership
+    );
   }
 }
