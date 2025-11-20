@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/pages/main_page.dart';
 import '../providers/auth_providers.dart';
+import 'email_verification_page.dart';
 import 'login_page.dart';
 
 class AuthWrapper extends ConsumerWidget {
@@ -16,6 +17,18 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
+          // Check email verification - mandatory before accessing app
+          // Google Sign In users are already verified
+          final isGoogleUser = user.providerData.any(
+            (info) => info.providerId == 'google.com',
+          );
+          final isEmailVerified = user.emailVerified || isGoogleUser;
+
+          if (!isEmailVerified) {
+            // User must verify email before accessing the app
+            return const EmailVerificationPage();
+          }
+
           return const MainPage();
         }
 

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart' as core_widgets;
 import '../../../../core/widgets/core_snackbar.dart';
 import '../../../../core/utils/error_message_formatter.dart';
+import '../../../../core/routes/route_paths.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -135,7 +137,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
         final state = ref.read(authControllerProvider);
         state.when(
           data: (_) {
-            // Success - navigation handled by auth wrapper
+            // Success - redirect to email verification page
+            CoreSnackbar.showSuccess(
+              context,
+              'Registrasi berhasil! Silakan verifikasi email Anda.',
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.go(RoutePaths.emailVerification);
+              }
+            });
           },
           loading: () {},
           error: (error, _) {

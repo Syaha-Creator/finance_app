@@ -110,15 +110,33 @@ class _LoginPageState extends ConsumerState<LoginPage>
         if (!mounted) return;
         final state = ref.read(authControllerProvider);
         state.when(
-          data: (_) {
-            // Check if user is logged in and navigate
+          data: (_) async {
+            // Reload user to get latest verification status
             final user = FirebaseAuth.instance.currentUser;
             if (user != null) {
+              await user.reload();
+              final reloadedUser = FirebaseAuth.instance.currentUser;
+              
+              if (!mounted) return;
               setState(() => _isLoading = false);
-              // Navigate to main page
-              context.go(RoutePaths.main);
+              
+              // Check email verification - mandatory before accessing app
+              final isGoogleUser = reloadedUser?.providerData.any(
+                (info) => info.providerId == 'google.com',
+              ) ?? false;
+              final isEmailVerified = reloadedUser?.emailVerified ?? false;
+              
+              if (!isEmailVerified && !isGoogleUser) {
+                // Redirect to email verification page
+                context.go(RoutePaths.emailVerification);
+              } else {
+                // Navigate to main page
+                context.go(RoutePaths.main);
+              }
             } else {
-              setState(() => _isLoading = false);
+              if (mounted) {
+                setState(() => _isLoading = false);
+              }
             }
           },
           loading: () {},
