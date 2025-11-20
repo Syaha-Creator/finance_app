@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/logger.dart';
 import 'local_notification_service.dart';
 
@@ -97,10 +98,18 @@ class FCMService {
         final existingTokens =
             userDoc.data()?['fcmTokens'] as List<dynamic>? ?? [];
 
-        // Check if this device already has a token
-        final existingTokenIndex = existingTokens.indexWhere(
+        // Check if this device already has a token (by deviceId or by token)
+        // First check by deviceId (preferred)
+        int existingTokenIndex = existingTokens.indexWhere(
           (t) => t['deviceId'] == deviceId,
         );
+        
+        // If not found by deviceId, check by token (in case deviceId changed)
+        if (existingTokenIndex < 0) {
+          existingTokenIndex = existingTokens.indexWhere(
+            (t) => t['token'] == token,
+          );
+        }
 
         final now = Timestamp.now();
 
@@ -114,7 +123,19 @@ class FCMService {
 
         if (existingTokenIndex >= 0) {
           // Update existing token for this device
+          // Preserve createdAt if exists
+          final existingToken = existingTokens[existingTokenIndex];
+          if (existingToken['createdAt'] != null) {
+            tokenData['createdAt'] = existingToken['createdAt'];
+          }
           existingTokens[existingTokenIndex] = tokenData;
+          
+          // Cleanup: Remove any duplicate tokens with same token value but different deviceId
+          // This handles the case where same token was saved with different deviceIds
+          existingTokens.removeWhere((t) => 
+            t['token'] == token && 
+            t['deviceId'] != deviceId
+          );
         } else {
           // Add new token for this device
           tokenData['createdAt'] = now;
@@ -134,13 +155,28 @@ class FCMService {
     }
   }
 
-  /// Get unique device ID
+  /// Get unique device ID (persistent across app restarts)
   Future<String> _getDeviceId() async {
-    // Use a combination of platform and timestamp
-    // In production, you might want to use device_info_plus package for actual device ID
+    const String deviceIdKey = 'fcm_device_id';
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Check if deviceId already exists
+    String? existingDeviceId = prefs.getString(deviceIdKey);
+    
+    if (existingDeviceId != null && existingDeviceId.isNotEmpty) {
+      // Return existing deviceId
+      return existingDeviceId;
+    }
+    
+    // Generate new deviceId if doesn't exist
     final platform = _getPlatform();
-    // Generate a simple device ID (in production, use actual device identifier)
-    return '${platform}_${DateTime.now().millisecondsSinceEpoch}';
+    final newDeviceId = '${platform}_${DateTime.now().millisecondsSinceEpoch}';
+    
+    // Save to SharedPreferences for persistence
+    await prefs.setString(deviceIdKey, newDeviceId);
+    
+    AppLogger.info('Generated new deviceId: $newDeviceId');
+    return newDeviceId;
   }
 
   /// Get device name

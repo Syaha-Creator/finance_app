@@ -5,6 +5,7 @@ class RoutePaths {
   static const String main = '/main';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String emailVerification = '/email-verification';
 
   static const String transactions = '/transactions';
   static const String transactionDetail = '/transaction-detail';
@@ -23,6 +24,7 @@ class RoutePaths {
   static const String addDebt = '/add-debt';
 
   static const String budget = '/budget';
+  static const String locationExpenseDetail = '/location-expense-detail';
   static const String reports = '/reports';
   static const String bills = '/bills';
   static const String addBill = '/add-bill';

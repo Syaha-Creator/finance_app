@@ -17,6 +17,7 @@ import '../../features/goals/presentation/pages/add_edit_goal_page.dart';
 import '../../features/goals/presentation/pages/goals_page.dart';
 import '../../features/goals/presentation/pages/goal_detail_page.dart';
 import '../../features/budget/presentation/pages/budget_page.dart';
+import '../../features/budget/presentation/pages/location_expense_detail_page.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/bill_management/presentation/pages/bill_management_page.dart';
@@ -28,6 +29,7 @@ import '../../features/investment/presentation/pages/add_edit_investment_page.da
 import '../../features/authentication/presentation/pages/auth_wrapper.dart';
 import '../../features/authentication/presentation/pages/register_page.dart';
 import '../../features/authentication/presentation/pages/forgot_password_page.dart';
+import '../../features/authentication/presentation/pages/email_verification_page.dart';
 import '../../features/dashboard/presentation/pages/main_page.dart';
 import '../../features/transaction/presentation/pages/recurring_transaction_page.dart';
 import '../../features/transaction/presentation/pages/add_edit_recurring_page.dart';
@@ -66,12 +68,34 @@ class AppRouter {
         final bool atAuth = loc == RoutePaths.auth;
         final bool atRegister = loc == RoutePaths.register;
         final bool atForgotPassword = loc == RoutePaths.forgotPassword;
-        final bool isAuthRoute = atAuth || atRegister || atForgotPassword;
+        final bool atEmailVerification = loc == RoutePaths.emailVerification;
+        final bool isAuthRoute = atAuth || atRegister || atForgotPassword || atEmailVerification;
 
-        // Allow access to auth routes (login, register, forgot password) when not logged in
+        // Allow access to auth routes (login, register, forgot password, email verification) when not logged in
         if (!loggedIn && !isAuthRoute) return RoutePaths.auth;
-        // Redirect to main if logged in and trying to access auth routes
-        if (loggedIn && isAuthRoute) return RoutePaths.main;
+        
+        // Check email verification for logged in users
+        if (loggedIn) {
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            // Google Sign In users are already verified
+            final isGoogleUser = user.providerData.any(
+              (info) => info.providerId == 'google.com',
+            );
+            final isEmailVerified = user.emailVerified || isGoogleUser;
+            
+            // Redirect to email verification if not verified and not already on verification page
+            if (!isEmailVerified && !atEmailVerification && !atAuth && !atRegister && !atForgotPassword) {
+              return RoutePaths.emailVerification;
+            }
+            
+            // Redirect to main if verified and trying to access auth routes (except email verification)
+            if (isEmailVerified && (atAuth || atRegister || atForgotPassword)) {
+              return RoutePaths.main;
+            }
+          }
+        }
+        
         return null;
       },
       routes: [
@@ -92,6 +116,12 @@ class AppRouter {
           pageBuilder:
               (context, state) =>
                   _buildFadeSlidePage(state, const ForgotPasswordPage()),
+        ),
+        GoRoute(
+          path: RoutePaths.emailVerification,
+          pageBuilder:
+              (context, state) =>
+                  _buildFadeSlidePage(state, const EmailVerificationPage()),
         ),
         GoRoute(
           name: 'main',
@@ -133,6 +163,12 @@ class AppRouter {
           pageBuilder:
               (context, state) =>
                   _buildFadeSlidePage(state, const BudgetPage()),
+        ),
+        GoRoute(
+          path: RoutePaths.locationExpenseDetail,
+          pageBuilder:
+              (context, state) =>
+                  _buildFadeSlidePage(state, const LocationExpenseDetailPage()),
         ),
         GoRoute(
           path: RoutePaths.reports,
@@ -322,9 +358,14 @@ class AppRouter {
 }
 
 class _GoRouterRefreshStream extends ChangeNotifier {
-  late final StreamSubscription<dynamic> _subscription;
-  _GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.asBroadcastStream().listen((_) {
+  late final StreamSubscription<User?> _subscription;
+  _GoRouterRefreshStream(Stream<User?> stream) {
+    _subscription = stream.asBroadcastStream().listen((user) async {
+      // Reload user to get latest email verification status
+      // This is important when user clicks email verification link
+      if (user != null) {
+        await user.reload();
+      }
       notifyListeners();
     });
   }
