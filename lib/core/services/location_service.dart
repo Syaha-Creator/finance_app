@@ -56,7 +56,7 @@ class LocationService {
       // Cek apakah location service enabled
       bool serviceEnabled = await isLocationServiceEnabled();
       if (!serviceEnabled) {
-        AppLogger.warning('Location service is disabled');
+        AppLogger.warn('Location service is disabled');
         return false;
       }
 
@@ -66,13 +66,13 @@ class LocationService {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          AppLogger.warning('Location permissions are denied');
+          AppLogger.warn('Location permissions are denied');
           return false;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        AppLogger.warning(
+        AppLogger.warn(
           'Location permissions are permanently denied, we cannot request permissions.',
         );
         return false;
@@ -112,13 +112,14 @@ class LocationService {
 
       // Dapatkan posisi saat ini
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       String? address;
       if (includeAddress) {
-        address = await _getAddressFromCoordinates(
+        address = await getAddressFromCoordinates(
           position.latitude,
           position.longitude,
         );
@@ -151,7 +152,7 @@ class LocationService {
 
       String? address;
       if (includeAddress) {
-        address = await _getAddressFromCoordinates(
+        address = await getAddressFromCoordinates(
           position.latitude,
           position.longitude,
         );
@@ -188,7 +189,7 @@ class LocationService {
       )) {
         String? address;
         if (includeAddress) {
-          address = await _getAddressFromCoordinates(
+          address = await getAddressFromCoordinates(
             position.latitude,
             position.longitude,
           );
@@ -206,7 +207,8 @@ class LocationService {
   }
 
   /// Convert koordinat ke alamat (reverse geocoding)
-  Future<String?> _getAddressFromCoordinates(
+  /// Public method untuk digunakan di widget
+  Future<String?> getAddressFromCoordinates(
     double latitude,
     double longitude,
   ) async {
@@ -214,7 +216,6 @@ class LocationService {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         latitude,
         longitude,
-        localeIdentifier: 'id_ID',
       );
 
       if (placemarks.isEmpty) {
@@ -252,10 +253,7 @@ class LocationService {
   /// Convert alamat ke koordinat (geocoding)
   Future<LocationData?> getLocationFromAddress(String address) async {
     try {
-      List<Location> locations = await locationFromAddress(
-        address,
-        localeIdentifier: 'id_ID',
-      );
+      List<Location> locations = await locationFromAddress(address);
 
       if (locations.isEmpty) {
         return null;

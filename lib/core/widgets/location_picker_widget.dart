@@ -12,6 +12,8 @@ class LocationPickerWidget extends ConsumerStatefulWidget {
   final String? initialAddress;
   final Function(double latitude, double longitude, String? address)? onLocationSelected;
   final bool showLabel;
+  /// Auto-detect lokasi saat widget pertama kali dibuka (hanya untuk transaksi baru)
+  final bool autoDetect;
 
   const LocationPickerWidget({
     super.key,
@@ -20,6 +22,7 @@ class LocationPickerWidget extends ConsumerStatefulWidget {
     this.initialAddress,
     this.onLocationSelected,
     this.showLabel = true,
+    this.autoDetect = false,
   });
 
   @override
@@ -40,48 +43,90 @@ class _LocationPickerWidgetState
     _latitude = widget.initialLatitude;
     _longitude = widget.initialLongitude;
     _address = widget.initialAddress;
+    
+    // Auto-detect lokasi jika tidak ada initial location dan autoDetect = true
+    if (widget.autoDetect && 
+        _latitude == null && 
+        _longitude == null) {
+      // Delay sedikit untuk memastikan widget sudah mounted
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _getCurrentLocation(silent: true);
+      });
+    }
   }
 
-  Future<void> _getCurrentLocation() async {
+  /// Get current location
+  /// [silent] jika true, tidak menampilkan snackbar (untuk auto-detect)
+  Future<void> _getCurrentLocation({bool silent = false}) async {
     setState(() => _isLoading = true);
 
     try {
       final locationService = ref.read(locationServiceProvider);
-      final location = await locationService.getCurrentLocation(
-        includeAddress: true,
+      
+      // Coba dapatkan last known location dulu (lebih cepat)
+      LocationData? location = await locationService.getLastKnownLocation(
+        includeAddress: false,
       );
+      
+      // Jika tidak ada last known, ambil current location dengan address
+      if (location == null) {
+        location = await locationService.getCurrentLocation(
+          includeAddress: true,
+        );
+      } else {
+        // Jika ada last known, dapatkan address untuk lokasi tersebut
+        final address = await locationService.getAddressFromCoordinates(
+          location.latitude,
+          location.longitude,
+        );
+        if (address != null) {
+          location = LocationData(
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: address,
+            timestamp: location.timestamp,
+          );
+        }
+      }
 
-      if (location != null) {
+      final loc = location;
+      if (loc != null) {
         setState(() {
-          _latitude = location.latitude;
-          _longitude = location.longitude;
-          _address = location.address;
+          _latitude = loc.latitude;
+          _longitude = loc.longitude;
+          _address = loc.address;
         });
 
         widget.onLocationSelected?.call(
-          location.latitude,
-          location.longitude,
-          location.address,
+          loc.latitude,
+          loc.longitude,
+          loc.address,
         );
 
         if (!mounted) return;
-        CoreSnackbar.showSuccess(
-          context,
-          'Lokasi berhasil diperoleh',
-        );
+        if (!silent) {
+          CoreSnackbar.showSuccess(
+            context,
+            'Lokasi berhasil diperoleh',
+          );
+        }
       } else {
         if (!mounted) return;
-        CoreSnackbar.showError(
-          context,
-          'Gagal mendapatkan lokasi. Pastikan GPS aktif dan izin lokasi sudah diberikan.',
-        );
+        if (!silent) {
+          CoreSnackbar.showError(
+            context,
+            'Gagal mendapatkan lokasi. Pastikan GPS aktif dan izin lokasi sudah diberikan.',
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
-      CoreSnackbar.showError(
-        context,
-        'Error: $e',
-      );
+      if (!silent) {
+        CoreSnackbar.showError(
+          context,
+          'Error: $e',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -207,7 +252,7 @@ class _LocationPickerWidgetState
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: _isLoading ? null : _getCurrentLocation,
+                  onPressed: _isLoading ? null : () => _getCurrentLocation(),
                   icon: _isLoading
                       ? SizedBox(
                           width: 16,
@@ -221,7 +266,11 @@ class _LocationPickerWidgetState
                         )
                       : const Icon(Icons.my_location, size: 18),
                   label: Text(
-                    _isLoading ? 'Mendapatkan lokasi...' : 'Dapatkan Lokasi Saat Ini',
+                    _isLoading 
+                        ? 'Mendapatkan lokasi...' 
+                        : hasLocation 
+                            ? 'Perbarui Lokasi' 
+                            : 'Dapatkan Lokasi Saat Ini',
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,

@@ -10,6 +10,7 @@ import '../../data/models/budget_model.dart';
 import '../providers/budget_providers.dart';
 import '../widgets/auto_budget_card.dart';
 import '../widgets/budget_category_item.dart';
+import '../widgets/location_based_expense_tracking.dart';
 
 class BudgetPage extends ConsumerWidget {
   const BudgetPage({super.key});
@@ -100,6 +101,17 @@ class BudgetPage extends ConsumerWidget {
                                 horizontal: 16,
                               ),
                               child: const AutoBudgetCard(),
+                            ),
+                          ),
+
+                          // Location-Based Expense Tracking
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: const LocationBasedExpenseTracking(),
                             ),
                           ),
 
