@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../core/widgets/location_picker_widget.dart';
 import '../../application/ocr_service.dart';
 import '../../data/models/receipt_model.dart';
 import '../providers/receipt_provider.dart';
@@ -28,6 +29,9 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
   bool _isProcessing = false;
   bool _isOcrCompleted = false;
   OcrResult? _ocrData;
+  double? _latitude;
+  double? _longitude;
+  String? _locationAddress;
 
   @override
   void dispose() {
@@ -65,6 +69,23 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
 
             // Form Fields
             _buildFormFields(),
+
+            const SizedBox(height: 24),
+
+            // Location Picker
+            LocationPickerWidget(
+              initialLatitude: _latitude,
+              initialLongitude: _longitude,
+              initialAddress: _locationAddress,
+              autoDetect: true, // Auto-detect lokasi saat scan receipt
+              onLocationSelected: (lat, lng, address) {
+                setState(() {
+                  _latitude = lat;
+                  _longitude = lng;
+                  _locationAddress = address;
+                });
+              },
+            ),
 
             const SizedBox(height: 32),
 
@@ -437,6 +458,9 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
         status: ReceiptStatus.pending,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        latitude: _latitude,
+        longitude: _longitude,
+        locationAddress: _locationAddress,
       );
 
       ref

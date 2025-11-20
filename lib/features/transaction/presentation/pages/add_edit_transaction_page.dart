@@ -354,6 +354,8 @@ class _AddEditTransactionPageState
                       initialLatitude: _latitude,
                       initialLongitude: _longitude,
                       initialAddress: _locationAddress,
+                      autoDetect:
+                          !_isEditMode, // Auto-detect hanya untuk transaksi baru
                       onLocationSelected: (lat, lng, address) {
                         setState(() {
                           _latitude = lat;

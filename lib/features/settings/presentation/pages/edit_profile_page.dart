@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/providers/firebase_providers.dart';
+import '../../../../core/routes/route_paths.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -211,13 +213,35 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Check email verification before allowing profile edit
+    final firebaseAuth = ref.read(firebaseAuthProvider);
+    final user = firebaseAuth.currentUser;
+    if (user == null) {
+      CoreSnackbar.showError(context, 'User tidak ditemukan');
+      return;
+    }
+
+    // Google Sign In users are already verified
+    final isGoogleUser = user.providerData.any(
+      (info) => info.providerId == 'google.com',
+    );
+    final isEmailVerified = user.emailVerified || isGoogleUser;
+
+    if (!isEmailVerified) {
+      CoreSnackbar.showWarning(
+        context,
+        'Silakan verifikasi email Anda terlebih dahulu sebelum mengedit profil.',
+      );
+      // Navigate to email verification page
+      if (mounted) {
+        context.go(RoutePaths.emailVerification);
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final firebaseAuth = ref.read(firebaseAuthProvider);
-      final user = firebaseAuth.currentUser;
-      if (user == null) throw Exception('User tidak ditemukan');
-
       // Update display name
       await user.updateDisplayName(_nameController.text.trim());
 
