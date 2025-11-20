@@ -12,3 +12,4 @@ export {checkOverdueBills} from "./overdueBills";
 export {createRecurringTransactions} from "./recurringTransactions";
 export {sendMonthlyReport} from "./monthlyReport";
 export {checkBudgetAlerts} from "./budgetAlert";
+export {cleanupUnverifiedUsers} from "./cleanupUnverifiedUsers";
