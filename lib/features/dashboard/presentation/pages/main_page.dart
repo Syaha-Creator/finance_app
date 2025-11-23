@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_decorations.dart';
+import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
@@ -148,7 +150,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
                 // Menu items
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: AppSpacing.paddingHorizontal,
                   child: Column(
                     children: [
                       _buildEnhancedMenuItem(
@@ -239,7 +241,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                 ),
 
                 // Bottom padding
-                const SizedBox(height: 24),
+                AppSpacing.spaceLG,
               ],
             ),
           ),
@@ -262,7 +264,7 @@ class _MainPageState extends ConsumerState<MainPage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
@@ -327,7 +329,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
               // Arrow icon
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -414,7 +416,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                 ],
               ),
               style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 minimumSize: const Size(40, 40),
               ),
             ),
@@ -610,13 +612,14 @@ class _MainPageState extends ConsumerState<MainPage> {
 
                     // Notifications List
                     notificationsAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: CoreLoadingState(),
-                      ),
+                      loading:
+                          () => const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CoreLoadingState(),
+                          ),
                       error:
                           (err, stack) => Padding(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(20.0),
                             child: Center(
                               child: Column(
                                 children: [
@@ -625,7 +628,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                                     size: 48,
                                     color: Theme.of(context).colorScheme.error,
                                   ),
-                                  const SizedBox(height: 16),
+                                  AppSpacing.spaceMD,
                                   Text(
                                     'Terjadi kesalahan',
                                     style: Theme.of(
@@ -635,7 +638,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                                           Theme.of(context).colorScheme.error,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  AppSpacing.spaceSM,
                                   Text(
                                     'Error: $err',
                                     style: Theme.of(
@@ -655,7 +658,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                       data: (notifications) {
                         if (notifications.isEmpty) {
                           return Padding(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(20.0),
                             child: Center(
                               child: Column(
                                 children: [
@@ -667,7 +670,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                                         .onSurfaceVariant
                                         .withValues(alpha: 0.5),
                                   ),
-                                  const SizedBox(height: 16),
+                                  AppSpacing.spaceMD,
                                   Text(
                                     'Tidak Ada Notifikasi',
                                     style: Theme.of(
@@ -679,7 +682,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                                           ).colorScheme.onSurface,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  AppSpacing.spaceSM,
                                   Text(
                                     'Semua kondisi keuangan Anda dalam keadaan baik!',
                                     style: Theme.of(
@@ -699,7 +702,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         }
 
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: AppSpacing.paddingHorizontal,
                           child: Column(
                             children: [
                               ...notifications.map(
@@ -722,7 +725,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                     ),
 
                     // Bottom padding
-                    const SizedBox(height: 24),
+                    AppSpacing.spaceLG,
                   ],
                 ),
               ),
@@ -742,11 +745,12 @@ class _MainPageState extends ConsumerState<MainPage> {
     String time,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      padding: AppSpacing.paddingAll,
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
+        borderColor: color.withValues(alpha: 0.2),
+      ).copyWith(
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -787,7 +791,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                AppSpacing.spaceSM,
                 Text(
                   time,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_viewmodel_provider.dart';
 import '../widgets/index.dart';
@@ -14,73 +15,60 @@ class DashboardPage extends ConsumerWidget {
     final viewModelAsync = ref.watch(dashboardViewModelProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+    return viewModelAsync.when(
+      loading:
+          () => const Center(child: CoreLoadingState(color: AppColors.primary)),
+      error: (err, stack) => Center(child: Text('Error: $err')),
+      data:
+          (viewModel) => CustomScrollView(
+            slivers: [
+              // Header
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.md),
+                  child: _buildHeader(context, theme, viewModel),
+                ),
+              ),
+
+              // Dashboard Content
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: AppSpacing.paddingAll,
+                  child: Column(
+                    children: [
+                      // Phase 1: Core Features
+                      const QuickActionsWidget(),
+                      AppSpacing.spaceMD,
+                      const GoalsProgressOverview(),
+                      AppSpacing.spaceMD,
+
+                      // Phase 2: Analysis Features
+                      const SpendingPatternAnalysis(),
+                      AppSpacing.spaceMD,
+                      const MonthlyComparison(),
+                      AppSpacing.spaceMD,
+
+                      // Phase 3: Health & Insights
+                      const FinancialHealthScore(),
+                      AppSpacing.spaceMD,
+                      const PersonalizedInsights(),
+                      AppSpacing.spaceMD,
+
+                      // Phase 4: Advanced Analytics
+                      const FinancialRatioCard(),
+                      AppSpacing.spaceMD,
+                      const NetWorthLineChart(),
+                      AppSpacing.spaceMD,
+
+                      // Phase 5: Summary & Overview
+                      const OverallScoreGauge(),
+                      AppSpacing.spaceMD,
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        child: viewModelAsync.when(
-          loading:
-              () => const Center(
-                child: CoreLoadingState(color: AppColors.primary),
-              ),
-          error: (err, stack) => Center(child: Text('Error: $err')),
-          data:
-              (viewModel) => CustomScrollView(
-                slivers: [
-                  // Header
-                  SliverToBoxAdapter(
-                    child: _buildHeader(context, theme, viewModel),
-                  ),
-
-                  // Dashboard Content
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          // Phase 1: Core Features
-                          const QuickActionsWidget(),
-                          const SizedBox(height: 16),
-                          const GoalsProgressOverview(),
-                          const SizedBox(height: 8),
-
-                          // Phase 2: Analysis Features
-                          const SpendingPatternAnalysis(),
-                          const SizedBox(height: 8),
-                          const MonthlyComparison(),
-                          const SizedBox(height: 8),
-
-                          // Phase 3: Health & Insights
-                          const FinancialHealthScore(),
-                          const SizedBox(height: 8),
-                          const PersonalizedInsights(),
-                          const SizedBox(height: 8),
-
-                          // Phase 4: Advanced Analytics
-                          const FinancialRatioCard(),
-                          const SizedBox(height: 8),
-                          const NetWorthLineChart(),
-                          const SizedBox(height: 8),
-
-                          // Phase 5: Summary & Overview
-                          const OverallScoreGauge(),
-                          const SizedBox(height: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-        ),
-      ),
     );
   }
 
@@ -91,7 +79,7 @@ class DashboardPage extends ConsumerWidget {
   ) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: AppSpacing.paddingHorizontal,
       child: const SummaryCard(),
     );
   }
