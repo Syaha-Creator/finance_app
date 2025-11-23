@@ -104,11 +104,20 @@ class AppTheme {
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      elevation: 4,
+    ),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: AppColors.lightSurface,
+      elevation: 0,
+    ),
     cardTheme: CardThemeData(
       color: AppColors.lightSurface,
       elevation: 0,
       shadowColor: AppColors.lightCardShadow.first.color,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: EdgeInsets.zero, // Remove default margin to prevent double margin when wrapped with Padding
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: AppColors.lightBorder, width: 1),
@@ -328,11 +337,21 @@ class AppTheme {
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: AppColors.primaryLight,
+      foregroundColor: Colors.white,
+      elevation: 6,
+      highlightElevation: 8,
+    ),
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: AppColors.darkSurface,
+      elevation: 0,
+    ),
     cardTheme: CardThemeData(
       color: AppColors.darkSurface,
       elevation: 0,
       shadowColor: AppColors.darkCardShadow.first.color,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      margin: EdgeInsets.zero, // Remove default margin to prevent double margin when wrapped with Padding
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: AppColors.darkBorder, width: 1),

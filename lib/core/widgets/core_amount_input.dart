@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
 import '../utils/thousand_input_formatter.dart';
 
 class CoreAmountInput extends StatelessWidget {
@@ -26,37 +25,8 @@ class CoreAmountInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = primaryColor ?? AppColors.primary;
-    final radius = borderRadius ?? 16.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextFormField(
+    return TextFormField(
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [
@@ -71,6 +41,7 @@ class CoreAmountInput extends StatelessWidget {
                   return null;
                 },
             decoration: InputDecoration(
+        labelText: label,
               hintText: hint ?? 'Masukkan jumlah',
               prefixText: prefixText,
               prefixStyle: theme.textTheme.bodyMedium?.copyWith(
@@ -79,21 +50,13 @@ class CoreAmountInput extends StatelessWidget {
               ),
               prefixIcon: Icon(
                 Icons.attach_money,
-                color: color,
+          color: Colors.grey.shade600,
                 size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
               ),
               hintStyle: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-          ),
-        ),
-      ],
     );
   }
 }

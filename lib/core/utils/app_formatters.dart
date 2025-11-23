@@ -22,4 +22,22 @@ class AppFormatters {
       return DateFormat('dd MMMM yyyy', 'id_ID').format(date);
     }
   }
+
+  /// Format date as relative time (e.g., "2 hari lalu", "Kemarin")
+  ///
+  /// Returns relative time string for dates within 7 days, otherwise returns formatted date
+  static String formatRelativeDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Hari ini';
+    } else if (difference.inDays == 1) {
+      return 'Kemarin';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} hari lalu';
+    } else {
+      return DateFormat('dd/MM/yyyy', 'id_ID').format(date);
+    }
+  }
 }
