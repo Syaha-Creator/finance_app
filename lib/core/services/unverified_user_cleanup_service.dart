@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/auth_helper.dart';
 import '../utils/logger.dart';
 
 /// Service untuk cleanup unverified users saat login
@@ -13,12 +14,8 @@ class UnverifiedUserCleanupService {
   /// Jika user belum verified lebih dari 7 hari, hapus account
   static Future<bool> checkAndCleanupIfNeeded(User user) async {
     try {
-      // Skip Google users (already verified)
-      final isGoogleUser = user.providerData.any(
-        (provider) => provider.providerId == 'google.com',
-      );
-
-      if (isGoogleUser || user.emailVerified) {
+      // Skip verified users (including Google users)
+      if (AuthHelper.isEmailVerified(user)) {
         return false; // User sudah verified, tidak perlu cleanup
       }
 
@@ -91,11 +88,7 @@ class UnverifiedUserCleanupService {
   /// Get days until expiry untuk unverified user
   static int? getDaysUntilExpiry(User user) {
     try {
-      final isGoogleUser = user.providerData.any(
-        (provider) => provider.providerId == 'google.com',
-      );
-
-      if (isGoogleUser || user.emailVerified) {
+      if (AuthHelper.isEmailVerified(user)) {
         return null; // User sudah verified
       }
 

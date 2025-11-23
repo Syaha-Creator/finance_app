@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
+import '../utils/auth_helper.dart';
+
 import '../../features/transaction/data/models/transaction_model.dart';
 import '../../features/transaction/presentation/pages/transaction_detail_page.dart';
 import '../../features/transaction/presentation/pages/add_edit_transaction_page.dart';
@@ -69,33 +71,34 @@ class AppRouter {
         final bool atRegister = loc == RoutePaths.register;
         final bool atForgotPassword = loc == RoutePaths.forgotPassword;
         final bool atEmailVerification = loc == RoutePaths.emailVerification;
-        final bool isAuthRoute = atAuth || atRegister || atForgotPassword || atEmailVerification;
+        final bool isAuthRoute =
+            atAuth || atRegister || atForgotPassword || atEmailVerification;
 
         // Allow access to auth routes (login, register, forgot password, email verification) when not logged in
         if (!loggedIn && !isAuthRoute) return RoutePaths.auth;
-        
+
         // Check email verification for logged in users
         if (loggedIn) {
           final user = FirebaseAuth.instance.currentUser;
           if (user != null) {
-            // Google Sign In users are already verified
-            final isGoogleUser = user.providerData.any(
-              (info) => info.providerId == 'google.com',
-            );
-            final isEmailVerified = user.emailVerified || isGoogleUser;
-            
+            final isEmailVerified = AuthHelper.isEmailVerified(user);
+
             // Redirect to email verification if not verified and not already on verification page
-            if (!isEmailVerified && !atEmailVerification && !atAuth && !atRegister && !atForgotPassword) {
+            if (!isEmailVerified &&
+                !atEmailVerification &&
+                !atAuth &&
+                !atRegister &&
+                !atForgotPassword) {
               return RoutePaths.emailVerification;
             }
-            
+
             // Redirect to main if verified and trying to access auth routes (except email verification)
             if (isEmailVerified && (atAuth || atRegister || atForgotPassword)) {
               return RoutePaths.main;
             }
           }
         }
-        
+
         return null;
       },
       routes: [
