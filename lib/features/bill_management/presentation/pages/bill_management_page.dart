@@ -111,7 +111,7 @@ class _BillManagementPageState extends ConsumerState<BillManagementPage> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           itemCount: filteredBills.length,
           itemBuilder: (context, index) {
             final bill = filteredBills[index];

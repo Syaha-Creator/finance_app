@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/dropdown_helpers.dart';
+import '../../../../core/utils/dialog_helper.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/form_validators.dart';
+import '../../../../core/utils/user_helper.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../data/models/bill_model.dart';
@@ -103,12 +109,9 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
               label: 'Judul Tagihan',
               hint: 'Contoh: Tagihan Listrik Bulan Januari',
               icon: Icons.receipt_long_outlined,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Judul tagihan harus diisi';
-                }
-                return null;
-              },
+              validator: FormValidators.required(
+                errorMessage: 'Judul tagihan harus diisi',
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -129,16 +132,10 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
               controller: _amountController,
               label: 'Jumlah Tagihan',
               hint: '0',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Jumlah tagihan harus diisi';
-                }
-                final amount = double.tryParse(value.replaceAll('.', ''));
-                if (amount == null || amount <= 0) {
-                  return 'Jumlah tagihan harus lebih dari 0';
-                }
-                return null;
-              },
+              validator: FormValidators.amount(
+                errorMessage: 'Jumlah tagihan harus diisi',
+                zeroMessage: 'Jumlah tagihan harus lebih dari 0',
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -152,12 +149,15 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
               label: 'Kategori',
               icon: Icons.category_outlined,
               items:
-                  _categories.map((category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
+                  _categories
+                      .map(
+                        (category) =>
+                            DropdownItemHelpers.createCategoryItemFromString(
+                              category,
+                              isIncome: false,
+                            ),
+                      )
+                      .toList(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Kategori harus dipilih';
@@ -343,45 +343,58 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
     );
   }
 
-  void _saveBill() {
-    if (_formKey.currentState!.validate()) {
-      try {
-        final amount = double.parse(_amountController.text.replaceAll('.', ''));
+  Future<void> _saveBill() async {
+    if (!_formKey.currentState!.validate()) return;
 
-        final bill = BillModel(
-          id: widget.bill?.id ?? '',
-          userId: '',
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          amount: amount,
-          category: _selectedCategory ?? '',
-          dueDate: _selectedDueDate,
-          status: BillStatus.pending,
-          frequency: _selectedFrequency,
-          nextDueDate: _isRecurring ? _calculateNextDueDate() : null,
-          paidDate: null,
-          notes:
-              _notesController.text.trim().isEmpty
-                  ? null
-                  : _notesController.text.trim(),
-          isRecurring: _isRecurring,
-          hasReminder: _hasReminder,
-          reminderDays: _reminderDays,
-          createdAt: widget.bill?.createdAt ?? DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
-        if (widget.bill != null) {
-          ref.read(billNotifierProvider.notifier).updateBill(bill);
-        } else {
-          ref.read(billNotifierProvider.notifier).addBill(bill);
-        }
+    try {
+      final amount = FormSubmissionHelper.parseAmount(_amountController.text);
 
-        Navigator.pop(context);
-      } catch (e) {
-        if (!mounted) return;
-        CoreSnackbar.showError(context, 'Gagal menyimpan tagihan: $e');
+      final bill = BillModel(
+        id: widget.bill?.id ?? '',
+        userId: userId,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        amount: amount,
+        category: _selectedCategory ?? '',
+        dueDate: _selectedDueDate,
+        status: BillStatus.pending,
+        frequency: _selectedFrequency,
+        nextDueDate: _isRecurring ? _calculateNextDueDate() : null,
+        paidDate: null,
+        notes:
+            _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+        isRecurring: _isRecurring,
+        hasReminder: _hasReminder,
+        reminderDays: _reminderDays,
+        createdAt: widget.bill?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final controller = ref.read(billNotifierProvider.notifier);
+      if (widget.bill != null) {
+        await controller.updateBill(bill);
+      } else {
+        await controller.addBill(bill);
       }
+
+      if (!mounted) return;
+      final state = ref.read(billNotifierProvider);
+      AsyncValueHelper.handleFormResult(
+        context: context,
+        state: state,
+        successMessage:
+            'Tagihan berhasil ${widget.bill != null ? 'diperbarui' : 'disimpan'}',
+        errorMessagePrefix:
+            'Gagal ${widget.bill != null ? 'memperbarui' : 'menyimpan'} tagihan',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal menyimpan tagihan: $e');
     }
   }
 
@@ -411,41 +424,14 @@ class _AddEditBillPageState extends ConsumerState<AddEditBillPage> {
   }
 
   void _showDeleteDialog() {
-    showDialog(
+    DialogHelper.showDeleteConfirmation(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.delete_outline, color: AppColors.error),
-                SizedBox(width: 8),
-                Text('Hapus Tagihan'),
-              ],
-            ),
-            content: Text(
-              'Apakah Anda yakin ingin menghapus tagihan "${widget.bill!.title}"?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ref
-                      .read(billNotifierProvider.notifier)
-                      .deleteBill(widget.bill!.id);
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Ya, Hapus'),
-              ),
-            ],
-          ),
+      title: 'Hapus Tagihan',
+      itemName: widget.bill!.title,
+      onConfirm: () {
+        ref.read(billNotifierProvider.notifier).deleteBill(widget.bill!.id);
+        Navigator.pop(context);
+      },
     );
   }
 }

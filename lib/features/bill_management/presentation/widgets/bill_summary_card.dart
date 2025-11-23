@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
 
 enum BillSummarySelection { all, pending, overdue, paid }
 
@@ -13,11 +14,14 @@ class BillSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 2,
+      ),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.paddingAll,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -57,7 +61,7 @@ class BillSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
 
             // Statistics Grid
             Row(
@@ -129,11 +133,11 @@ class BillSummaryCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Total Amount
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.paddingAll,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -201,14 +205,14 @@ class BillSummaryCard extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 20),
         ),
-        const SizedBox(height: 8),
+        AppSpacing.spaceSM,
         Text(
           value,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
