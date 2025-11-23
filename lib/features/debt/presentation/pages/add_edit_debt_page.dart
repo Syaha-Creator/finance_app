@@ -3,9 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_decorations.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/form_validators.dart';
+import '../../../../core/utils/user_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/widgets/gradient_header_card.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
-import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/debt_receivable_model.dart';
 import '../providers/debt_provider.dart';
 
@@ -54,20 +61,14 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final amount = double.parse(_amountController.text.replaceAll('.', ''));
-      final userId = ref.read(authStateChangesProvider).value?.uid;
+    if (!_formKey.currentState!.validate()) return;
 
-      if (userId == null) {
-        if (!mounted) return;
-        CoreSnackbar.showError(
-          context,
-          'Pengguna tidak ditemukan. Silakan login ulang.',
-        );
-        return;
-      }
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
-      if (_isEditMode) {
+    final amount = FormSubmissionHelper.parseAmount(_amountController.text);
+
+    if (_isEditMode) {
         final updatedDebt = DebtReceivableModel(
           id: widget.debt!.id,
           userId: widget.debt!.userId,
@@ -86,15 +87,11 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
 
         if (!mounted) return;
         final state = ref.read(debtNotifierProvider);
-        state.when(
-          data: (_) {
-            CoreSnackbar.showSuccess(context, 'Catatan berhasil diperbarui');
-            Navigator.of(context).pop();
-          },
-          loading: () {},
-          error: (error, _) {
-            CoreSnackbar.showError(context, 'Gagal memperbarui catatan: $error');
-          },
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage: 'Catatan berhasil diperbarui',
+          errorMessagePrefix: 'Gagal memperbarui catatan',
         );
       } else {
         final newDebt = DebtReceivableModel(
@@ -114,18 +111,13 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
 
         if (!mounted) return;
         final state = ref.read(debtNotifierProvider);
-        state.when(
-          data: (_) {
-            CoreSnackbar.showSuccess(context, 'Catatan berhasil disimpan');
-            Navigator.of(context).pop();
-          },
-          loading: () {},
-          error: (error, _) {
-            CoreSnackbar.showError(context, 'Gagal menyimpan catatan: $error');
-          },
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage: 'Catatan berhasil disimpan',
+          errorMessagePrefix: 'Gagal menyimpan catatan',
         );
       }
-    }
   }
 
   @override
@@ -147,7 +139,9 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
         child: Column(
           children: [
             // Custom App Bar dengan tombol back
-            _buildCustomAppBar(context, theme),
+            CustomAppBar(
+              title: _isEditMode ? 'Edit Catatan' : 'Tambah Catatan Utang/Piutang',
+            ),
 
             // Form content
             Expanded(
@@ -187,150 +181,28 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              _isEditMode ? 'Edit Catatan' : 'Tambah Catatan Utang/Piutang',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryLight,
-            AppColors.primaryDark,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              _isEditMode ? Icons.edit : Icons.add,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isEditMode ? 'Edit Catatan' : 'Tambah Catatan Baru',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _isEditMode
-                      ? 'Perbarui informasi utang/piutang Anda'
-                      : 'Catat utang atau piutang baru untuk melacak keuangan',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return GradientHeaderCard(
+      title: _isEditMode ? 'Edit Catatan' : 'Tambah Catatan Baru',
+      subtitle: _isEditMode
+          ? 'Perbarui informasi utang/piutang Anda'
+          : 'Catat utang atau piutang baru untuk melacak keuangan',
+      icon: _isEditMode ? Icons.edit : Icons.add,
+      gradientColors: [
+        AppColors.secondary,
+        AppColors.secondary.withValues(alpha: 0.8),
+        AppColors.secondary.withValues(alpha: 0.6),
+      ],
     );
   }
 
   Widget _buildForm(BuildContext context, ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.all(20.0),
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
       ),
       child: Form(
         key: _formKey,
@@ -340,7 +212,7 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             // Type selector
             _buildTypeSelector(context, theme),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Person Name Field
             CoreTextField(
@@ -348,28 +220,25 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
               label: 'Nama Orang',
               hint: 'Masukkan nama orang yang berutang/piutang',
               icon: Icons.person,
-              validator:
-                  (v) =>
-                      (v == null || v.isEmpty)
-                          ? 'Nama tidak boleh kosong'
-                          : null,
+              validator: FormValidators.required(
+                errorMessage: 'Nama tidak boleh kosong',
+              ),
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Amount Field
             CoreAmountInput(
               controller: _amountController,
               label: 'Jumlah',
               hint: 'Masukkan jumlah utang/piutang',
-              validator:
-                  (v) =>
-                      (v == null || v.isEmpty)
-                          ? 'Jumlah tidak boleh kosong'
-                          : null,
+              validator: FormValidators.amount(
+                errorMessage: 'Jumlah tidak boleh kosong',
+                zeroMessage: 'Jumlah harus lebih dari 0',
+              ),
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Description Field
             CoreTextField(
@@ -385,7 +254,7 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
                           : null,
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Due Date Field
             CoreDatePicker(
@@ -428,7 +297,7 @@ class _AddEditDebtPageState extends ConsumerState<AddEditDebtPage> {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        AppSpacing.spaceSM,
         SegmentedButton<DebtReceivableType>(
           segments: const [
             ButtonSegment(

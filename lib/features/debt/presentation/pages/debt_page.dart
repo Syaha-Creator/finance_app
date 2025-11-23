@@ -4,6 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/dropdown_helpers.dart';
+import '../../../../core/utils/dialog_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../data/models/debt_receivable_model.dart';
@@ -58,11 +63,11 @@ class _DebtPageState extends ConsumerState<DebtPage>
         child: Column(
           children: [
             // Custom App Bar dengan tombol back
-            _buildCustomAppBar(context, theme),
+            const CustomAppBar(title: 'Utang & Piutang'),
 
             // Tab Bar
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: AppSpacing.paddingHorizontal,
               child: Row(
                 children: [
                   Expanded(
@@ -151,7 +156,7 @@ class _DebtPageState extends ConsumerState<DebtPage>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md, horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
           color:
               isSelected
@@ -198,59 +203,6 @@ class _DebtPageState extends ConsumerState<DebtPage>
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              'Utang & Piutang',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DebtList extends ConsumerWidget {
@@ -267,7 +219,7 @@ class _DebtList extends ConsumerWidget {
       error:
           (err, stack) => Center(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: AppSpacing.paddingAll,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -276,7 +228,7 @@ class _DebtList extends ConsumerWidget {
                     size: 64,
                     color: theme.colorScheme.error,
                   ),
-                  const SizedBox(height: 16),
+                  AppSpacing.spaceMD,
                   Text(
                     'Terjadi kesalahan',
                     style: theme.textTheme.headlineSmall?.copyWith(
@@ -360,7 +312,7 @@ class _DebtList extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.asset('assets/debt.json', width: 250, height: 250),
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
             Text(
               title,
               textAlign: TextAlign.center,
@@ -377,7 +329,7 @@ class _DebtList extends ConsumerWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
             ElevatedButton.icon(
               onPressed: () => context.push('/add-debt'),
               style: ElevatedButton.styleFrom(
@@ -411,8 +363,8 @@ class _DebtList extends ConsumerWidget {
     final color = isDebtTab ? AppColors.expense : AppColors.income;
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: AppSpacing.paddingAll,
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -488,7 +440,7 @@ class _DebtList extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          AppSpacing.spaceLG,
 
           // Statistics row
           Row(
@@ -574,7 +526,7 @@ class _DebtListItem extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -767,15 +719,7 @@ class _DebtListItem extends ConsumerWidget {
                             decoration: const InputDecoration(
                               labelText: 'Pilih Akun',
                             ),
-                            items:
-                                accounts
-                                    .map(
-                                      (a) => DropdownMenuItem(
-                                        value: a.name,
-                                        child: Text(a.name),
-                                      ),
-                                    )
-                                    .toList(),
+                            items: DropdownItemHelpers.createAccountItems(accounts),
                             onChanged: (v) => selectedAccount = v,
                             validator: (v) => v == null ? 'Pilih akun' : null,
                           ),
@@ -841,63 +785,18 @@ class _DebtListItem extends ConsumerWidget {
     WidgetRef ref,
     DebtReceivableModel debt,
   ) {
-    showDialog(
+    DialogHelper.showDeleteConfirmation(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Hapus'),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus catatan utang/piutang ini?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Batal'),
-            ),
-            Consumer(
-              builder: (context, innerRef, child) {
-                final isLoading =
-                    innerRef.watch(debtNotifierProvider).isLoading;
-                return ElevatedButton(
-                  onPressed:
-                      isLoading
-                          ? null
-                          : () async {
-                            final navigator = Navigator.of(dialogContext);
-                            navigator.pop();
-                            await innerRef
-                                .read(debtNotifierProvider.notifier)
-                                .deleteDebt(debt.id!);
-
-                            final state = innerRef.read(debtNotifierProvider);
-                            state.when(
-                              data: (_) {
-                                CoreSnackbar.showSuccess(
-                                  context,
-                                  'Catatan berhasil dihapus',
-                                );
-                              },
-                              loading: () {},
-                              error: (error, _) {
-                                CoreSnackbar.showError(
-                                  context,
-                                  'Gagal menghapus catatan: $error',
-                                );
-                              },
-                            );
-                          },
-                  child:
-                      isLoading
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CoreLoadingState(size: 20),
-                          )
-                          : const Text('Hapus'),
-                );
-              },
-            ),
-          ],
+      title: 'Konfirmasi Hapus',
+      message: 'Apakah Anda yakin ingin menghapus catatan utang/piutang ini?',
+      onConfirm: () async {
+        await ref.read(debtNotifierProvider.notifier).deleteDebt(debt.id!);
+        final state = ref.read(debtNotifierProvider);
+        if (!context.mounted) return;
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage: 'Catatan berhasil dihapus',
         );
       },
     );
