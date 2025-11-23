@@ -12,7 +12,9 @@ import '../../../transaction/presentation/providers/transaction_provider.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 
 /// Provider untuk mendapatkan expense berdasarkan lokasi
-final locationBasedExpensesProvider = FutureProvider<List<LocationExpense>>((ref) async {
+final locationBasedExpensesProvider = FutureProvider<List<LocationExpense>>((
+  ref,
+) async {
   final userId = ref.watch(authStateChangesProvider).value?.uid;
   if (userId == null) return [];
 
@@ -22,20 +24,24 @@ final locationBasedExpensesProvider = FutureProvider<List<LocationExpense>>((ref
   final transactions = await transactionsStream.first;
 
   // Filter hanya expense dengan lokasi
-  final expensesWithLocation = transactions
-      .where((t) =>
-          t.type == TransactionType.expense &&
-          t.latitude != null &&
-          t.longitude != null)
-      .toList();
+  final expensesWithLocation =
+      transactions
+          .where(
+            (t) =>
+                t.type == TransactionType.expense &&
+                t.latitude != null &&
+                t.longitude != null,
+          )
+          .toList();
 
   // Group by location (dalam radius 100 meter)
   final Map<String, LocationExpense> locationMap = {};
 
   for (final transaction in expensesWithLocation) {
-    String locationKey = transaction.locationAddress ?? 
+    String locationKey =
+        transaction.locationAddress ??
         '${transaction.latitude!.toStringAsFixed(4)},${transaction.longitude!.toStringAsFixed(4)}';
-    
+
     // Cek apakah ada lokasi yang dekat (dalam 100m)
     bool foundNearby = false;
     for (final key in locationMap.keys) {
@@ -55,9 +61,10 @@ final locationBasedExpensesProvider = FutureProvider<List<LocationExpense>>((ref
             transactionCount: existing.transactionCount + 1,
             latitude: existing.latitude,
             longitude: existing.longitude,
-            lastTransactionDate: transaction.date.isAfter(existing.lastTransactionDate)
-                ? transaction.date
-                : existing.lastTransactionDate,
+            lastTransactionDate:
+                transaction.date.isAfter(existing.lastTransactionDate)
+                    ? transaction.date
+                    : existing.lastTransactionDate,
           );
           foundNearby = true;
           break;
@@ -79,8 +86,9 @@ final locationBasedExpensesProvider = FutureProvider<List<LocationExpense>>((ref
   }
 
   // Sort by total amount descending
-  final sortedLocations = locationMap.values.toList()
-    ..sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
+  final sortedLocations =
+      locationMap.values.toList()
+        ..sort((a, b) => b.totalAmount.compareTo(a.totalAmount));
 
   return sortedLocations;
 });
@@ -95,27 +103,33 @@ class LocationBasedExpenseTracking extends ConsumerWidget {
     final expensesAsync = ref.watch(locationBasedExpensesProvider);
 
     return expensesAsync.when(
-      loading: () => const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Center(child: CoreLoadingState()),
-        ),
-      ),
-      error: (error, stack) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red, size: 48),
-              const SizedBox(height: 8),
-              Text('Error: $error', style: theme.textTheme.bodyMedium),
-            ],
+      loading:
+          () => Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: const Center(child: CoreLoadingState()),
+            ),
           ),
-        ),
-      ),
+      error:
+          (error, stack) => Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 8),
+                  Text('Error: $error', style: theme.textTheme.bodyMedium),
+                ],
+              ),
+            ),
+          ),
       data: (expenses) {
         if (expenses.isEmpty) {
           return Card(
+            margin:
+                EdgeInsets.zero, // Remove default margin to match other cards
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -151,6 +165,7 @@ class LocationBasedExpenseTracking extends ConsumerWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
+          margin: EdgeInsets.zero, // Remove default margin to match other cards
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -193,7 +208,9 @@ class LocationBasedExpenseTracking extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                ...expenses.take(5).map(
+                ...expenses
+                    .take(5)
+                    .map(
                       (expense) => LocationExpenseItemWidget(
                         expense: expense,
                         showFullDetails: false,
@@ -215,6 +232,4 @@ class LocationBasedExpenseTracking extends ConsumerWidget {
       },
     );
   }
-
 }
-

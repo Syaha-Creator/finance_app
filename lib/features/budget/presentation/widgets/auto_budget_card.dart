@@ -19,7 +19,10 @@ class AutoBudgetCard extends ConsumerWidget {
 
     return suggestionAsync.when(
       loading: () => const AppLoadingIndicator(),
-      error: (err, stack) => Card(child: Center(child: Text('Error: $err'))),
+      error: (err, stack) => Card(
+        margin: EdgeInsets.zero, // Remove default margin to match other cards
+        child: Center(child: Text('Error: $err')),
+      ),
       data: (suggestions) {
         if (suggestions.isEmpty) {
           // Jangan tampilkan apa-apa jika tidak ada saran
@@ -27,6 +30,7 @@ class AutoBudgetCard extends ConsumerWidget {
         }
 
         return Card(
+          margin: EdgeInsets.zero, // Remove default margin to match other cards
           color: theme.colorScheme.primaryContainer,
           child: Padding(
             padding: const EdgeInsets.all(16.0),

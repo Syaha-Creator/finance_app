@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_decorations.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
@@ -289,28 +291,12 @@ class BudgetPage extends ConsumerWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryLight,
-            AppColors.primaryDark,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
+      padding: const EdgeInsets.all(24),
+      decoration: AppDecorations.primaryGradientDecoration(borderRadius: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -356,7 +342,7 @@ class BudgetPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          AppSpacing.spaceLG,
 
           // Progress Bar
           Column(
@@ -381,7 +367,7 @@ class BudgetPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              AppSpacing.spaceSM,
               LinearProgressIndicator(
                 value: progress,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -391,7 +377,7 @@ class BudgetPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          AppSpacing.spaceLG,
 
           // Summary Row
           Row(
@@ -473,7 +459,7 @@ class BudgetPage extends ConsumerWidget {
               overflow: TextOverflow.visible,
             ),
           ),
-          const SizedBox(height: 24),
+          AppSpacing.spaceLG,
           // Label
           Flexible(
             child: Text(
@@ -545,7 +531,7 @@ class BudgetPage extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
             Text(
               'Belum Ada Kategori',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -586,7 +572,7 @@ class BudgetPage extends ConsumerWidget {
                 color: AppColors.error,
               ),
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
             Text(
               'Terjadi Kesalahan',
               style: theme.textTheme.headlineSmall?.copyWith(
