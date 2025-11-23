@@ -3,9 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/form_validators.dart';
+import '../../../../core/utils/user_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/widgets/gradient_header_card.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
-import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/asset_model.dart';
 import '../providers/asset_provider.dart';
 
@@ -46,65 +52,48 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final value = double.parse(_valueController.text.replaceAll('.', ''));
-      final userId = ref.read(authStateChangesProvider).value?.uid;
+    if (!_formKey.currentState!.validate()) return;
 
-      if (userId == null) {
-        if (!mounted) return;
-        CoreSnackbar.showError(
-          context,
-          'Pengguna tidak ditemukan. Silakan login ulang.',
-        );
-        return;
-      }
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
-      if (_isEditMode) {
-        final updatedAsset = widget.asset!.copyWith(
-          name: _nameController.text,
-          value: value,
-          type: _selectedType,
-        );
-        await ref
-            .read(assetNotifierProvider.notifier)
-            .updateAsset(updatedAsset);
+    final value = FormSubmissionHelper.parseAmount(_valueController.text);
 
-        if (!mounted) return;
-        final state = ref.read(assetNotifierProvider);
-        state.when(
-          data: (_) {
-            CoreSnackbar.showSuccess(context, 'Aset berhasil diperbarui');
-            Navigator.of(context).pop();
-          },
-          loading: () {},
-          error: (error, _) {
-            CoreSnackbar.showError(context, 'Gagal memperbarui aset: $error');
-          },
-        );
-      } else {
-        final newAsset = AssetModel(
-          userId: userId,
-          name: _nameController.text,
-          type: _selectedType!,
-          value: value,
-          createdAt: DateTime.now(),
-          lastUpdatedAt: DateTime.now(),
-        );
-        await ref.read(assetNotifierProvider.notifier).addAsset(newAsset);
+    if (_isEditMode) {
+      final updatedAsset = widget.asset!.copyWith(
+        name: _nameController.text,
+        value: value,
+        type: _selectedType,
+      );
+      await ref.read(assetNotifierProvider.notifier).updateAsset(updatedAsset);
 
-        if (!mounted) return;
-        final state = ref.read(assetNotifierProvider);
-        state.when(
-          data: (_) {
-            CoreSnackbar.showSuccess(context, 'Aset berhasil disimpan');
-            Navigator.of(context).pop();
-          },
-          loading: () {},
-          error: (error, _) {
-            CoreSnackbar.showError(context, 'Gagal menyimpan aset: $error');
-          },
-        );
-      }
+      if (!mounted) return;
+      final state = ref.read(assetNotifierProvider);
+      AsyncValueHelper.handleFormResult(
+        context: context,
+        state: state,
+        successMessage: 'Aset berhasil diperbarui',
+        errorMessagePrefix: 'Gagal memperbarui aset',
+      );
+    } else {
+      final newAsset = AssetModel(
+        userId: userId,
+        name: _nameController.text,
+        type: _selectedType!,
+        value: value,
+        createdAt: DateTime.now(),
+        lastUpdatedAt: DateTime.now(),
+      );
+      await ref.read(assetNotifierProvider.notifier).addAsset(newAsset);
+
+      if (!mounted) return;
+      final state = ref.read(assetNotifierProvider);
+      AsyncValueHelper.handleFormResult(
+        context: context,
+        state: state,
+        successMessage: 'Aset berhasil disimpan',
+        errorMessagePrefix: 'Gagal menyimpan aset',
+      );
     }
   }
 
@@ -127,7 +116,7 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
         child: Column(
           children: [
             // Custom App Bar dengan tombol back
-            _buildCustomAppBar(context, theme),
+            CustomAppBar(title: _isEditMode ? 'Edit Aset' : 'Tambah Aset Baru'),
 
             // Form content
             Expanded(
@@ -167,136 +156,21 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              _isEditMode ? 'Edit Aset' : 'Tambah Aset Baru',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryLight,
-            AppColors.primaryDark,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              _isEditMode ? Icons.edit : Icons.add,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isEditMode ? 'Edit Aset' : 'Tambah Aset Baru',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _isEditMode
-                      ? 'Perbarui informasi aset Anda'
-                      : 'Catat aset baru untuk melacak kekayaan',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return GradientHeaderCard(
+      title: _isEditMode ? 'Edit Aset' : 'Tambah Aset Baru',
+      subtitle:
+          _isEditMode
+              ? 'Perbarui informasi aset Anda'
+              : 'Catat aset baru untuk melacak kekayaan',
+      icon: _isEditMode ? Icons.edit : Icons.add,
     );
   }
 
   Widget _buildForm(BuildContext context, ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -350,11 +224,9 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
               controller: _nameController,
               label: 'Nama Aset',
               hint: 'Contoh: Tabungan BCA, Saham Telkom, dll',
-              validator:
-                  (v) =>
-                      (v == null || v.isEmpty)
-                          ? 'Nama tidak boleh kosong'
-                          : null,
+              validator: FormValidators.required(
+                errorMessage: 'Nama tidak boleh kosong',
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -364,11 +236,10 @@ class _AddEditAssetPageState extends ConsumerState<AddEditAssetPage> {
               controller: _valueController,
               label: 'Nilai / Saldo',
               hint: 'Masukkan nilai aset',
-              validator:
-                  (v) =>
-                      (v == null || v.isEmpty)
-                          ? 'Nilai tidak boleh kosong'
-                          : null,
+              validator: FormValidators.amount(
+                errorMessage: 'Nilai tidak boleh kosong',
+                zeroMessage: 'Nilai harus lebih dari 0',
+              ),
             ),
 
             const SizedBox(height: 28),

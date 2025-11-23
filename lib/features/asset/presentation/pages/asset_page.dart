@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/widgets.dart';
+import '../../../../core/utils/app_decorations.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/dialog_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/asset_model.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/asset_provider.dart';
@@ -32,15 +37,13 @@ class AssetPage extends ConsumerWidget {
         child: Column(
           children: [
             // Custom App Bar dengan tombol back
-            _buildCustomAppBar(context, theme),
+            const CustomAppBar(title: 'Aset Saya'),
 
             // Content
             Expanded(
               child: assetsAsyncValue.when(
                 loading: () => const CoreLoadingState(),
-                error: (err, stack) => AppErrorWidget(
-                  message: err.toString(),
-                ),
+                error: (err, stack) => AppErrorWidget(message: err.toString()),
                 data: (assets) {
                   if (assets.isEmpty) {
                     return _buildEmptyState(context, theme);
@@ -106,60 +109,6 @@ class AssetPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              'Aset Saya',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Center(
       child: Column(
@@ -188,7 +137,7 @@ class AssetPage extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -208,7 +157,7 @@ class AssetPage extends ConsumerWidget {
   ) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -294,22 +243,11 @@ class AssetPage extends ConsumerWidget {
     final totalAssets = assets.length;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: AppSpacing.paddingAll,
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +259,7 @@ class AssetPage extends ConsumerWidget {
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 12.0),
           Row(
             children: [
               Expanded(
@@ -334,7 +272,7 @@ class AssetPage extends ConsumerWidget {
                   theme,
                 ),
               ),
-              const SizedBox(width: 12),
+              AppSpacing.widthMD,
               Expanded(
                 child: _buildStatItem(
                   context,
@@ -396,49 +334,20 @@ class _AssetListItem extends ConsumerWidget {
   const _AssetListItem({required this.asset});
 
   void _showDeleteConfirmationDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+    DialogHelper.showDeleteConfirmation(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('Konfirmasi Hapus'),
-            content: Text(
-              'Apakah Anda yakin ingin menghapus aset "${asset.name}"?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Batal'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final navigator = Navigator.of(dialogContext);
-                  navigator.pop();
-                  await ref
-                      .read(assetNotifierProvider.notifier)
-                      .deleteAsset(asset.id!);
-                  
-                  // Check state after operation
-                  final state = ref.read(assetNotifierProvider);
-                  state.when(
-                    data: (_) {
-                      CoreSnackbar.showSuccess(
-                        context,
-                        'Aset berhasil dihapus',
-                      );
-                    },
-                    loading: () {},
-                    error: (error, _) {
-                      CoreSnackbar.showError(
-                        context,
-                        'Gagal menghapus aset: $error',
-                      );
-                    },
-                  );
-                },
-                child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
+      title: 'Konfirmasi Hapus',
+      itemName: asset.name,
+      onConfirm: () async {
+        await ref.read(assetNotifierProvider.notifier).deleteAsset(asset.id!);
+        final state = ref.read(assetNotifierProvider);
+        if (!context.mounted) return;
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage: 'Aset berhasil dihapus',
+        );
+      },
     );
   }
 
@@ -447,7 +356,7 @@ class _AssetListItem extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -461,7 +370,7 @@ class _AssetListItem extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: () => context.push('/add-asset', extra: {'asset': asset}),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.paddingAll,
             child: Row(
               children: [
                 // Icon dan tipe aset
@@ -503,7 +412,7 @@ class _AssetListItem extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Diperbarui: ${_formatDate(asset.lastUpdatedAt)}',
+                        'Diperbarui: ${AppFormatters.formatRelativeDate(asset.lastUpdatedAt)}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 11,
@@ -624,18 +533,4 @@ class _AssetListItem extends ConsumerWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Hari ini';
-    } else if (difference.inDays == 1) {
-      return 'Kemarin';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} hari lalu';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
 }
