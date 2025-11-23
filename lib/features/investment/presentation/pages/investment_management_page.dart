@@ -279,7 +279,7 @@ class _InvestmentManagementPageState
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           itemCount: investments.length,
           itemBuilder: (context, index) {
             final investment = investments[index];

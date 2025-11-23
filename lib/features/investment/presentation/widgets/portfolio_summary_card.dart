@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
 
 class PortfolioSummaryCard extends StatelessWidget {
   final Map<String, dynamic> summary;
@@ -17,11 +18,14 @@ class PortfolioSummaryCard extends StatelessWidget {
     final totalInvestments = summary['totalInvestments'] ?? 0;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 2,
+      ),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.paddingAll,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -61,7 +65,7 @@ class PortfolioSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
 
             // Main Metrics
             Row(
@@ -89,7 +93,7 @@ class PortfolioSummaryCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Profit/Loss Section
             Container(
@@ -161,7 +165,7 @@ class PortfolioSummaryCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Additional Stats
             Row(
@@ -211,7 +215,7 @@ class PortfolioSummaryCard extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 24),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 12.0),
         Text(
           value,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -241,7 +245,7 @@ class PortfolioSummaryCard extends StatelessWidget {
     return Column(
       children: [
         Icon(icon, color: color, size: 20),
-        const SizedBox(height: 8),
+        AppSpacing.spaceSM,
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
