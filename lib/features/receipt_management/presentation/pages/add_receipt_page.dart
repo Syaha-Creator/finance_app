@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_decorations.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/user_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/widgets/gradient_header_card.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
+import '../../../../core/widgets/loading_action_button.dart';
 import '../../application/ocr_service.dart';
 import '../../data/models/receipt_model.dart';
 import '../providers/receipt_provider.dart';
@@ -44,56 +50,88 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Tambah Struk Baru'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Image Selection Section
-            _buildImageSection(),
-
-            const SizedBox(height: 24),
-
-            // OCR Results Section
-            if (_isOcrCompleted && _ocrData != null) ...[
-              _buildOcrResultsSection(),
-              const SizedBox(height: 24),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Custom App Bar dengan tombol back
+            const CustomAppBar(title: 'Tambah Struk Baru'),
 
-            // Form Fields
-            _buildFormFields(),
+            // Form content
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: CustomScrollView(
+                  slivers: [
+                    // Header dengan gradient
+                    SliverToBoxAdapter(child: _buildHeader(context, theme)),
 
-            const SizedBox(height: 24),
+                    // Image Selection Section
+                    SliverToBoxAdapter(child: _buildImageSection()),
 
-            // Location Picker
-            LocationPickerWidget(
-              initialLatitude: _latitude,
-              initialLongitude: _longitude,
-              initialAddress: _locationAddress,
-              autoDetect: true, // Auto-detect lokasi saat scan receipt
-              onLocationSelected: (lat, lng, address) {
-                setState(() {
-                  _latitude = lat;
-                  _longitude = lng;
-                  _locationAddress = address;
-                });
-              },
-            ),
+                    // OCR Results Section
+                    if (_isOcrCompleted && _ocrData != null)
+                      SliverToBoxAdapter(child: _buildOcrResultsSection()),
 
-            const SizedBox(height: 32),
+                    // Form Fields
+                    SliverToBoxAdapter(child: _buildFormFields()),
 
-            // Save Button
-            CoreLoadingButton(
-              onPressed: _selectedImage != null ? _saveReceipt : null,
-              text: 'Simpan Struk',
-              isLoading: _isProcessing,
+                    // Location Picker
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: LocationPickerWidget(
+                          initialLatitude: _latitude,
+                          initialLongitude: _longitude,
+                          initialAddress: _locationAddress,
+                          autoDetect:
+                              true, // Auto-detect lokasi saat scan receipt
+                          onLocationSelected: (lat, lng, address) {
+                            setState(() {
+                              _latitude = lat;
+                              _longitude = lng;
+                              _locationAddress = address;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Save Button
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: AppSpacing.paddingSymmetric,
+                        child: LoadingActionButton(
+                          onPressed:
+                              _selectedImage != null ? _saveReceipt : null,
+                          isLoading: _isProcessing,
+                          text: 'SIMPAN STRUK',
+                          icon: Icons.save_outlined,
+                          height: 56,
+                        ),
+                      ),
+                    ),
+
+                    // Bottom padding
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -101,159 +139,180 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
     );
   }
 
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
+    return GradientHeaderCard(
+      title: 'Tambah Struk Baru',
+      subtitle: 'Scan atau unggah foto struk untuk mencatat transaksi',
+      icon: Icons.receipt_long,
+      gradientColors: [
+        AppColors.secondary,
+        AppColors.secondaryLight,
+        AppColors.secondary.withValues(alpha: 0.8),
+      ],
+    );
+  }
+
   Widget _buildImageSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Foto Struk',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 16),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      padding: const EdgeInsets.all(20.0),
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Foto Struk',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          AppSpacing.spaceMD,
 
-            if (_selectedImage != null) ...[
-              // Selected Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  _selectedImage!,
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
+          if (_selectedImage != null) ...[
+            // Selected Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                _selectedImage!,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
               ),
-              const SizedBox(height: 16),
+            ),
+            AppSpacing.spaceMD,
 
-              // Process OCR Button
-              if (!_isOcrCompleted) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : _processOcr,
-                    icon: const Icon(Icons.text_fields),
-                    label: const Text('Proses OCR'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Change Image Button
+            // Process OCR Button
+            if (!_isOcrCompleted) ...[
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _selectImage,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Ganti Foto'),
+                child: ElevatedButton.icon(
+                  onPressed: _isProcessing ? null : _processOcr,
+                  icon: const Icon(Icons.text_fields),
+                  label: const Text('Proses OCR'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-            ] else ...[
-              // Image Selection Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.camera),
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Kamera'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library),
-                      label: const Text('Galeri'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              AppSpacing.spaceMD,
             ],
+
+            // Change Image Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _selectImage,
+                icon: const Icon(Icons.edit),
+                label: const Text('Ganti Foto'),
+              ),
+            ),
+          ] else ...[
+            // Image Selection Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.camera),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Kamera'),
+                    style: OutlinedButton.styleFrom(
+                      padding: AppSpacing.paddingVertical,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Galeri'),
+                    style: OutlinedButton.styleFrom(
+                      padding: AppSpacing.paddingVertical,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildOcrResultsSection() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.text_fields, color: AppColors.accent, size: 24),
-                const SizedBox(width: 12),
-                Text(
-                  'Hasil OCR',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accent,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // OCR Data Display
-            if (_ocrData!.merchantName != null) ...[
-              _buildOcrDataRow('Nama Merchant:', _ocrData!.merchantName!),
-            ],
-            if (_ocrData!.merchantAddress != null) ...[
-              _buildOcrDataRow('Alamat:', _ocrData!.merchantAddress!),
-            ],
-            if (_ocrData!.totalAmount != null) ...[
-              _buildOcrDataRow(
-                'Total:',
-                AppFormatters.currency.format(_ocrData!.totalAmount),
-              ),
-            ],
-            if (_ocrData!.items != null) ...[
-              const SizedBox(height: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      padding: const EdgeInsets.all(20.0),
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.text_fields, color: AppColors.accent, size: 24),
+              const SizedBox(width: 12),
               Text(
-                'Item:',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                'Hasil OCR',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
               ),
-              const SizedBox(height: 4),
-              ...(_ocrData!.items!)
-                  .take(3)
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(left: 16, bottom: 2),
-                      child: Text(
-                        '• $item',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+            ],
+          ),
+          AppSpacing.spaceMD,
+
+          // OCR Data Display
+          if (_ocrData!.merchantName != null) ...[
+            _buildOcrDataRow('Nama Merchant:', _ocrData!.merchantName!),
+          ],
+          if (_ocrData!.merchantAddress != null) ...[
+            _buildOcrDataRow('Alamat:', _ocrData!.merchantAddress!),
+          ],
+          if (_ocrData!.totalAmount != null) ...[
+            _buildOcrDataRow(
+              'Total:',
+              AppFormatters.currency.format(_ocrData!.totalAmount),
+            ),
+          ],
+          if (_ocrData!.items != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Item:',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            ...(_ocrData!.items!)
+                .take(3)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 2),
+                    child: Text(
+                      '• $item',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
-            ],
+                ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -288,78 +347,82 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
   }
 
   Widget _buildFormFields() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Informasi Struk',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 20),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      padding: const EdgeInsets.all(20.0),
+      decoration: AppDecorations.cardDecoration(
+        context: context,
+        borderRadius: 16.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Informasi Struk',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 20),
 
-            // Merchant Name
-            CoreTextField(
-              controller: _merchantNameController,
-              label: 'Nama Merchant',
-              hint: 'Masukkan nama merchant',
-              icon: Icons.store,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Nama merchant harus diisi';
-                }
-                return null;
-              },
-            ),
+          // Merchant Name
+          CoreTextField(
+            controller: _merchantNameController,
+            label: 'Nama Merchant',
+            hint: 'Masukkan nama merchant',
+            icon: Icons.store,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Nama merchant harus diisi';
+              }
+              return null;
+            },
+          ),
 
-            const SizedBox(height: 16),
+          AppSpacing.spaceMD,
 
-            // Merchant Address
-            CoreTextField(
-              controller: _merchantAddressController,
-              label: 'Alamat Merchant (Opsional)',
-              hint: 'Masukkan alamat merchant',
-              icon: Icons.location_on_outlined,
-              maxLines: 2,
-            ),
+          // Merchant Address
+          CoreTextField(
+            controller: _merchantAddressController,
+            label: 'Alamat Merchant (Opsional)',
+            hint: 'Masukkan alamat merchant',
+            icon: Icons.location_on_outlined,
+            maxLines: 2,
+          ),
 
-            const SizedBox(height: 16),
+          AppSpacing.spaceMD,
 
-            // Amount
-            CoreAmountInput(
-              controller: _amountController,
-              label: 'Total Amount',
-              hint: '0',
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Total amount harus diisi';
-                }
-                final amount = double.tryParse(value.replaceAll('.', ''));
-                if (amount == null || amount <= 0) {
-                  return 'Total amount harus lebih dari 0';
-                }
-                return null;
-              },
-            ),
+          // Amount
+          CoreAmountInput(
+            controller: _amountController,
+            label: 'Total Amount',
+            hint: '0',
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Total amount harus diisi';
+              }
+              final amount = double.tryParse(value.replaceAll('.', ''));
+              if (amount == null || amount <= 0) {
+                return 'Total amount harus lebih dari 0';
+              }
+              return null;
+            },
+          ),
 
-            const SizedBox(height: 16),
+          AppSpacing.spaceMD,
 
-            // Notes
-            CoreTextField(
-              controller: _notesController,
-              label: 'Catatan (Opsional)',
-              hint: 'Catatan tambahan',
-              icon: Icons.note_outlined,
-              maxLines: 3,
-            ),
-          ],
-        ),
+          // Notes
+          CoreTextField(
+            controller: _notesController,
+            label: 'Catatan (Opsional)',
+            hint: 'Catatan tambahan',
+            icon: Icons.note_outlined,
+            maxLines: 3,
+          ),
+        ],
       ),
     );
   }
@@ -433,13 +496,16 @@ class _AddReceiptPageState extends ConsumerState<AddReceiptPage> {
     }
   }
 
-  void _saveReceipt() {
+  Future<void> _saveReceipt() async {
     if (_formKey.currentState!.validate() && _selectedImage != null) {
+      final userId = UserHelper.requireUserId(ref, context);
+      if (userId == null) return;
+
       final amount = double.parse(_amountController.text.replaceAll('.', ''));
 
       final receipt = ReceiptModel(
         id: '',
-        userId: '',
+        userId: userId,
         imageUrl: '',
         ocrText: _ocrData?.ocrText,
         merchantName: _merchantNameController.text.trim(),

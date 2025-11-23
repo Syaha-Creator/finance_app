@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
 
 class ReceiptSummaryCard extends StatelessWidget {
   final Map<String, dynamic> summary;
@@ -10,11 +11,14 @@ class ReceiptSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 2,
+      ),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.paddingAll,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,7 +58,7 @@ class ReceiptSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
 
             // Statistics Grid
             Row(
@@ -98,11 +102,11 @@ class ReceiptSummaryCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
 
             // Total Amount
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.paddingAll,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/dialog_helper.dart';
 import '../../data/models/receipt_model.dart';
 import '../providers/receipt_provider.dart';
 
@@ -314,71 +315,40 @@ class ReceiptListItem extends ConsumerWidget {
   }
 
   void _showActionDialog(BuildContext context, WidgetRef ref, String action) {
-    String title;
-    String message;
-    String confirmText;
-    Color confirmColor;
-    IconData confirmIcon;
-
     switch (action) {
       case 'processed':
-        title = 'Tandai Diproses';
-        message =
-            'Apakah Anda yakin ingin menandai struk ini sebagai diproses?';
-        confirmText = 'Ya, Diproses';
-        confirmColor = AppColors.success;
-        confirmIcon = Icons.check_circle_outline;
+        DialogHelper.showConfirmation(
+          context: context,
+          title: 'Tandai Diproses',
+          message: 'Apakah Anda yakin ingin menandai struk ini sebagai diproses?',
+          confirmText: 'Ya, Diproses',
+          confirmColor: AppColors.success,
+          confirmIcon: Icons.check_circle_outline,
+          onConfirm: () => _performAction(ref, action),
+        );
         break;
       case 'archived':
-        title = 'Arsipkan Struk';
-        message = 'Apakah Anda yakin ingin mengarsipkan struk ini?';
-        confirmText = 'Ya, Arsipkan';
-        confirmColor = AppColors.accent;
-        confirmIcon = Icons.archive_outlined;
+        DialogHelper.showConfirmation(
+          context: context,
+          title: 'Arsipkan Struk',
+          message: 'Apakah Anda yakin ingin mengarsipkan struk ini?',
+          confirmText: 'Ya, Arsipkan',
+          confirmColor: AppColors.accent,
+          confirmIcon: Icons.archive_outlined,
+          onConfirm: () => _performAction(ref, action),
+        );
         break;
       case 'delete':
-        title = 'Hapus Struk';
-        message =
-            'Apakah Anda yakin ingin menghapus struk ini? Tindakan ini tidak dapat dibatalkan.';
-        confirmText = 'Ya, Hapus';
-        confirmColor = AppColors.error;
-        confirmIcon = Icons.delete_outline;
+        DialogHelper.showDeleteConfirmation(
+          context: context,
+          title: 'Hapus Struk',
+          message: 'Apakah Anda yakin ingin menghapus struk ini? Tindakan ini tidak dapat dibatalkan.',
+          onConfirm: () => _performAction(ref, action),
+        );
         break;
       default:
         return;
     }
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Row(
-              children: [
-                Icon(confirmIcon, color: confirmColor),
-                const SizedBox(width: 8),
-                Text(title),
-              ],
-            ),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _performAction(ref, action);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: confirmColor,
-                  foregroundColor: Colors.white,
-                ),
-                child: Text(confirmText),
-              ),
-            ],
-          ),
-    );
   }
 
   void _performAction(WidgetRef ref, String action) {
