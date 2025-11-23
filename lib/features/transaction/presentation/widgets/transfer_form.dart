@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/dropdown_helpers.dart';
 import '../../../../core/utils/thousand_input_formatter.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../providers/transaction_provider.dart';
@@ -73,15 +74,7 @@ class TransferForm extends ConsumerWidget {
                 'Dari Akun',
                 Icons.north_east_outlined,
               ),
-              items:
-                  accounts
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a.name,
-                          child: Text(a.name),
-                        ),
-                      )
-                      .toList(),
+              items: DropdownItemHelpers.createAccountItems(accounts),
               onChanged: onFromAccountChanged,
               validator: (v) => v == null ? 'Pilih akun asal' : null,
             );
@@ -99,15 +92,7 @@ class TransferForm extends ConsumerWidget {
                 'Ke Akun',
                 Icons.south_west_outlined,
               ),
-              items:
-                  accounts
-                      .map(
-                        (a) => DropdownMenuItem(
-                          value: a.name,
-                          child: Text(a.name),
-                        ),
-                      )
-                      .toList(),
+              items: DropdownItemHelpers.createAccountItems(accounts),
               onChanged: onToAccountChanged,
               validator: (v) => v == null ? 'Pilih akun tujuan' : null,
             );

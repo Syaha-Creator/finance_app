@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/user_helper.dart';
 import '../../../../core/widgets/widgets.dart';
 
 import '../../data/models/transaction_model.dart';
@@ -10,7 +13,6 @@ import '../providers/transaction_provider.dart';
 import '../../../goals/data/models/goal_model.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../../goals/application/goal_progress_service.dart';
-import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class AddTransactionWithGoalPage extends ConsumerStatefulWidget {
   final TransactionType transactionType;
@@ -39,7 +41,6 @@ class _AddTransactionWithGoalPageState
   String? _selectedGoalId;
   String? _selectedGoalName;
   DateTime _selectedDate = DateTime.now();
-  bool _isLoading = false;
 
   // Helper method to invalidate all related providers
   void _invalidateProviders() {
@@ -53,7 +54,6 @@ class _AddTransactionWithGoalPageState
       widget.transactionType == TransactionType.income
           ? AppColors.income
           : AppColors.expense;
-
 
   @override
   void initState() {
@@ -252,11 +252,18 @@ class _AddTransactionWithGoalPageState
                         // Submit Button
                         CoreLoadingButton(
                           onPressed: _submitTransaction,
-                          text: widget.transactionType == TransactionType.income
-                              ? 'TAMBAH PEMASUKAN'
-                              : 'TAMBAH PENGELUARAN',
-                          isLoading: _isLoading,
-                          gradientColors: [_transactionColor, _transactionColor],
+                          text:
+                              widget.transactionType == TransactionType.income
+                                  ? 'TAMBAH PEMASUKAN'
+                                  : 'TAMBAH PENGELUARAN',
+                          isLoading:
+                              ref
+                                  .watch(transactionControllerProvider)
+                                  .isLoading,
+                          gradientColors: [
+                            _transactionColor,
+                            _transactionColor,
+                          ],
                         ),
                       ],
                     ),
@@ -288,14 +295,10 @@ class _AddTransactionWithGoalPageState
       label: 'Pilih Goal',
       hint: 'Pilih goal yang terkait',
       primaryColor: _transactionColor,
-      items: activeGoals
-          .map((goal) {
-            return DropdownMenuItem(
-              value: goal.id,
-              child: Text(goal.name),
-            );
-          })
-          .toList(),
+      items:
+          activeGoals.map((goal) {
+            return DropdownMenuItem(value: goal.id, child: Text(goal.name));
+          }).toList(),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Pilih goal yang terkait';
@@ -305,7 +308,6 @@ class _AddTransactionWithGoalPageState
     );
   }
 
-
   Future<void> _submitTransaction() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGoalId == null) {
@@ -313,33 +315,21 @@ class _AddTransactionWithGoalPageState
       return;
     }
 
-    setState(() => _isLoading = true);
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
     try {
       // Remove currency formatting and parse amount correctly
-      final numericValue = _amountController.text.replaceAll(
-        RegExp(r'[^\d]'),
-        '',
-      );
-      if (numericValue.isEmpty) {
-        throw Exception('Jumlah tidak valid');
-      }
-      final amount = double.parse(numericValue);
+      final amount = FormSubmissionHelper.parseAmount(_amountController.text);
       final description =
           _descriptionController.text.isNotEmpty
               ? _descriptionController.text
               : 'Transaksi ${widget.transactionType == TransactionType.income ? 'pemasukan' : 'pengeluaran'} untuk goal';
 
-      // Get current user ID
-      final user = ref.read(authStateChangesProvider).value;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
       // Create transaction
       final transaction = TransactionModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: user.uid,
+        userId: userId,
         amount: amount,
         type: widget.transactionType,
         description: description,
@@ -356,8 +346,12 @@ class _AddTransactionWithGoalPageState
 
       if (!mounted) return;
       final state = ref.read(transactionControllerProvider);
-      state.when(
-        data: (_) async {
+      AsyncValueHelper.handleFormResult(
+        context: context,
+        state: state,
+        successMessage:
+            'Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
+        onSuccess: () async {
           // Update goal progress
           if (_selectedGoalId != null) {
             await ref
@@ -368,28 +362,15 @@ class _AddTransactionWithGoalPageState
             _invalidateProviders();
           }
 
-          // Show success message
-          if (!mounted) return;
-          CoreSnackbar.showSuccess(
-            context,
-            'Transaksi berhasil ditambahkan ke goal "${_selectedGoalName ?? "Unknown"}"',
-          );
-
           // Navigate back
-          Navigator.of(context).pop();
-        },
-        loading: () {},
-        error: (error, _) {
-          CoreSnackbar.showError(context, 'Gagal menambahkan transaksi: $error');
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
         },
       );
     } catch (e) {
       if (!mounted) return;
       CoreSnackbar.showError(context, 'Gagal menambahkan transaksi: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
   }
 }

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/dropdown_helpers.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/user_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
+import '../../../../core/widgets/gradient_header_card.dart';
 import '../../../../core/widgets/widgets.dart';
-import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../data/models/recurring_transaction_model.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/recurring_transaction_provider.dart';
@@ -59,58 +63,44 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
   }
 
   void _submit() async {
-    if (_formKey.currentState!.validate()) {
-      final amount = double.parse(_amountController.text.replaceAll('.', ''));
-      final userId = ref.read(authStateChangesProvider).value?.uid;
+    if (!_formKey.currentState!.validate()) return;
 
-      if (userId == null) {
-        if (!mounted) return;
-        CoreSnackbar.showError(
-          context,
-          'Pengguna tidak ditemukan. Silakan login ulang.',
-        );
-        return;
-      }
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
-      final newRecurring = RecurringTransactionModel(
-        id: widget.recurringTransaction?.id,
-        userId: userId,
-        description: _descriptionController.text,
-        amount: amount,
-        category: _selectedCategory!,
-        account: _selectedAccount!,
-        type: _type,
-        frequency: _frequency,
-        dayOfMonth: _dayOfMonth,
-        dayOfWeek: _dayOfWeek,
-        startDate: _startDate,
-      );
+    final amount = FormSubmissionHelper.parseAmount(_amountController.text);
 
-      final controller = ref.read(
-        recurringTransactionControllerProvider.notifier,
-      );
-      if (isEditMode) {
-        await controller.update(newRecurring);
-      } else {
-        await controller.add(newRecurring);
-      }
+    final newRecurring = RecurringTransactionModel(
+      id: widget.recurringTransaction?.id,
+      userId: userId,
+      description: _descriptionController.text,
+      amount: amount,
+      category: _selectedCategory!,
+      account: _selectedAccount!,
+      type: _type,
+      frequency: _frequency,
+      dayOfMonth: _dayOfMonth,
+      dayOfWeek: _dayOfWeek,
+      startDate: _startDate,
+    );
 
-      if (!mounted) return;
-      final state = ref.read(recurringTransactionControllerProvider);
-      state.when(
-        data: (_) {
-          CoreSnackbar.showSuccess(
-            context,
-            'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}!',
-          );
-          Navigator.of(context).pop();
-        },
-        loading: () {},
-        error: (error, _) {
-          CoreSnackbar.showError(context, 'Gagal: $error');
-        },
-      );
+    final controller = ref.read(
+      recurringTransactionControllerProvider.notifier,
+    );
+    if (isEditMode) {
+      await controller.update(newRecurring);
+    } else {
+      await controller.add(newRecurring);
     }
+
+    if (!mounted) return;
+    final state = ref.read(recurringTransactionControllerProvider);
+    AsyncValueHelper.handleFormResult(
+      context: context,
+      state: state,
+      successMessage:
+          'Jadwal berhasil ${isEditMode ? 'diperbarui' : 'disimpan'}!',
+    );
   }
 
   @override
@@ -134,7 +124,9 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
         child: Column(
           children: [
             // Custom App Bar
-            _buildCustomAppBar(context, theme),
+            CustomAppBar(
+              title: isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
+            ),
 
             // Form Content
             Expanded(
@@ -195,128 +187,14 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
 
   // --- KUMPULAN WIDGET BUILDER UNTUK FORM ---
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return GradientHeaderCard(
+      title: isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
+      subtitle: isEditMode
+          ? 'Perbarui jadwal transaksi berulang'
+          : 'Buat jadwal transaksi yang berulang otomatis',
+      icon: isEditMode ? Icons.edit : Icons.add,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryLight,
-            AppColors.primaryDark,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              isEditMode ? Icons.edit : Icons.add,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isEditMode ? 'Edit Jadwal' : 'Jadwal Baru',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  isEditMode
-                      ? 'Perbarui jadwal transaksi berulang'
-                      : 'Buat jadwal transaksi yang berulang otomatis',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -375,6 +253,7 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
             ? expenseCategoriesProvider
             : incomeCategoriesProvider;
     final categoriesAsync = ref.watch(provider);
+    final isIncome = _type == TransactionType.income;
     return categoriesAsync.when(
       loading: () => const CoreLoadingState(size: 20),
       error: (err, stack) => Text('Error: $err'),
@@ -383,12 +262,10 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
           value: _selectedCategory,
           onChanged: (val) => setState(() => _selectedCategory = val),
           label: 'Kategori',
-          items:
-              categories
-                  .map(
-                    (c) => DropdownMenuItem(value: c.name, child: Text(c.name)),
-                  )
-                  .toList(),
+          items: DropdownItemHelpers.createCategoryItems(
+            categories,
+            isIncome: isIncome,
+          ),
           validator: (v) => v == null ? 'Wajib dipilih' : null,
         );
       },
@@ -405,12 +282,7 @@ class _AddEditRecurringPageState extends ConsumerState<AddEditRecurringPage> {
           value: _selectedAccount,
           onChanged: (val) => setState(() => _selectedAccount = val),
           label: 'Akun',
-          items:
-              accounts
-                  .map(
-                    (a) => DropdownMenuItem(value: a.name, child: Text(a.name)),
-                  )
-                  .toList(),
+          items: DropdownItemHelpers.createAccountItems(accounts),
           validator: (v) => v == null ? 'Wajib dipilih' : null,
         );
       },

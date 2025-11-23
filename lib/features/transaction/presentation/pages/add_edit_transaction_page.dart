@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/form_submission_helper.dart';
+import '../../../../core/utils/user_helper.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/widgets/loading_action_button.dart';
 import '../../../../core/widgets/location_picker_widget.dart';
@@ -36,7 +38,6 @@ class _AddEditTransactionPageState
   String? _toAccount;
   late DateTime _selectedDate;
   late TransactionType _selectedType;
-  bool _isLoading = false;
   double? _latitude;
   double? _longitude;
   String? _locationAddress;
@@ -73,68 +74,64 @@ class _AddEditTransactionPageState
   }
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      final userId = ref.read(authStateChangesProvider).value?.uid;
-      if (userId == null) {
-        if (!mounted) return;
-        CoreSnackbar.showError(
-          context,
-          'Pengguna tidak ditemukan. Silakan login ulang.',
-        );
-        setState(() => _isLoading = false);
-        return;
-      }
+    final userId = UserHelper.requireUserId(ref, context);
+    if (userId == null) return;
 
-      final amountString = _amountController.text.replaceAll('.', '');
-      final amount = double.parse(amountString);
+    final amount = FormSubmissionHelper.parseAmount(_amountController.text);
 
-      try {
+    try {
+      if (_selectedType == TransactionType.transfer) {
+        // Transfer masih menggunakan repository karena tidak ada controller method
         final repo = ref.read(transactionRepositoryProvider);
-        if (_selectedType == TransactionType.transfer) {
-          await repo.addTransfer(
-            amount: amount,
-            fromAccount: _fromAccount!,
-            toAccount: _toAccount!,
-            date: _selectedDate,
-            description: _descriptionController.text,
-          );
-        } else {
-          final transactionData = TransactionModel(
-            id: widget.transaction?.id,
-            userId: userId,
-            description: _descriptionController.text,
-            amount: amount,
-            category: _selectedCategory!,
-            account: _selectedAccount!,
-            date: _selectedDate,
-            type: _selectedType,
-            latitude: _latitude,
-            longitude: _longitude,
-            locationAddress: _locationAddress,
-          );
-          if (_isEditMode) {
-            await repo.updateTransaction(transactionData);
-          } else {
-            await repo.addTransaction(transactionData);
-          }
-        }
-
-        if (!mounted) return;
-        CoreSnackbar.showSuccess(
-          context,
-          'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
+        await repo.addTransfer(
+          amount: amount,
+          fromAccount: _fromAccount!,
+          toAccount: _toAccount!,
+          date: _selectedDate,
+          description: _descriptionController.text,
         );
+        if (!mounted) return;
+        CoreSnackbar.showSuccess(context, 'Transfer berhasil disimpan!');
         if (context.canPop()) {
           context.pop();
         }
-      } catch (e) {
+      } else {
+        final transactionData = TransactionModel(
+          id: widget.transaction?.id,
+          userId: userId,
+          description: _descriptionController.text,
+          amount: amount,
+          category: _selectedCategory!,
+          account: _selectedAccount!,
+          date: _selectedDate,
+          type: _selectedType,
+          latitude: _latitude,
+          longitude: _longitude,
+          locationAddress: _locationAddress,
+        );
+        final controller = ref.read(transactionControllerProvider.notifier);
+        if (_isEditMode) {
+          await controller.updateTransaction(transactionData);
+        } else {
+          await controller.addTransaction(transactionData);
+        }
+
         if (!mounted) return;
-        CoreSnackbar.showError(context, 'Gagal: $e');
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+        final state = ref.read(transactionControllerProvider);
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage:
+              'Transaksi berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}!',
+          errorMessagePrefix:
+              'Gagal ${_isEditMode ? 'memperbarui' : 'menyimpan'} transaksi',
+        );
       }
+    } catch (e) {
+      if (!mounted) return;
+      CoreSnackbar.showError(context, 'Gagal: $e');
     }
   }
 
@@ -371,7 +368,7 @@ class _AddEditTransactionPageState
                   // Submit Button
                   LoadingActionButton(
                     onPressed: _submitForm,
-                    isLoading: _isLoading,
+                    isLoading: ref.watch(transactionControllerProvider).isLoading,
                     text: _isEditMode ? 'PERBARUI' : 'SIMPAN',
                     icon: _isEditMode ? Icons.save_outlined : Icons.add,
                     height: 56,
@@ -382,7 +379,7 @@ class _AddEditTransactionPageState
           ),
 
           // Loading Overlay
-          if (_isLoading)
+          if (ref.watch(transactionControllerProvider).isLoading)
             Container(
               color: Colors.black.withValues(alpha: 0.5),
               child: const CoreLoadingState(),

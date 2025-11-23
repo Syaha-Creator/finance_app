@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/app_decorations.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
 import '../../../../widgets/month_selector.dart';
 import '../../../dashboard/presentation/providers/dashboard_providers.dart';
 import '../widgets/transaction_history_list.dart';
@@ -18,90 +20,78 @@ class TransactionPage extends ConsumerWidget {
     return Column(
       children: [
         // MonthSelector
-        Container(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 70,
-                child: MonthSelector(
-                  selectedDate: ref.watch(selectedDateProvider),
-                  onDateChanged: (date) {
-                    ref.read(selectedDateProvider.notifier).state = date;
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
+        Padding(
+          padding: AppSpacing.paddingSymmetric,
+          child: SizedBox(
+            height: 70,
+            child: MonthSelector(
+              selectedDate: ref.watch(selectedDateProvider),
+              onDateChanged: (date) {
+                ref.read(selectedDateProvider.notifier).state = date;
+              },
+            ),
           ),
         ),
+        AppSpacing.spaceMD,
 
         // Content
         Expanded(
           child: Column(
             children: [
               // Compact summary section
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    width: 1,
+              Padding(
+                padding: AppSpacing.paddingHorizontal,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20.0),
+                  decoration: AppDecorations.headerCardDecoration(
+                    context: context,
+                    borderRadius: 16.0,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.trending_up_rounded,
-                        title: 'Pemasukan',
-                        value: analysis.totalIncome,
-                        color: AppColors.income,
-                        theme: theme,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.trending_up_rounded,
+                          title: 'Pemasukan',
+                          value: analysis.totalIncome,
+                          color: AppColors.income,
+                          theme: theme,
+                        ),
                       ),
-                    ),
-                    Container(
-                      height: 40,
-                      width: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    ),
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.trending_down_rounded,
-                        title: 'Pengeluaran',
-                        value: analysis.totalExpense,
-                        color: AppColors.expense,
-                        theme: theme,
+                      Container(
+                        height: 40,
+                        width: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
                       ),
-                    ),
-                    Container(
-                      height: 40,
-                      width: 1,
-                      color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                    ),
-                    Expanded(
-                      child: _buildCompactSummaryCard(
-                        context,
-                        icon: Icons.account_balance_wallet_outlined,
-                        title: 'Saldo',
-                        value: analysis.balance,
-                        color: AppColors.secondary,
-                        theme: theme,
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.trending_down_rounded,
+                          title: 'Pengeluaran',
+                          value: analysis.totalExpense,
+                          color: AppColors.expense,
+                          theme: theme,
+                        ),
                       ),
-                    ),
-                  ],
+                      Container(
+                        height: 40,
+                        width: 1,
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                      ),
+                      Expanded(
+                        child: _buildCompactSummaryCard(
+                          context,
+                          icon: Icons.account_balance_wallet_outlined,
+                          title: 'Saldo',
+                          value: analysis.balance,
+                          color: AppColors.secondary,
+                          theme: theme,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -110,17 +100,16 @@ class TransactionPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    Padding(
+                      padding: AppSpacing.paddingHorizontal,
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
+                            decoration: AppDecorations.iconContainerDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: 8.0,
+                              alpha: 0.1,
                             ),
                             child: Icon(
                               Icons.receipt_long_outlined,

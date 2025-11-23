@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/dropdown_helpers.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
@@ -94,19 +95,16 @@ class IncomeExpenseForm extends ConsumerWidget {
           loading: () => const CoreLoadingState(size: 20),
           error: (err, stack) => Text('Error: $err'),
           data: (categories) {
+            final isIncome = selectedType == TransactionType.income;
             return CoreDropdown<String>(
               value: selectedCategory,
               onChanged: onCategoryChanged,
               label: 'Kategori',
               icon: Icons.category_outlined,
-              items: categories
-                  .map(
-                    (c) => DropdownMenuItem(
-                      value: c.name,
-                      child: Text(c.name),
-                    ),
-                  )
-                  .toList(),
+              items: DropdownItemHelpers.createCategoryItems(
+                categories,
+                isIncome: isIncome,
+              ),
               validator: (v) => v == null ? 'Pilih kategori' : null,
             );
           },
@@ -121,14 +119,7 @@ class IncomeExpenseForm extends ConsumerWidget {
               onChanged: onAccountChanged,
               label: 'Akun',
               icon: Icons.account_balance_wallet_outlined,
-              items: accounts
-                  .map(
-                    (a) => DropdownMenuItem(
-                      value: a.name,
-                      child: Text(a.name),
-                    ),
-                  )
-                  .toList(),
+              items: DropdownItemHelpers.createAccountItems(accounts),
               validator: (v) => v == null ? 'Pilih akun' : null,
             );
           },

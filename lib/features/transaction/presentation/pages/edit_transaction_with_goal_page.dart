@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/dialog_helper.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../data/models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
@@ -447,68 +448,47 @@ class _EditTransactionWithGoalPageState
   }
 
   Future<void> _deleteTransaction() async {
-    // Show confirmation dialog
-    final shouldDelete = await showDialog<bool>(
+    await DialogHelper.showDeleteConfirmation(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Konfirmasi Hapus'),
-            content: const Text(
-              'Apakah Anda yakin ingin menghapus transaksi ini? '
-              'Tindakan ini tidak dapat dibatalkan.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.expense,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Hapus'),
-              ),
-            ],
-          ),
+      title: 'Konfirmasi Hapus',
+      message: 'Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat dibatalkan.',
+      onConfirm: () async {
+
+        setState(() => _isLoading = true);
+
+        try {
+          // Delete transaction
+          await ref
+              .read(transactionRepositoryProvider)
+              .deleteTransaction(widget.transaction.id!);
+
+          // Update goal progress
+          if (_selectedGoalId != null) {
+            await ref
+                .read(goalProgressServiceProvider)
+                .updateGoalProgress(_selectedGoalId!);
+
+            // Invalidate providers to trigger UI refresh
+            _invalidateProviders();
+          }
+
+          // Show success message
+          if (mounted) {
+            CoreSnackbar.showSuccess(context, 'Transaksi berhasil dihapus');
+
+            // Navigate back
+            Navigator.of(context).pop();
+          }
+        } catch (e) {
+          if (mounted) {
+            CoreSnackbar.showError(context, 'Gagal menghapus transaksi: $e');
+          }
+        } finally {
+          if (mounted) {
+            setState(() => _isLoading = false);
+          }
+        }
+      },
     );
-
-    if (shouldDelete != true) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Delete transaction
-      await ref
-          .read(transactionRepositoryProvider)
-          .deleteTransaction(widget.transaction.id!);
-
-      // Update goal progress
-      if (_selectedGoalId != null) {
-        await ref
-            .read(goalProgressServiceProvider)
-            .updateGoalProgress(_selectedGoalId!);
-
-        // Invalidate providers to trigger UI refresh
-        _invalidateProviders();
-      }
-
-      // Show success message
-      if (mounted) {
-        CoreSnackbar.showSuccess(context, 'Transaksi berhasil dihapus');
-
-        // Navigate back
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        CoreSnackbar.showError(context, 'Gagal menghapus transaksi: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 }

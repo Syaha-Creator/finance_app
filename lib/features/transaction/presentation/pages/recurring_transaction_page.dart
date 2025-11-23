@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../widgets/app_loading_indicator.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/models/recurring_transaction_model.dart';
 import '../providers/recurring_transaction_provider.dart';
-import 'package:go_router/go_router.dart';
 
 class RecurringTransactionPage extends ConsumerWidget {
   const RecurringTransactionPage({super.key});
@@ -33,7 +34,7 @@ class RecurringTransactionPage extends ConsumerWidget {
         child: Column(
           children: [
             // Custom App Bar
-            _buildCustomAppBar(context, theme),
+            const CustomAppBar(title: 'Transaksi Berulang'),
 
             // Content
             Expanded(
@@ -76,60 +77,6 @@ class RecurringTransactionPage extends ConsumerWidget {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Jadwal Baru'),
-      ),
-    );
-  }
-
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              'Transaksi Berulang',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
