@@ -6,6 +6,10 @@ import 'package:lottie/lottie.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/app_formatters.dart';
+import '../../../../core/utils/app_spacing.dart';
+import '../../../../core/utils/async_value_helper.dart';
+import '../../../../core/utils/dialog_helper.dart';
+import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../data/models/goal_model.dart';
 import '../providers/goal_provider.dart';
@@ -35,7 +39,7 @@ class GoalsPage extends ConsumerWidget {
         child: Column(
           children: [
             // Custom App Bar dengan tombol back
-            _buildCustomAppBar(context, theme),
+            const CustomAppBar(title: 'Tujuan Saya'),
 
             // Content
             Expanded(
@@ -128,69 +132,15 @@ class GoalsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
-        right: 16,
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          // Tombol back
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: theme.colorScheme.onSurface,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: const Size(40, 40),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Judul halaman
-          Expanded(
-            child: Text(
-              'Tujuan Saya',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context, ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        padding: AppSpacing.paddingHorizontal,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.asset('assets/goal.json', width: 250, height: 250),
-            const SizedBox(height: 20),
+            AppSpacing.spaceLG,
             Text(
               'Anda belum punya tujuan.',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -206,7 +156,7 @@ class GoalsPage extends ConsumerWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            AppSpacing.spaceLG,
             ElevatedButton.icon(
               onPressed: () => context.push('/add-goal'),
               style: ElevatedButton.styleFrom(
@@ -244,20 +194,20 @@ class GoalsPage extends ConsumerWidget {
             : 0.0;
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.accent,
-            AppColors.accentLight,
-            AppColors.accentContainer,
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.circular(20),
+      margin: AppSpacing.paddingAll,
+      padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.accent,
+              AppColors.accentLight,
+              AppColors.accentContainer,
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+          borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.3),
@@ -438,47 +388,20 @@ class _GoalListItem extends ConsumerWidget {
 
   // --- Dialog Konfirmasi Hapus ---
   void _showDeleteDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
+    DialogHelper.showDeleteConfirmation(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text('Hapus Tujuan'),
-            content: Text(
-              'Apakah Anda yakin ingin menghapus tujuan "${goal.name}"?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Batal'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.of(dialogContext).pop();
-                  await ref
-                      .read(goalControllerProvider.notifier)
-                      .deleteGoal(goal.id!);
-
-                  final state = ref.read(goalControllerProvider);
-                  state.when(
-                    data: (_) {
-                      CoreSnackbar.showSuccess(
-                        context,
-                        'Tujuan berhasil dihapus',
-                      );
-                    },
-                    loading: () {},
-                    error: (error, _) {
-                      CoreSnackbar.showError(
-                        context,
-                        'Gagal menghapus tujuan: $error',
-                      );
-                    },
-                  );
-                },
-                child: const Text('Hapus', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
+      title: 'Hapus Tujuan',
+      itemName: goal.name,
+      onConfirm: () async {
+        await ref.read(goalControllerProvider.notifier).deleteGoal(goal.id!);
+        final state = ref.read(goalControllerProvider);
+        if (!context.mounted) return;
+        AsyncValueHelper.handleFormResult(
+          context: context,
+          state: state,
+          successMessage: 'Tujuan berhasil dihapus',
+        );
+      },
     );
   }
 
@@ -509,7 +432,7 @@ class _GoalListItem extends ConsumerWidget {
     final canBeCompleted = goal.progressPercentage >= 1.0 && !isCompleted;
 
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: AppSpacing.paddingAll,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -607,11 +530,11 @@ class _GoalListItem extends ConsumerWidget {
                 ],
               ),
 
-              const SizedBox(height: 20),
+              AppSpacing.spaceLG,
 
               // Progress section dengan ukuran yang konsisten
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.paddingAll,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.3,
@@ -665,7 +588,7 @@ class _GoalListItem extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              AppSpacing.spaceLG,
 
               // Amount information dengan ukuran yang konsisten
               Row(
@@ -692,7 +615,7 @@ class _GoalListItem extends ConsumerWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              AppSpacing.spaceMD,
 
               // Target date dengan styling yang konsisten
               Container(
@@ -786,7 +709,7 @@ class _GoalListItem extends ConsumerWidget {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.paddingAll,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
@@ -830,7 +753,7 @@ class _GoalListItem extends ConsumerWidget {
                   'Pilih jenis transaksi yang ingin ditambahkan ke goal ini:',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.spaceMD,
                 _buildTransactionOption(
                   context,
                   'Pemasukan',
@@ -854,7 +777,7 @@ class _GoalListItem extends ConsumerWidget {
                     _navigateToAddTransaction(context, TransactionType.expense);
                   },
                 ),
-                const SizedBox(height: 16),
+                AppSpacing.spaceMD,
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
