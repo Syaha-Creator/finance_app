@@ -6,6 +6,7 @@ import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../../../asset/presentation/providers/asset_provider.dart';
 import '../../../goals/presentation/providers/goal_provider.dart';
 import '../../../transaction/presentation/providers/transaction_provider.dart';
+import '../providers/settings_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class UserProfileCard extends ConsumerWidget {
@@ -15,6 +16,14 @@ class UserProfileCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateChangesProvider).value;
     final theme = Theme.of(context);
+    final userProfileAsync = ref.watch(userProfileStreamProvider);
+
+    // Get displayName: prefer Firestore, fallback to Firebase Auth, then default
+    final displayName = userProfileAsync.value?.displayName ??
+        user?.displayName ??
+        'Pengguna';
+    
+    final profile = userProfileAsync.value;
 
     // Watch real data from providers
     final transactionsAsync = ref.watch(transactionsStreamProvider);
@@ -85,7 +94,7 @@ class UserProfileCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user?.displayName ?? 'Pengguna',
+                        displayName,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -106,6 +115,39 @@ class UserProfileCard extends ConsumerWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      if (profile?.profession != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          profile!.profession!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                      if (profile?.city != null || profile?.country != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 14,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              [
+                                profile?.city,
+                                profile?.country,
+                              ].where((e) => e != null).join(', '),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       // Edit Profile Button
                       Container(
