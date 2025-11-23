@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../../core/constants/firestore_constants.dart';
 import '../../../../core/services/fcm_service.dart';
 import '../../../../core/services/unverified_user_cleanup_service.dart';
 import '../../../../core/utils/logger.dart';
@@ -7,10 +9,16 @@ import '../../../../core/utils/logger.dart';
 class AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final FirebaseFirestore _firestore;
 
-  AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
+  AuthRepository({
+    FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+    FirebaseFirestore? firestore,
+  })
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-      _googleSignIn = googleSignIn ?? GoogleSignIn();
+      _googleSignIn = googleSignIn ?? GoogleSignIn(),
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
@@ -40,14 +48,31 @@ class AuthRepository {
         email: email,
         password: password,
       );
-      await userCredential.user?.updateDisplayName(displayName);
+      
+      final user = userCredential.user;
+      if (user == null) return null;
+
+      // Update displayName in Firebase Auth
+      await user.updateDisplayName(displayName);
+
+      // Save user profile to Firestore with complete information
+      await _firestore
+          .collection(FirestoreConstants.usersCollection)
+          .doc(user.uid)
+          .set({
+        'displayName': displayName,
+        'email': email,
+        'emailVerified': user.emailVerified,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       // Send email verification automatically after sign up
-      if (userCredential.user != null && !userCredential.user!.emailVerified) {
-        await userCredential.user!.sendEmailVerification();
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
       }
 
-      await userCredential.user?.reload();
+      await user.reload();
       return _firebaseAuth.currentUser;
     }, 'Email Sign Up');
   }

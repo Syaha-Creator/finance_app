@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/auth_helper.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/pages/main_page.dart';
 import '../providers/auth_providers.dart';
@@ -18,13 +19,7 @@ class AuthWrapper extends ConsumerWidget {
       data: (user) {
         if (user != null) {
           // Check email verification - mandatory before accessing app
-          // Google Sign In users are already verified
-          final isGoogleUser = user.providerData.any(
-            (info) => info.providerId == 'google.com',
-          );
-          final isEmailVerified = user.emailVerified || isGoogleUser;
-
-          if (!isEmailVerified) {
+          if (AuthHelper.needsEmailVerification(user)) {
             // User must verify email before accessing the app
             return const EmailVerificationPage();
           }
@@ -39,9 +34,7 @@ class AuthWrapper extends ConsumerWidget {
           (err, stack) =>
               Scaffold(body: Center(child: Text('Terjadi error: $err'))),
 
-      loading:
-          () =>
-              const Scaffold(body: Center(child: CoreLoadingState())),
+      loading: () => const Scaffold(body: Center(child: CoreLoadingState())),
     );
   }
 }

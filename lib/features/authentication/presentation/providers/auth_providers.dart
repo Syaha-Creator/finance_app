@@ -25,28 +25,19 @@ class AuthController extends BaseController {
     : _authRepository = authRepository,
       super();
 
-  /// Helper method to execute async operations with loading/error handling
-  Future<void> _executeOperation(Future<void> Function() operation) async {
-    state = const AsyncValue.loading();
-    try {
-      await operation();
-      state = const AsyncValue.data(null);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
-  }
-
   Future<void> signUpWithEmail({
     required String email,
     required String password,
     required String displayName,
   }) async {
-    await _executeOperation(
+    await executeWithLoading(
       () => _authRepository.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
       ),
+      providersToInvalidate:
+          [], // Auth state handled by authStateChangesProvider
     );
   }
 
@@ -54,21 +45,35 @@ class AuthController extends BaseController {
     required String email,
     required String password,
   }) async {
-    await _executeOperation(
+    await executeWithLoading(
       () => _authRepository.signInWithEmail(email: email, password: password),
+      providersToInvalidate:
+          [], // Auth state handled by authStateChangesProvider
     );
   }
 
   Future<void> signInWithGoogle() async {
-    await _executeOperation(() => _authRepository.signInWithGoogle());
+    await executeWithLoading(
+      () => _authRepository.signInWithGoogle(),
+      providersToInvalidate:
+          [], // Auth state handled by authStateChangesProvider
+    );
   }
 
   Future<void> resetPassword({required String email}) async {
-    await _executeOperation(() => _authRepository.resetPassword(email: email));
+    await executeWithLoading(
+      () => _authRepository.resetPassword(email: email),
+      providersToInvalidate:
+          [], // Auth state handled by authStateChangesProvider
+    );
   }
 
   Future<void> sendEmailVerification() async {
-    await _executeOperation(() => _authRepository.sendEmailVerification());
+    await executeWithLoading(
+      () => _authRepository.sendEmailVerification(),
+      providersToInvalidate:
+          [], // Auth state handled by authStateChangesProvider
+    );
   }
 
   Future<void> reloadUser() async {

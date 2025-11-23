@@ -5,6 +5,7 @@ import '../providers/auth_providers.dart';
 import '../widgets/widgets.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/auth_helper.dart';
 import '../../../../core/widgets/widgets.dart' as core_widgets;
 import '../../../../core/widgets/core_snackbar.dart';
 import '../../../../core/utils/error_message_formatter.dart';
@@ -116,17 +117,13 @@ class _LoginPageState extends ConsumerState<LoginPage>
             if (user != null) {
               await user.reload();
               final reloadedUser = FirebaseAuth.instance.currentUser;
-              
+
               if (!mounted) return;
               setState(() => _isLoading = false);
-              
+
               // Check email verification - mandatory before accessing app
-              final isGoogleUser = reloadedUser?.providerData.any(
-                (info) => info.providerId == 'google.com',
-              ) ?? false;
-              final isEmailVerified = reloadedUser?.emailVerified ?? false;
-              
-              if (!isEmailVerified && !isGoogleUser) {
+              if (reloadedUser != null &&
+                  AuthHelper.needsEmailVerification(reloadedUser)) {
                 // Redirect to email verification page
                 context.go(RoutePaths.emailVerification);
               } else {
